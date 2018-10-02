@@ -24,6 +24,13 @@ int main(int argc, char** argv) {
 		exit (EXIT_FAILURE);
 	}
 
+	//TODO: read these variables from config file
+	int NF = 4;
+	int NI = 8;
+	int NW = 4;
+	int NR = 16;
+	int NB = 4;
+
 	fillInstructionAndDataCache (argv[1]); //call loader to fill caches
 
 	printInstructionCache (); //print instruction cache
