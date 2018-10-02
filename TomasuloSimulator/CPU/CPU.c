@@ -45,56 +45,48 @@ void initializeCPU () {
 	cpu -> fpResult = 0; 
 }
 
-/**
- * Method that simulates the looping cycle-wise
- * @return: When the simulator stops
- */
-int runClockCycle () {
-	cpu -> cycle++; //increment cycle counter
-
-	printf ("\nCycle %d\n", cpu -> cycle);
-
-
-	if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))) { //check whether PC exceeds last instruction in cache
-                printf ("All instructions finished...\n");
-		return 0; 
-        } 
-	
-
-        void *addrPtr = malloc(sizeof(int));
+//Fetch an instruction
+char * fetchInstruction(){
+    void *addrPtr = malloc(sizeof(int));
 	*((int*)addrPtr) = cpu -> PC;
 
-        DictionaryEntry *currentInstruction = getValueChainByDictionaryKey (instructionCache, addrPtr);
+    DictionaryEntry *currentInstruction = getValueChainByDictionaryKey (instructionCache, addrPtr);
 
-        char *instruction_str = (char *) malloc (sizeof(char) * MAX_LINE);
-        strcpy (instruction_str, ((char*)currentInstruction -> value -> value));
+    char *instruction_str = (char *) malloc (sizeof(char) * MAX_LINE);
+    strcpy (instruction_str, ((char*)currentInstruction -> value -> value));
 
-        printf ("Fetched %d:%s\n", cpu -> PC, instruction_str);
+    printf ("Fetched %d:%s\n", cpu -> PC, instruction_str);
 
-	Instruction *instruction;
+    return instruction_str;
 
-        char *token = (char *) malloc (sizeof(char) * MAX_LINE);
+}
 
-        OpCode op; 
+//Decode an instruction
+Instruction * decodeInstruction(char * instruction_str){
+    Instruction *instruction;
 
-        int rd; 
-        int rs; 
-        int rt; 
+    char *token = (char *) malloc (sizeof(char) * MAX_LINE);
 
-        int rsValue;
-        int rtValue;
+    OpCode op;
 
-        int fd; 
-        int fs; 
-        int ft; 
+    int rd;
+    int rs;
+    int rt;
 
-        double fsValue;
-        double ftValue;
+    int rsValue;
+    int rtValue;
 
-        int immediate;
+    int fd;
+    int fs;
+    int ft;
 
-        int target;
-        
+    double fsValue;
+    double ftValue;
+
+    int immediate;
+
+    int target;
+
 
 	op = NOOP, rd = -1, rs = -1, rt = -1, rsValue = -1, rtValue = -1, fd = -1, fs = -1, ft = -1, fsValue = -1, ftValue = -1, immediate = 0, target = 0;
 
@@ -377,7 +369,12 @@ int runClockCycle () {
 	printf("Decoded %d:%s -> %s, rd=%d, rs=%d, rt=%d, fd=%d, fs=%d, ft=%d, immediate=%d, target=%d\n", cpu -> PC, instruction_str,
 		 getOpcodeString ((int) op), rd, rs, rt, fd, fs, ft, immediate, target);
 
-	void *valuePtr = malloc(sizeof(double));
+    return instruction;
+}
+
+//Execution
+void execute(Instruction * instruction){
+    void *valuePtr = malloc(sizeof(double));
 
 	DictionaryEntry *dataCacheElement;
 
@@ -386,7 +383,7 @@ int runClockCycle () {
 				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data & instruction -> immediate;
 				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
 				cpu -> PC = cpu -> PC + 4;
-				break;	
+				break;
 			case AND:
                                 cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data & cpu -> integerRegisters [instruction -> rt] -> data;
 				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
@@ -397,7 +394,7 @@ int runClockCycle () {
 				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
 				cpu -> PC = cpu -> PC + 4;
 				break;
-                        case OR:                                                                                                                                                         
+                        case OR:
 				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data | cpu -> integerRegisters [instruction -> rt] -> data;
 				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
 				cpu -> PC = cpu -> PC + 4;
@@ -455,6 +452,7 @@ int runClockCycle () {
                         case L_D:
 				cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
 
+                void *addrPtr = malloc(sizeof(int));
 				*((int*)addrPtr) = cpu -> memoryAddress;
 				dataCacheElement = getValueChainByDictionaryKey (dataCache, addrPtr);
 
@@ -477,7 +475,7 @@ int runClockCycle () {
 				cpu -> PC = cpu -> PC + 4;
                                 break;
                         case SD:
-                                cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;                                                                   
+                                cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
                                 cpu -> intResult = cpu -> integerRegisters [instruction -> rt] -> data ;
 
 				*((int*)addrPtr) = cpu -> memoryAddress;
@@ -499,7 +497,7 @@ int runClockCycle () {
 				cpu -> PC = cpu -> PC + 4;
                                 break;
 			case BNE:
-                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data != cpu -> integerRegisters [instruction -> rt] -> data ? 0 : -1; 
+                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data != cpu -> integerRegisters [instruction -> rt] -> data ? 0 : -1;
 				if (cpu -> intResult == 0) {
 					cpu -> PC = instruction -> target;
 				} else {
@@ -509,7 +507,7 @@ int runClockCycle () {
                         case BNEZ:
                                 cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data != 0 ? 0 : -1;
 				if (cpu -> intResult == 0) {
-                                        cpu -> PC = instruction -> target;                                                                                                                
+                                        cpu -> PC = instruction -> target;
                                 } else {
 					cpu -> PC = cpu -> PC + 4;
 				}
@@ -517,7 +515,7 @@ int runClockCycle () {
                         case BEQ:
                                 cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data == cpu -> integerRegisters [instruction -> rt] -> data ? 0 : -1;
 				if (cpu -> intResult == 0) {
-                                        cpu -> PC = instruction -> target;                                                                                                                
+                                        cpu -> PC = instruction -> target;
                                 } else {
 					cpu -> PC = cpu -> PC + 4;
 				}
@@ -525,15 +523,39 @@ int runClockCycle () {
                         case BEQZ:
                                 cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data == 0 ? 0 : -1;
 				if (cpu -> intResult == 0) {
-                                        cpu -> PC = instruction -> target;                                                                                                                       
+                                        cpu -> PC = instruction -> target;
                                 } else {
 					cpu -> PC = cpu -> PC + 4;
 				}
-                                break;	
+                                break;
                         default:
                                 break;
                 }
 
+}
+/**
+ * Method that simulates the looping cycle-wise
+ * @return: When the simulator stops
+ */
+int runClockCycle () {
+	cpu -> cycle++; //increment cycle counter
+
+	printf ("\nCycle %d\n", cpu -> cycle);
+
+
+	if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))) { //check whether PC exceeds last instruction in cache
+                printf ("All instructions finished...\n");
+		return 0; 
+        } 
+	
+
+    char * instruction_str = fetchInstruction();
+
+    Instruction * instruction = decodeInstruction(instruction_str);
+
+    execute(instruction);
+
+    printf("Cycle finished.\n");
 
 	return 1;
 }
