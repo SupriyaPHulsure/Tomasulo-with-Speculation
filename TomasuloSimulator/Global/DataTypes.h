@@ -90,15 +90,20 @@ typedef struct _cpu {
 	int PC; //program counter
 
 	INTReg **integerRegisters; //integer register
-        FPReg **floatingPointRegisters; //FP registers
+    FPReg **floatingPointRegisters; //FP registers
 
 	int memoryAddress;	
 
 	int intDestReg;
-        int intResult;
+    int intResult;
 
-        int fpDestReg;
-        double fpResult;
+    int fpDestReg;
+    double fpResult;
+
+    //New
+    Dictionary *fetchBuffer;
+    Dictionary *instructionQueue;
+    Dictionary *branchTargetBuffer;
 
 } CPU;
 
