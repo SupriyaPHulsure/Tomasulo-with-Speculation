@@ -80,6 +80,14 @@ typedef struct _FPReg {
         double fpResult;
 } FPReg;
 
+typedef struct _ROB{
+	Instruction instruction;
+	int intDestReg;
+	int intValueReg;
+	char isReady;
+	char * state;
+	char * Rename_name;
+}ROB;
 
 //main data structure representing CPU
 typedef struct _cpu {
@@ -92,6 +100,8 @@ typedef struct _cpu {
 	INTReg **integerRegisters; //integer register
     FPReg **floatingPointRegisters; //FP registers
 
+	ROB **reorderBuffer;
+	
 	int memoryAddress;	
 
 	int intDestReg;
