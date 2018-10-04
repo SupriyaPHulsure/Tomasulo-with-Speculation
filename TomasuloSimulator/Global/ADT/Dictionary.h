@@ -171,4 +171,49 @@ static inline void removeDictionaryEntryByKeyValue (Dictionary *table, void *key
 	}
 }
 
+static inline DictionaryEntry* popDictionaryEntry (Dictionary *table){
+    DictionaryEntry *popEntry = NULL;
+    if (table -> head != NULL){
+        popEntry = table -> head;
+        if (popEntry -> next == NULL) {
+            table -> head = NULL;
+        } else {
+            table -> head = table -> head -> next;
+            popEntry -> next = NULL;
+        }
+     }
+    return popEntry;
+}
+
+static inline void appendDictionaryEntry (Dictionary *table, DictionaryEntry *newEntry){
+
+	if (table != NULL) {
+		if (table -> head == NULL) {
+			table -> head = newEntry;
+		} else {
+
+            DictionaryEntry *previous;
+            DictionaryEntry *current;
+
+            for (current = table -> head; current != NULL; previous = current, current = current -> next){
+            }
+
+            previous -> next = newEntry;
+		}
+    }
+    return;
+}
+
+/*
+static inline int getDictionaryLen (Dictionary *table){
+    DictionaryEntry *current = table -> head;
+    int len = 0;
+    while(current!=NULL){
+        len += 1;
+        current = current -> next;
+    }
+    return len;
+}
+*/
+
 #endif /* GLOBAL_ADT_DICTIONARY_H_ */

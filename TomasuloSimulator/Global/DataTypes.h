@@ -102,8 +102,12 @@ typedef struct _cpu {
 
     //New
     Dictionary *fetchBuffer;
-    Dictionary *instructionQueue;
+    Dictionary *fetchBufferResult;
+    CircularQueue *instructionQueue;
+    CircularQueue *instructionQueueResult;
     Dictionary *branchTargetBuffer;
+
+    int stallNextFetch;
 
 } CPU;
 

@@ -83,3 +83,17 @@ void printFPRegisters () {
 		printf ("FP_Reg[%d]=%0.1lf\n", i, cpu -> floatingPointRegisters [i] -> data);
 	}
 }
+
+void printFetchBuffer () {
+	DictionaryEntry *current;
+
+	if (cpu -> fetchBuffer != NULL) {
+		printf ("-----------------\n");
+		printf ("Fetch Buffer\n");
+		printf ("-----------------\n");
+
+		for (current = cpu -> fetchBuffer -> head; current != NULL; current = current -> next)
+			printf ("%d: %s\n", *((int*)current -> key), ((char*)current -> value -> value));
+	}
+}
+
