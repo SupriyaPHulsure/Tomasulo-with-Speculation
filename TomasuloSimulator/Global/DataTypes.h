@@ -68,6 +68,14 @@ typedef struct _instruction {
 
 } Instruction;
 
+//data structure to bind instruction and its result in pipeline
+typedef struct _completedInstruction {
+    Instruction *instruction;
+    int intResult;
+    double fpResult;
+    int address; //used to keep address for SD and S.D
+} CompletedInstruction;
+
 //data structure for each item in integer registers and work as well register status
 typedef struct _INTReg {
 	int data;
@@ -114,6 +122,15 @@ typedef struct _cpu {
     Dictionary *fetchBuffer;
     Dictionary *instructionQueue;
     Dictionary *branchTargetBuffer;
+    //Pipelines
+    CircularQueue *INTPipeline;
+    CircularQueue *MULTPipeline;
+    CircularQueue *LoadStorePipeline;
+    CircularQueue *FPaddPipeline;
+    CircularQueue *FPmultPipeline;
+    CircularQueue *FPdivPipeline;
+    int FPdivPipelineBusy;
+    CircularQueue *BUPipeline;
 
 } CPU;
 
