@@ -8,11 +8,22 @@
 # include "../Global/TomasuloSimulator.h"
 
 int getHashCodeFromPCHash (void *PCHash);
+int compareInstructions (void *instruction1, void *instruction2);
+int getHashCodeFromInstructionAddress(void *InstructionAddress);
+int compareDecodedInstructions(void *decodedInstruction1, void *decodedInstruction2);
+int getHashCodeFromBranchAddress(void *branchAddress);
+int compareTargetAddress(void *targetAddress1, void *targetAddress2);
+
+int fetchMultiInstructionUnit(int NF);
+Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
+int decodeInstructionsUnit(int NI);
+void initializeCPU (int NI);
+
 
 /**
  * This method initializes CPU data structures and all its data members
  */
-void initializeCPU () {
+void initializeCPU (int NI) {
 	int i;
 
 	cpu = (CPU *) malloc (sizeof(CPU));
@@ -44,7 +55,7 @@ void initializeCPU () {
 	cpu -> fpDestReg = 0;
 	cpu -> fpResult = 0;
 
-//	//initialize Pipelines with bubbles and appropriate size
+    //initialize Pipelines with bubbles and appropriate size
     cpu -> INTPipeline = createCircularQueue(1);
     cpu -> MULTPipeline = createCircularQueue(4);
     cpu -> LoadStorePipeline = createCircularQueue(1);
@@ -63,26 +74,104 @@ void initializeCPU () {
 	    }
 	    enqueueCircular (cpu -> FPdivPipeline, NULL);
     }
+
+	cpu -> fetchBuffer = createDictionary (getHashCodeFromPCHash, compareInstructions);
+	cpu -> fetchBufferResult = createDictionary (getHashCodeFromPCHash, compareInstructions);
+	cpu -> instructionQueue = createCircularQueue(NI);
+	cpu -> instructionQueueResult = createCircularQueue(NI);
+	cpu -> branchTargetBuffer = createDictionary(getHashCodeFromBranchAddress, compareTargetAddress);
+
+	cpu -> stallNextFetch = 0;
 }
 
-//Fetch an instruction
-char * fetchInstruction(){
-    void *addrPtr = malloc(sizeof(int));
-	*((int*)addrPtr) = cpu -> PC;
 
-    DictionaryEntry *currentInstruction = getValueChainByDictionaryKey (instructionCache, addrPtr);
+//Fetch Instructions Unit
+int fetchMultiInstructionUnit(int NF){
 
-    char *instruction_str = (char *) malloc (sizeof(char) * MAX_LINE);
-    strcpy (instruction_str, ((char*)currentInstruction -> value -> value));
 
-    printf ("Fetched %d:%s\n", cpu -> PC, instruction_str);
+    int i;
 
-    return instruction_str;
+    if (cpu -> stallNextFetch == 0){
+        for(i=0; i<NF; i++){
+            if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))) { //check whether PC exceeds last instruction in cache
+                printf ("All instructions are fetched...\n");
+                return 0;
+            }
 
+            //*((int*)addrPtr) = cpu -> PC;
+            int *addrPtr = (int*) malloc(sizeof(int));
+            *addrPtr = cpu -> PC;
+
+            DictionaryEntry *currentInstruction = getValueChainByDictionaryKey (instructionCache, addrPtr);
+
+            char *instruction_str = (char *) malloc (sizeof(char) * MAX_LINE);
+            strcpy (instruction_str, ((char*)currentInstruction -> value -> value));
+
+            printf ("Fetched %d:%s\n", *addrPtr, instruction_str);
+
+            addDictionaryEntry (cpu -> fetchBufferResult, addrPtr, instruction_str);
+
+            //check if in BTB
+            if (cpu -> branchTargetBuffer != NULL){
+                DictionaryEntry *BTBEntry = getValueChainByDictionaryKey(cpu -> branchTargetBuffer, addrPtr);
+
+                if (BTBEntry != NULL){
+
+                    if (*((int*)BTBEntry -> key) == *addrPtr){
+                        printf("Instruction %d is a branch in the BranchTargetBuffer with", *addrPtr);
+                        int targetAddress = *((int*)BTBEntry -> value -> value);
+
+                        printf("target address %d.\n", targetAddress);
+                        cpu -> PC = targetAddress;
+                        return 1;
+
+                    }
+                }
+            }
+
+            cpu -> PC = cpu -> PC + 4;
+
+        }
+    }
+    else{
+        cpu -> stallNextFetch = 0;
+        printf("Fetching stall in this cycle...\n");
+    }
+    return 1;
 }
+
+//Decode instruction unit
+int decodeInstructionsUnit(int NI){
+    while(cpu -> fetchBuffer -> head!= NULL){
+        if (isFullCircularQueue(cpu -> instructionQueueResult)){
+            printf("Cannot decode all fetched instructions because the instruction queue is full.\n");
+            cpu -> stallNextFetch = 1;
+            return 1;
+        }else{
+            DictionaryEntry *instructionEntry;
+            Instruction *instruction;
+            instructionEntry = popDictionaryEntry(cpu -> fetchBuffer);
+            instruction = decodeInstruction(instructionEntry -> value -> value, *((int*)instructionEntry -> key));
+            enqueueCircular(cpu -> instructionQueueResult, instruction);
+        }
+
+    }
+    return 1;
+}
+
+//Update fetch buffer
+void updateFetchBuffer(){
+    DictionaryEntry *instructionEntry;
+    while((instructionEntry = popDictionaryEntry(cpu -> fetchBufferResult)) != NULL){
+        appendDictionaryEntry(cpu -> fetchBuffer, instructionEntry);
+    }
+    return ;
+}
+
+//TODO: update instruction queue
 
 //Decode an instruction
-Instruction * decodeInstruction(char * instruction_str){
+Instruction * decodeInstruction(char *instruction_str, int instructionAddress){
     Instruction *instruction;
 
     char *token = (char *) malloc (sizeof(char) * MAX_LINE);
@@ -386,7 +475,9 @@ Instruction * decodeInstruction(char * instruction_str){
 
 	instruction -> target = target;
 
-	printf("Decoded %d:%s -> %s, rd=%d, rs=%d, rt=%d, fd=%d, fs=%d, ft=%d, immediate=%d, target=%d\n", cpu -> PC, instruction_str,
+	instruction -> address = instructionAddress;
+
+	printf("Decoded %d:%s -> %s, rd=%d, rs=%d, rt=%d, fd=%d, fs=%d, ft=%d, immediate=%d, target=%d\n", instruction -> address, instruction_str,
 		 getOpcodeString ((int) op), rd, rs, rt, fd, fs, ft, immediate, target);
 
     return instruction;
@@ -539,215 +630,183 @@ void execute(Instruction * instruction){
 //            break;
 //    }
 
-  	switch (instruction->op) {
-  			case ANDI:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data & instruction->immediate;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-  				break;
-  			case AND:
-                                  cpu->intResult = cpu->integerRegisters[instruction->rs]->data & cpu->integerRegisters[instruction->rt]->data;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-  			case ORI:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data | instruction->immediate;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-  				break;
-                          case OR:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data | cpu->integerRegisters[instruction->rt]->data;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-  			case SLTI:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data < instruction->immediate ? 1 : 0;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-  				break;
-                          case SLT:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data < cpu->integerRegisters[instruction->rt]->data ? 1 : 0;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-                                 break;
-  			case DADDI:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-  				break;
-                          case DADD:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data + cpu->integerRegisters[instruction->rt]->data;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-                          case DSUB:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data - cpu->integerRegisters[instruction->rt]->data;
- 				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
- 				cpu->PC = cpu->PC + 4;
-                                 break;
-  			case DMUL:
-  				cpu->intResult = cpu->integerRegisters[instruction->rs]->data * cpu->integerRegisters[instruction->rt]->data;
-  				cpu->integerRegisters[instruction->rd]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-                          case ADD_D:
-                                  cpu->fpResult = cpu->floatingPointRegisters[instruction->fs]->data + cpu->floatingPointRegisters[instruction->ft]->data;
-  				cpu->floatingPointRegisters[instruction->fd]->data = cpu->fpResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-                          case SUB_D:
- 				cpu->fpResult = cpu->floatingPointRegisters[instruction->fs]->data - cpu->floatingPointRegisters[instruction->ft]->data;
-  				cpu->floatingPointRegisters[instruction->fd]->data = cpu->fpResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-                          case MUL_D:
-  				cpu->fpResult = cpu->floatingPointRegisters[instruction->fs]->data * cpu->floatingPointRegisters[instruction->ft]->data;
-  				cpu->floatingPointRegisters[instruction->fd]->data = cpu->fpResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-                          case DIV_D:
-  				cpu->fpResult = cpu->floatingPointRegisters[instruction->fs]->data / cpu->floatingPointRegisters[instruction->ft]->data;
-  				cpu->floatingPointRegisters[instruction->fd]->data = cpu->fpResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-                          case L_D:
-  				cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
+	switch (instruction -> op) {
+			case ANDI:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data & instruction -> immediate;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+				break;
+			case AND:
+                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data & cpu -> integerRegisters [instruction -> rt] -> data;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+			case ORI:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data | instruction -> immediate;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+				break;
+                        case OR:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data | cpu -> integerRegisters [instruction -> rt] -> data;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+			case SLTI:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data < instruction -> immediate ? 1 : 0;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+				break;
+                        case SLT:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data < cpu -> integerRegisters [instruction -> rt] -> data ? 1 : 0;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+			case DADDI:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+				break;
+                        case DADD:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data + cpu -> integerRegisters [instruction -> rt] -> data;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+                        case DSUB:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data - cpu -> integerRegisters [instruction -> rt] -> data;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+			case DMUL:
+				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data * cpu -> integerRegisters [instruction -> rt] -> data;
+				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+                        case ADD_D:
+                                cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> fs] -> data + cpu -> floatingPointRegisters [instruction -> ft] -> data;
+				cpu -> floatingPointRegisters [instruction -> fd] -> data = cpu -> fpResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+                        case SUB_D:
+				cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> fs] -> data - cpu -> floatingPointRegisters [instruction -> ft] -> data;
+				cpu -> floatingPointRegisters [instruction -> fd] -> data = cpu -> fpResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+                        case MUL_D:
+				cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> fs] -> data * cpu -> floatingPointRegisters [instruction -> ft] -> data;
+				cpu -> floatingPointRegisters [instruction -> fd] -> data = cpu -> fpResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+                        case DIV_D:
+				cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> fs] -> data / cpu -> floatingPointRegisters [instruction -> ft] -> data;
+				cpu -> floatingPointRegisters [instruction -> fd] -> data = cpu -> fpResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+                        case L_D:
+				cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
 
 
-                  void *addrPtr = malloc(sizeof(int));
- * ((int*)addrPtr) = cpu->memoryAddress;
-  				dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+				*((int*)addrPtr) = cpu -> memoryAddress;
+				dataCacheElement = getValueChainByDictionaryKey (dataCache, addrPtr);
 
+				valuePtr = dataCacheElement -> value -> value;
+				cpu -> fpResult = *((double*)valuePtr);
 
-  				valuePtr = dataCacheElement->value->value;
-  				cpu->fpResult = *((double*)valuePtr);
+				cpu -> floatingPointRegisters [instruction -> ft] -> data = cpu -> fpResult;
+				cpu -> PC = cpu -> PC + 4;
+				break;
+			case LD:
+				cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
 
+				*((int*)addrPtr) = cpu -> memoryAddress;
+				dataCacheElement = getValueChainByDictionaryKey (dataCache, addrPtr);
 
-  				cpu->floatingPointRegisters[instruction->ft]->data = cpu->fpResult;
-  				cpu->PC = cpu->PC + 4;
-  				break;
-  			case LD:
-  				cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
+				valuePtr = dataCacheElement -> value -> value;
+				cpu -> intResult =  (int) *((double*)valuePtr);
 
+				cpu -> integerRegisters [instruction -> rt] -> data = cpu -> intResult;
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+                        case SD:
+                                cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
+                                cpu -> intResult = cpu -> integerRegisters [instruction -> rt] -> data ;
 
- * ((int*)addrPtr) = cpu->memoryAddress;
-  				dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+				*((int*)addrPtr) = cpu -> memoryAddress;
+				removeDictionaryEntriesByKey (dataCache, addrPtr);
 
+				*((double*)valuePtr) = cpu -> intResult;
+				addDictionaryEntry (dataCache, addrPtr, valuePtr);
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+                        case S_D:
+                                cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data  + instruction -> immediate;
+                                cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> ft] -> data ;
 
-  				valuePtr = dataCacheElement->value->value;
-  				cpu->intResult = (int)*((double*)valuePtr);
+				*((int*)addrPtr) = cpu -> memoryAddress;
+                                removeDictionaryEntriesByKey (dataCache, addrPtr);
 
-  				cpu->integerRegisters[instruction->rt]->data = cpu->intResult;
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-                          case SD:
-                                  cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-                                  cpu->intResult = cpu->integerRegisters[instruction->rt]->data;
-
-
- * ((int*)addrPtr) = cpu->memoryAddress;
-  				removeDictionaryEntriesByKey(dataCache, addrPtr);
-
-
- * ((double*)valuePtr) = cpu->intResult;
-  				addDictionaryEntry(dataCache, addrPtr, valuePtr);
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-                          case S_D:
-                                  cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-                                  cpu->fpResult = cpu->floatingPointRegisters[instruction->ft]->data;
-
-
- * ((int*)addrPtr) = cpu->memoryAddress;
-                                  removeDictionaryEntriesByKey(dataCache, addrPtr);
-
-
- * ((double*)valuePtr) = (double)cpu->fpResult;
-                                  addDictionaryEntry(dataCache, addrPtr, valuePtr);
-  				cpu->PC = cpu->PC + 4;
-                                  break;
-  			case BNE:
-                                  cpu->intResult = cpu->integerRegisters[instruction->rs]->data != cpu->integerRegisters[instruction->rt]->data ? 0 : -1;
-  				if (cpu->intResult == 0) {
-  					cpu->PC = instruction->target;
-
-}
-else {
-  					cpu->PC = cpu->PC + 4;
-
-}
-                                  break;
-                          case BNEZ:
-                                  cpu->intResult = cpu->integerRegisters[instruction->rs]->data != 0 ? 0 : -1;
-  				if (cpu->intResult == 0) {
-                                          cpu->PC = instruction->target;
-
-}
-else {
-  					cpu->PC = cpu->PC + 4;
-
-}
-                                  break;
-                          case BEQ:
-                                  cpu->intResult = cpu->integerRegisters[instruction->rs]->data == cpu->integerRegisters[instruction->rt]->data ? 0 : -1;
-  				if (cpu->intResult == 0) {
-                                          cpu->PC = instruction->target;
-
-}
-else {
-  					cpu->PC = cpu->PC + 4;
+                                *((double*)valuePtr) = (double) cpu -> fpResult;
+                                addDictionaryEntry (dataCache, addrPtr, valuePtr);
+				cpu -> PC = cpu -> PC + 4;
+                                break;
+			case BNE:
+                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data != cpu -> integerRegisters [instruction -> rt] -> data ? 0 : -1;
+				if (cpu -> intResult == 0) {
+					cpu -> PC = instruction -> target;
+				} else {
+					cpu -> PC = cpu -> PC + 4;
+				}
+                                break;
+                        case BNEZ:
+                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data != 0 ? 0 : -1;
+				if (cpu -> intResult == 0) {
+                                        cpu -> PC = instruction -> target;
+                                } else {
+					cpu -> PC = cpu -> PC + 4;
+				}
+                                break;
+                        case BEQ:
+                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data == cpu -> integerRegisters [instruction -> rt] -> data ? 0 : -1;
+				if (cpu -> intResult == 0) {
+                                        cpu -> PC = instruction -> target;
+                                } else {
+					cpu -> PC = cpu -> PC + 4;
+				}
+                                break;
+                        case BEQZ:
+                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data == 0 ? 0 : -1;
+				if (cpu -> intResult == 0) {
+                                        cpu -> PC = instruction -> target;
+                                } else {
+					cpu -> PC = cpu -> PC + 4;
+				}
+                                break;
+                        default:
+                                break;
+                }
 
 }
-                                  break;
-                          case BEQZ:
-                                  cpu->intResult = cpu->integerRegisters[instruction->rs]->data == 0 ? 0 : -1;
- 				if (cpu->intResult == 0) {
-	cpu->PC = instruction->target;
-}
-else {
-  					cpu->PC = cpu->PC + 4;
-
-}
-                                  break;
-                          default:
-                                  break;
-
-}
-
-}
-
-
 
 
 /**
  * Method that simulates the looping cycle-wise
  * @return: When the simulator stops
  */
-int runClockCycle () {
+int runClockCycle (int NF, int NI) {
+
 	cpu -> cycle++; //increment cycle counter
 
 	printf ("\nCycle %d\n", cpu -> cycle);
 
+    fetchMultiInstructionUnit(NF);
 
-	if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))) { //check whether PC exceeds last instruction in cache
-                printf ("All instructions finished...\n");
-		return 0;
-        }
+    decodeInstructionsUnit(NI);
 
+    updateFetchBuffer();
 
-    char * instruction_str = fetchInstruction();
-
-    Instruction * instruction = decodeInstruction(instruction_str);
-
-    // separated code for execute and commit to register file and datacache
-    execute(instruction);
-
-
-
-
-    printf("Cycle finished.\n");
+    //execute(instruction);
 
 	return 1;
+
 }
 
 /**
@@ -758,3 +817,35 @@ int runClockCycle () {
 int getHashCodeFromPCHash (void *PCHash) {
 	return *((int*)PCHash);
 }
+
+int getHashCodeFromInstructionAddress(void *InstructionAddress){
+    return *((int*)InstructionAddress);
+}
+
+int compareDecodedInstructions(void *decodedInstruction1, void *decodedInstruction2){
+    return ((Instruction *)decodedInstruction1) -> address - ((Instruction *)decodedInstruction2) -> address;
+}
+
+int getHashCodeFromBranchAddress(void *branchAddress){
+    int fullAddr = *((int*)branchAddress);
+    int k;
+    int hashAddr = 0;
+    int base = 2;
+    int i;
+    for(i = 0; i < 4; i++){
+        if (i == 0)
+            base = 1;
+        else
+            base *= 2;
+        k = fullAddr >> (i + 3);
+        if (k & 1)
+            hashAddr += 1 * base;
+    }
+    return hashAddr;
+}
+
+int compareTargetAddress(void *targetAddress1, void *targetAddress2){
+    return *((int*)targetAddress1)  - *((int*)targetAddress2);
+}
+
+

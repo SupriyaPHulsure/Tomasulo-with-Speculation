@@ -39,15 +39,24 @@ int main(int argc, char** argv) {
 
 	printCodeLabels (); //print data cache
 
-	initializeCPU (); //initialize CPU data structure
+	initializeCPU (NI); //initialize CPU data structure
 
-	while (runClockCycle()); //loop emulating simulator clock cycles
+    int test_cycle;
+    for (test_cycle = 0; test_cycle < 10; test_cycle ++){
+        runClockCycle(NF, NI);
+        //printFetchBuffer();
 
+    }
+
+	//while (runClockCycle()); //loop emulating simulator clock cycles
+
+    /*
 	printDataCache (); //print data cache
 
 
 	printIntegerRegisters (); //print integer registers
 	printFPRegisters (); //print floating point registers
+	*/
 
 	return 0;
 }

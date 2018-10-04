@@ -120,7 +120,9 @@ typedef struct _cpu {
 
     //New
     Dictionary *fetchBuffer;
-    Dictionary *instructionQueue;
+    Dictionary *fetchBufferResult;
+    CircularQueue *instructionQueue;
+    CircularQueue *instructionQueueResult;
     Dictionary *branchTargetBuffer;
     //Pipelines
     CircularQueue *INTPipeline;
@@ -131,6 +133,8 @@ typedef struct _cpu {
     CircularQueue *FPdivPipeline;
     int FPdivPipelineBusy;
     CircularQueue *BUPipeline;
+
+    int stallNextFetch;
 
 } CPU;
 
