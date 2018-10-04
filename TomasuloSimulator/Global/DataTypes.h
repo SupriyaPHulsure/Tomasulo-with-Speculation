@@ -37,6 +37,16 @@ typedef enum _opCode {
 	NOOP
 } OpCode;
 
+typedef enum _unit {
+    INT,
+    MULT,
+    LS,
+    FPadd,
+    FPmult,
+    FPdiv,
+    BU
+} Unit;
+
 static inline char *getOpcodeString (int opcode) {
 	char *opcodeString[23] = {"AND", "ANDI", "OR", "ORI", "SLT", "SLTI", "DADD", "DADDI", "DSUB", "DMUL", "LD", "SD", "L_D", "S_D", "ADD_D", "SUB_D", "MUL_D", "DIV_D", "BEQZ", "BNEZ", "BEQ", "BNE", "NOOP"};
 
