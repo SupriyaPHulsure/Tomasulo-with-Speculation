@@ -55,6 +55,7 @@ void initializeCPU (int NI) {
 	cpu -> fpDestReg = 0;
 	cpu -> fpResult = 0;
 
+
 	cpu -> fetchBuffer = createDictionary (getHashCodeFromPCHash, compareInstructions);
 	cpu -> fetchBufferResult = createDictionary (getHashCodeFromPCHash, compareInstructions);
 	cpu -> instructionQueue = createCircularQueue(NI);
@@ -465,6 +466,7 @@ Instruction * decodeInstruction(char *instruction_str, int instructionAddress){
 
 //Execution
 void execute(Instruction * instruction){
+
     void *valuePtr = malloc(sizeof(double));
 
 	DictionaryEntry *dataCacheElement;
