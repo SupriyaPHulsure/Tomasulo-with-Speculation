@@ -56,7 +56,7 @@ static inline char *getOpcodeString (int opcode) {
 //data structure for decoded instruction
 typedef struct _instruction {
 	OpCode op;
-	int address;
+	int address; //Instruction address (PC)
 
 	int rd;
 	int rs;
@@ -99,13 +99,30 @@ typedef struct _FPReg {
 } FPReg;
 
 typedef struct _ROB{
-	Instruction instruction;
+	Instruction *instruction;
+	int busy;
 	int intDestReg;
 	int intValueReg;
 	char isReady;
 	char * state;
 	char * Rename_name;
 }ROB;
+
+//Data structure for reservation stations
+typedef struct _RSint{
+	Instruction *instruction;
+	int intVj; //value of input register j
+	int intVk; //value of input register k
+	int intQj; //ROB number of input register j
+	int intQk;  //ROC number of input register k
+	int intDest; //ROC number of destination register
+}RSint;
+
+//Data Structure for renaming register
+typedef struct _RenameReg{
+    int reorderNum;
+    int busy;
+}RenameReg;
 
 //main data structure representing CPU
 typedef struct _cpu {
@@ -118,8 +135,6 @@ typedef struct _cpu {
 	INTReg **integerRegisters; //integer register
     FPReg **floatingPointRegisters; //FP registers
 
-	ROB **reorderBuffer;
-	
 	int memoryAddress;	
 
 	int intDestReg;
@@ -128,12 +143,26 @@ typedef struct _cpu {
     int fpDestReg;
     double fpResult;
 
-    //New
+    //Fetch and decode
     Dictionary *fetchBuffer;
     Dictionary *fetchBufferResult;
     CircularQueue *instructionQueue;
     CircularQueue *instructionQueueResult;
     Dictionary *branchTargetBuffer;
+    //Reorder buffer
+    CircularQueue *reorderBuffer;
+    //Reservation station
+    CircularQueue *resStaInt;
+    CircularQueue *resStaMult;
+    CircularQueue *resStaLoad;
+    CircularQueue *resStaStore;
+    CircularQueue *resStaFPadd;
+    CircularQueue *resStaFPmult;
+    CircularQueue *resStaFPdiv;
+    CircularQueue *resStaBU;
+    //Renaming registers
+    CircularQueue *renameRegInt;
+    CircularQueue *renameRegFP;
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
@@ -143,7 +172,7 @@ typedef struct _cpu {
     CircularQueue *FPdivPipeline;
     int FPdivPipelineBusy;
     CircularQueue *BUPipeline;
-
+    //Install flag
     int stallNextFetch;
 
 } CPU;

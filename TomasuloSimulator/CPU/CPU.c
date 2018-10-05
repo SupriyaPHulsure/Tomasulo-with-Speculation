@@ -17,13 +17,13 @@ int compareTargetAddress(void *targetAddress1, void *targetAddress2);
 int fetchMultiInstructionUnit(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
 int decodeInstructionsUnit(int NI);
-void initializeCPU (int NI);
+
 
 
 /**
  * This method initializes CPU data structures and all its data members
  */
-void initializeCPU (int NI) {
+void initializeCPU (int NI, int NR) {
 	int i;
 
 	cpu = (CPU *) malloc (sizeof(CPU));
@@ -74,20 +74,42 @@ void initializeCPU (int NI) {
 	    }
 	    enqueueCircular (cpu -> FPdivPipeline, NULL);
     }
-
+    //Initialize fetch buffer and instruction queue
 	cpu -> fetchBuffer = createDictionary (getHashCodeFromPCHash, compareInstructions);
 	cpu -> fetchBufferResult = createDictionary (getHashCodeFromPCHash, compareInstructions);
 	cpu -> instructionQueue = createCircularQueue(NI);
 	cpu -> instructionQueueResult = createCircularQueue(NI);
+	//Initialize BTB
 	cpu -> branchTargetBuffer = createDictionary(getHashCodeFromBranchAddress, compareTargetAddress);
 
 	cpu -> stallNextFetch = 0;
+    //Initialize renaming register
+	cpu -> renameRegInt = createCircularQueue(8);
+	cpu -> renameRegFP = createCircularQueue(8);
+	RenameReg *renameReg;
+	renameReg = (RenameReg *) malloc (sizeof(RenameReg));
+	renameReg -> busy = 0;
+	renameReg -> reorderNum = 0;
+	for (i = 0; i < 8; i++) {
+	    enqueueCircular (cpu -> renameRegInt, renameReg);
+	    enqueueCircular(cpu -> renameRegFP, renameReg);
+    }
+    //Initialize reservation stations
+    cpu -> resStaInt = createCircularQueue(4);
+    cpu -> resStaMult = createCircularQueue(2);
+    cpu -> resStaLoad = createCircularQueue(2);
+    cpu -> resStaStore = createCircularQueue(2);
+    cpu -> resStaFPadd = createCircularQueue(3);
+    cpu -> resStaFPmult = createCircularQueue(4);
+    cpu -> resStaFPdiv = createCircularQueue(2);
+    cpu -> resStaBU = createCircularQueue(2);
+    //Initialize Reorder buffer
+    cpu -> reorderBuffer = createCircularQueue(NR);
 }
 
 
 //Fetch Instructions Unit
 int fetchMultiInstructionUnit(int NF){
-
 
     int i;
 
@@ -165,7 +187,7 @@ void updateFetchBuffer(){
     while((instructionEntry = popDictionaryEntry(cpu -> fetchBufferResult)) != NULL){
         appendDictionaryEntry(cpu -> fetchBuffer, instructionEntry);
     }
-    return ;
+    return;
 }
 
 //TODO: update instruction queue
@@ -588,7 +610,6 @@ CompletedInstruction **execute(Instruction * instruction){
             break;
         case L_D:
             cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            void *addrPtr = malloc(sizeof(int));
             * ((int*)addrPtr) = cpu->memoryAddress;
             dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
             valuePtr = dataCacheElement->value->value;
@@ -643,160 +664,6 @@ CompletedInstruction **execute(Instruction * instruction){
     unitOutputs[BU] = executePipelinedUnit (cpu -> BUPipeline);
 
     return unitOutputs;
-
-//	switch (instruction -> op) {
-//			case ANDI:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data & instruction -> immediate;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//				break;
-//			case AND:
-//                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data & cpu -> integerRegisters [instruction -> rt] -> data;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//			case ORI:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data | instruction -> immediate;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//				break;
-//                        case OR:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data | cpu -> integerRegisters [instruction -> rt] -> data;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//			case SLTI:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data < instruction -> immediate ? 1 : 0;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//				break;
-//                        case SLT:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data < cpu -> integerRegisters [instruction -> rt] -> data ? 1 : 0;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//			case DADDI:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//				break;
-//                        case DADD:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data + cpu -> integerRegisters [instruction -> rt] -> data;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//                        case DSUB:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data - cpu -> integerRegisters [instruction -> rt] -> data;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//			case DMUL:
-//				cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data * cpu -> integerRegisters [instruction -> rt] -> data;
-//				cpu -> integerRegisters [instruction -> rd] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//                        case ADD_D:
-//                                cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> fs] -> data + cpu -> floatingPointRegisters [instruction -> ft] -> data;
-//				cpu -> floatingPointRegisters [instruction -> fd] -> data = cpu -> fpResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//                        case SUB_D:
-//				cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> fs] -> data - cpu -> floatingPointRegisters [instruction -> ft] -> data;
-//				cpu -> floatingPointRegisters [instruction -> fd] -> data = cpu -> fpResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//                        case MUL_D:
-//				cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> fs] -> data * cpu -> floatingPointRegisters [instruction -> ft] -> data;
-//				cpu -> floatingPointRegisters [instruction -> fd] -> data = cpu -> fpResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//                        case DIV_D:
-//				cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> fs] -> data / cpu -> floatingPointRegisters [instruction -> ft] -> data;
-//				cpu -> floatingPointRegisters [instruction -> fd] -> data = cpu -> fpResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//                        case L_D:
-//				cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
-//
-//
-//				*((int*)addrPtr) = cpu -> memoryAddress;
-//				dataCacheElement = getValueChainByDictionaryKey (dataCache, addrPtr);
-//
-//				valuePtr = dataCacheElement -> value -> value;
-//				cpu -> fpResult = *((double*)valuePtr);
-//
-//				cpu -> floatingPointRegisters [instruction -> ft] -> data = cpu -> fpResult;
-//				cpu -> PC = cpu -> PC + 4;
-//				break;
-//			case LD:
-//				cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
-//
-//				*((int*)addrPtr) = cpu -> memoryAddress;
-//				dataCacheElement = getValueChainByDictionaryKey (dataCache, addrPtr);
-//
-//				valuePtr = dataCacheElement -> value -> value;
-//				cpu -> intResult =  (int) *((double*)valuePtr);
-//
-//				cpu -> integerRegisters [instruction -> rt] -> data = cpu -> intResult;
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//                        case SD:
-//                                cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data + instruction -> immediate;
-//                                cpu -> intResult = cpu -> integerRegisters [instruction -> rt] -> data ;
-//
-//				*((int*)addrPtr) = cpu -> memoryAddress;
-//				removeDictionaryEntriesByKey (dataCache, addrPtr);
-//
-//				*((double*)valuePtr) = cpu -> intResult;
-//				addDictionaryEntry (dataCache, addrPtr, valuePtr);
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//                        case S_D:
-//                                cpu -> memoryAddress = cpu -> integerRegisters [instruction -> rs] -> data  + instruction -> immediate;
-//                                cpu -> fpResult = cpu -> floatingPointRegisters [instruction -> ft] -> data ;
-//
-//				*((int*)addrPtr) = cpu -> memoryAddress;
-//                                removeDictionaryEntriesByKey (dataCache, addrPtr);
-//
-//                                *((double*)valuePtr) = (double) cpu -> fpResult;
-//                                addDictionaryEntry (dataCache, addrPtr, valuePtr);
-//				cpu -> PC = cpu -> PC + 4;
-//                                break;
-//			case BNE:
-//                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data != cpu -> integerRegisters [instruction -> rt] -> data ? 0 : -1;
-//				if (cpu -> intResult == 0) {
-//					cpu -> PC = instruction -> target;
-//				} else {
-//					cpu -> PC = cpu -> PC + 4;
-//				}
-//                                break;
-//                        case BNEZ:
-//                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data != 0 ? 0 : -1;
-//				if (cpu -> intResult == 0) {
-//                                        cpu -> PC = instruction -> target;
-//                                } else {
-//					cpu -> PC = cpu -> PC + 4;
-//				}
-//                                break;
-//                        case BEQ:
-//                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data == cpu -> integerRegisters [instruction -> rt] -> data ? 0 : -1;
-//				if (cpu -> intResult == 0) {
-//                                        cpu -> PC = instruction -> target;
-//                                } else {
-//					cpu -> PC = cpu -> PC + 4;
-//				}
-//                                break;
-//                        case BEQZ:
-//                                cpu -> intResult = cpu -> integerRegisters [instruction -> rs] -> data == 0 ? 0 : -1;
-//				if (cpu -> intResult == 0) {
-//                                        cpu -> PC = instruction -> target;
-//                                } else {
-//					cpu -> PC = cpu -> PC + 4;
-//				}
-//                                break;
-//                        default:
-//                                break;
-//                }
 
 }
 

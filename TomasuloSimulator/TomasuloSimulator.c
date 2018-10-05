@@ -17,8 +17,7 @@ int cacheLineSize = 4; //CLS
 
 int main(int argc, char** argv) {
 	//Validate command line argument
-	printf("Number of args: %d\n", argc);
-	
+
 	if (argc != 2) {
 		printf ("USAGE: TomasuloSimulator <benchmark_file>\n");
 		exit (EXIT_FAILURE);
@@ -39,7 +38,7 @@ int main(int argc, char** argv) {
 
 	printCodeLabels (); //print data cache
 
-	initializeCPU (NI); //initialize CPU data structure
+	initializeCPU (NI, NR); //initialize CPU data structure
 
     int test_cycle;
     for (test_cycle = 0; test_cycle < 10; test_cycle ++){
