@@ -163,14 +163,14 @@ typedef struct _cpu {
     //Reorder buffer
     CircularQueue *reorderBuffer;
     //Reservation station
-    CircularQueue *resStaInt;
-    CircularQueue *resStaMult;
-    CircularQueue *resStaLoad;
-    CircularQueue *resStaStore;
-    CircularQueue *resStaFPadd;
-    CircularQueue *resStaFPmult;
-    CircularQueue *resStaFPdiv;
-    CircularQueue *resStaBU;
+    Dictionary *resStaInt;
+    Dictionary *resStaMult;
+    Dictionary *resStaLoad;
+    Dictionary *resStaStore;
+    Dictionary *resStaFPadd;
+    Dictionary *resStaFPmult;
+    Dictionary *resStaFPdiv;
+    Dictionary *resStaBU;
     //Renaming registers
     CircularQueue *renameRegInt;
     CircularQueue *renameRegFP;
