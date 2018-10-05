@@ -99,24 +99,35 @@ typedef struct _FPReg {
 } FPReg;
 
 typedef struct _ROB{
-	Instruction *instruction;
-	int busy;
-	int intDestReg;
-	int intValueReg;
-	char isReady;
-	char * state;
-	char * Rename_name;
+    int ROB_number;
+	Instruction * instruction;
+	int DestReg;
+	int DestValueInt;
+	float DestValueFP;
+	int isReady;
+	int isINT;
+	int isStore;
+	int DestAddr; // optional, DestReg can replace it
 }ROB;
 
 //Data structure for reservation stations
 typedef struct _RSint{
 	Instruction *instruction;
-	int intVj; //value of input register j
-	int intVk; //value of input register k
-	int intQj; //ROB number of input register j
-	int intQk;  //ROC number of input register k
-	int intDest; //ROC number of destination register
+	int Vj; //value of input register j
+	int Vk; //value of input register k
+	int Qj; //ROB number of input register j
+	int Qk;  //ROB number of input register k
+	int Dest; //ROB number of destination register
 }RSint;
+
+typedef struct _RSfloat{
+	Instruction *instruction;
+	float Vj; //value of input register j
+	float Vk; //value of input register k
+	int Qj; //ROB number of input register j
+	int Qk;  //ROB number of input register k
+	int Dest; //ROB number of destination register
+}RSfloat;
 
 //Data Structure for renaming register
 typedef struct _RenameReg{

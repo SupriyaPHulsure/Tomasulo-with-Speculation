@@ -89,7 +89,7 @@ void initializeCPU (int NI, int NR) {
 	RenameReg *renameReg;
 	renameReg = (RenameReg *) malloc (sizeof(RenameReg));
 	renameReg -> busy = 0;
-	renameReg -> reorderNum = 0;
+	renameReg -> reorderNum = -1;
 	for (i = 0; i < 8; i++) {
 	    enqueueCircular (cpu -> renameRegInt, renameReg);
 	    enqueueCircular(cpu -> renameRegFP, renameReg);
