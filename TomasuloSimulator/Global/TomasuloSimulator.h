@@ -41,14 +41,15 @@ int numberOfInstruction;
 Dictionary *instructionCache;
 Dictionary *dataCache;
 Dictionary *codeLabels;
-
-
+int NR;
+int NW;
+int robCounter; //ROB name Counter
 CPU *cpu;
 
 void fillInstructionAndDataCache (char *fileName);
 
 void initializeCPU (int NI, int NR);
-int runClockCycle (int NF, int NI);
+int runClockCycle (int NF, int NI, int NW);
 
 void printInstructionCache ();
 void printCodeLabels ();

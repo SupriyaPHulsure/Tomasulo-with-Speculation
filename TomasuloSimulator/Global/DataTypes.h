@@ -99,12 +99,15 @@ typedef struct _FPReg {
         double fpResult;
 } FPReg;
 
+
+// data structure for Reorder Buffer
 typedef struct _ROB{
-    int ROB_number;
-	Instruction *instruction;
+	int ROB_number;
+	Instruction * instruction;
+	char * state;
 	int DestReg;
-	int DestValueInt; //Value to be written
-	float DestValueFP;
+	int DestValueIntReg;
+	float DestValueFloatReg;
 	int isReady;
 	int isINT;
 	int isStore;
@@ -187,6 +190,9 @@ typedef struct _cpu {
     CircularQueue *FPdivPipeline;
     int FPdivPipelineBusy;
     CircularQueue *BUPipeline;
+    //Load and Store buffer
+    CircularQueue *loadBuffer;
+    CircularQueue *storeBuffer;
     //Install flag
     int stallNextFetch;
     //Stall counter

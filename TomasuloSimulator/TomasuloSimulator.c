@@ -13,7 +13,7 @@ int numberOfFPRegisters = 32; //NFPR
 int instructionCacheBaseAddress = 1000; //ICBA
 
 int cacheLineSize = 4; //CLS
-
+int robCounter = 0;
 
 
 int main(int argc, char** argv) {
@@ -43,11 +43,11 @@ int main(int argc, char** argv) {
 
     int test_cycle;
     for (test_cycle = 0; test_cycle < 10; test_cycle ++){
-        runClockCycle(NF, NI);
+        runClockCycle(NF, NI, NW);
         //printFetchBuffer();
 
     }
-
+	printROB();
 	//while (runClockCycle()); //loop emulating simulator clock cycles
 
     /*

@@ -97,3 +97,24 @@ void printFetchBuffer () {
 	}
 }
 
+void printROB()
+{
+	ROB *ROBentry;
+	int i = 0;
+	if(cpu->reorderBuffer != NULL)
+	{
+		printf ("-----------------\n");
+		printf ("Reored Buffer\n");
+		printf ("-----------------\n");
+		printf("ROB_number  |Instr add|State| Dest Reg  | Dest Value   |  isReady  |  isIntegerReg | DestValueFloatReg | isStore\n");
+			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
+		ROBentry = cpu->reorderBuffer -> items[i];
+		while(ROBentry != NULL){
+
+			printf("%d\t\t\%d\t\t%s\t\t%d\t%d\t\t%d\t\t%d\t%f\t%d\n", ROBentry->ROB_number, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> DestValueIntReg, ROBentry -> isReady, ROBentry->isINT, ROBentry -> DestValueFloatReg, ROBentry ->isStore);
+			i++;
+			ROBentry = cpu->reorderBuffer -> items[i];
+			
+		}
+	}
+}
