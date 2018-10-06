@@ -15,6 +15,7 @@ int getHashCodeFromBranchAddress(void *branchAddress);
 int compareTargetAddress(void *targetAddress1, void *targetAddress2);
 int getHashCodeFromROBNumber (void *ROBNumber);
 int compareROBNumber (void *ROBNumber1, void *ROBNumber2);
+DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat);
 
 int fetchMultiInstructionUnit(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
@@ -547,9 +548,43 @@ CompletedInstruction **execute(Instruction * instruction){
   	DictionaryEntry *dataCacheElement;
   	CompletedInstruction *instructionAndResult = malloc(sizeof(CompletedInstruction));
     instructionAndResult -> instruction = instruction;
-
+    void *reservationStationEntry;
+    DictionaryEntry *dictEntry;
+    //Array for instructions moving from Reservation Stations to execution units
+    void **instructionsToExec = malloc(sizeof(void*)*10);
     //Array for outputs of Units. See Unit enum in DataTypes.h
     static CompletedInstruction *unitOutputs[7];
+    int i;
+
+//    cpu -> resStaInt = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+//    cpu -> resStaMult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+//    cpu -> resStaLoad = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+//    cpu -> resStaStore = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+//    cpu -> resStaFPadd = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+//    cpu -> resStaFPmult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+//    cpu -> resStaFPdiv = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+//    cpu -> resStaBU = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+
+    dictEntry = (DictionaryEntry *)cpu -> resStaInt -> head;
+    instructionsToExec[0] = checkReservationStation(dictEntry, 0);
+    dictEntry = (DictionaryEntry *)cpu -> resStaMult -> head;
+    instructionsToExec[1] = checkReservationStation(dictEntry, 0);
+    dictEntry = (DictionaryEntry *)cpu -> resStaLoad -> head;
+    instructionsToExec[2] = checkReservationStation(dictEntry, 0);
+    dictEntry = (DictionaryEntry *)cpu -> resStaStore -> head;
+    instructionsToExec[3] = checkReservationStation(dictEntry, 0);
+    dictEntry = (DictionaryEntry *)cpu -> resStaFPadd -> head;
+    instructionsToExec[4] = checkReservationStation(dictEntry, 1);
+    dictEntry = (DictionaryEntry *)cpu -> resStaFPmult -> head;
+    instructionsToExec[5] = checkReservationStation(dictEntry, 1);
+    dictEntry = (DictionaryEntry *)cpu -> resStaFPdiv -> head;
+    instructionsToExec[6] = checkReservationStation(dictEntry, 1);
+    dictEntry = (DictionaryEntry *)cpu -> resStaBU -> head;
+    instructionsToExec[7] = checkReservationStation(dictEntry, 0);
+
+    for (i = 0; i < 8; i++) {
+
+    }
 
     //pipelined
     switch (instruction->op) {
@@ -737,6 +772,26 @@ int getHashCodeFromROBNumber (void *ROBNumber) {
 
 int compareROBNumber (void *ROBNumber1, void *ROBNumber2) {
     return *((int *)ROBNumber1) - *((int *)ROBNumber2);
+}
+
+DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat) {
+    while (dictEntry != NULL) {
+        if (isFloat) {
+            RSfloat *RS = (RSfloat *)((DictionaryEntry *)dictEntry -> value -> value);
+            if (RS -> isReady) {
+                return ((DictionaryEntry *)dictEntry) -> value;
+            } else {
+                dictEntry = dictEntry -> next;
+            }
+        } else {
+            RSint *RS = (RSint *)((DictionaryEntry *)dictEntry -> value -> value);
+            if (RS -> isReady) {
+                return ((DictionaryEntry *)dictEntry) -> value;
+            } else {
+                dictEntry = dictEntry -> next;
+            }
+        }
+    }
 }
 
 
