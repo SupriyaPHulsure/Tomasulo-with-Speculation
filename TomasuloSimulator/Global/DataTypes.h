@@ -118,6 +118,7 @@ typedef struct _RSint{
 	int Qj; //ROB number of input register j
 	int Qk;  //ROB number of input register k
 	int Dest; //ROB number of destination register
+	int isReady;
 }RSint;
 
 typedef struct _RSfloat{
@@ -127,6 +128,7 @@ typedef struct _RSfloat{
 	int Qj; //ROB number of input register j
 	int Qk;  //ROB number of input register k
 	int Dest; //ROB number of destination register
+	int isReady;
 }RSfloat;
 
 //Data Structure for renaming register
