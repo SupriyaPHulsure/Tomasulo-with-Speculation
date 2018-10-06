@@ -705,11 +705,166 @@ CompletedInstruction **execute(Instruction * instruction){
 }
 
 
+
+//Initialize ROB struct
+ROB * InitializeROBEntry(Instruction * instructionP)
+{
+	robCounter++;
+	ROB * ROBEntry ;
+	OpCode op;
+	
+	ROBEntry = (ROB*) malloc (sizeof(ROB));	
+	ROBEntry -> isStore = 0;
+	
+	op = instructionP -> op;
+	
+	  switch (op) {
+        case ANDI:
+			ROBEntry->DestReg = instructionP->rd;
+			ROBEntry -> isINT = 1;
+            break;
+        case AND:
+            ROBEntry->DestReg = instructionP->rd;
+			ROBEntry -> isINT = 1;
+            break;
+        case ORI:
+            ROBEntry->DestReg = instructionP->rd;
+		ROBEntry -> isINT = 1;
+            break;
+        case OR:
+            ROBEntry->DestReg = instructionP->rd;
+		ROBEntry -> isINT = 1;
+            break;
+        case SLTI:
+            ROBEntry->DestReg = instructionP->rd;
+		ROBEntry -> isINT = 1;
+            break;
+        case SLT:
+          ROBEntry->DestReg = instructionP->rd;
+		ROBEntry -> isINT = 1;
+            break;
+        case DADDI:
+            ROBEntry->DestReg = instructionP->rd;
+		ROBEntry -> isINT = 1;
+            break;
+        case DADD:
+            ROBEntry->DestReg = instructionP->rd;
+		ROBEntry -> isINT = 1;
+            break;
+        case DSUB:
+		ROBEntry->DestReg = instructionP->rd;
+		ROBEntry -> isINT = 1;
+            break;
+        case DMUL:
+		ROBEntry->DestReg = instructionP->rd;
+		ROBEntry -> isINT = 1;
+            break;
+        case ADD_D:
+		ROBEntry->DestReg = instructionP->fd;
+			ROBEntry -> isINT = 0;
+            break;
+        case SUB_D:
+			ROBEntry->DestReg = instructionP->fd;
+			ROBEntry -> isINT = 0;
+            break;
+        case MUL_D:
+			ROBEntry->DestReg = instructionP->fd;
+			ROBEntry -> isINT = 0;
+            break;
+        case DIV_D:
+			ROBEntry->DestReg = instructionP->fd;
+			ROBEntry -> isINT = 0;
+            break;
+        case L_D:
+		ROBEntry->DestReg = instructionP->fd;
+			ROBEntry -> isINT = 0;
+            break;
+        case LD:
+			ROBEntry->DestReg = instructionP->rd;
+			ROBEntry -> isINT = 1;
+            break;
+        case SD:
+			ROBEntry->DestReg = instructionP->rs;
+			ROBEntry -> isINT = 1;
+			ROBEntry -> isStore = 1;
+            break;
+        case S_D:
+			ROBEntry->DestReg = instructionP->fs;
+			ROBEntry -> isINT = 0;
+			ROBEntry -> isStore = 1;
+            break;
+        case BNE:
+				ROBEntry->DestReg = -1;
+				ROBEntry -> isINT = 0;
+            break;
+        case BNEZ:
+				ROBEntry->DestReg = -1;
+				ROBEntry -> isINT = 0;
+            break;
+        case BEQ:
+				ROBEntry->DestReg = -1;
+				ROBEntry -> isINT = 0;
+            break;
+        case BEQZ:
+				ROBEntry->DestReg = -1;
+				ROBEntry -> isINT = 0;
+            break;
+        default:
+				ROBEntry->DestReg = -1;
+				ROBEntry -> isINT = 0;
+            break;
+    }
+	
+	ROBEntry->ROB_number = robCounter;
+	ROBEntry->instruction = instructionP;
+	ROBEntry->state = "I";
+	ROBEntry->DestValueIntReg = 0;
+	ROBEntry -> DestValueFloatReg = 0.0;
+	ROBEntry->isReady = 0;
+	ROBEntry -> DestAddr = 0;
+	return ROBEntry;
+}
+
+
+// AddtoROB
+void addSingleEntrytoROB(Instruction *instructionL){
+	if (isFullCircularQueue(cpu->reorderBuffer) == 1)
+				{
+						printf("Stall the issue beacause ROB is full\n");
+				}
+				else{
+					enqueueCircular(cpu->reorderBuffer, InitializeROBEntry(instructionL));
+				/* 	ROB * drob = (ROB *) malloc (sizeof(ROB));
+					drob = dequeueCircular(cpu->reorderBuffer); */				
+		} 
+}
+
+/// addall issued istructions to ROB from instruction queue
+void addMultipleEntriestoROB(int NW)
+{
+	int i;
+	Instruction *instruction = (Instruction *) malloc (sizeof(Instruction));
+	for(i =0; i<NW; i++){
+		if((instruction = dequeueCircular(cpu -> instructionQueue)) != NULL)
+		{
+			if (isFullCircularQueue(cpu->reorderBuffer) == 1)
+				{
+						printf(" ROB is full\n");
+				}
+				else{
+					enqueueCircular(cpu->reorderBuffer, InitializeROBEntry(instruction));
+						
+			}
+		}		
+	}
+}
+
+
 /**
  * Method that simulates the looping cycle-wise
  * @return: When the simulator stops
  */
-int runClockCycle (int NF, int NI) {
+int runClockCycle (int NF, int NI, int NW) {
 
 	cpu -> cycle++; //increment cycle counter
 
@@ -721,6 +876,8 @@ int runClockCycle (int NF, int NI) {
 
     updateFetchBuffer();
 
+	
+	addMultipleEntriestoROB(NW);
     //execute(instruction);
 
 	return 1;
