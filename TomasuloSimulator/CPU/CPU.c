@@ -1083,7 +1083,7 @@ DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat
 void printPipeline(void *instruction, char *pipeline, int entering) {
     if (entering) {
         Instruction *inst = (Instruction *)instruction;
-        printf("Instruction %s at address %d entered %s pipeline.\n",
+        printf("Instruction %s at address %d entered %s unit.\n",
          getOpcodeString ((int) (inst -> op)), inst -> address, pipeline);
     } else {
         CompletedInstruction *inst = (CompletedInstruction *)instruction;
