@@ -84,6 +84,7 @@ typedef struct _completedInstruction {
     int intResult;
     double fpResult;
     int address; //used to keep address for SD and S.D
+    int ROB_number;
 } CompletedInstruction;
 
 //data structure for each item in integer registers and work as well register status

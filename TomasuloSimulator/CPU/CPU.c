@@ -13,6 +13,8 @@ int getHashCodeFromInstructionAddress(void *InstructionAddress);
 int compareDecodedInstructions(void *decodedInstruction1, void *decodedInstruction2);
 int getHashCodeFromBranchAddress(void *branchAddress);
 int compareTargetAddress(void *targetAddress1, void *targetAddress2);
+int getHashCodeFromROBNumber (void *ROBNumber);
+int compareROBNumber (void *ROBNumber1, void *ROBNumber2);
 
 int fetchMultiInstructionUnit(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
@@ -95,14 +97,14 @@ void initializeCPU (int NI, int NR) {
 	    enqueueCircular(cpu -> renameRegFP, renameReg);
     }
     //Initialize reservation stations
-    cpu -> resStaInt = createCircularQueue(4);
-    cpu -> resStaMult = createCircularQueue(2);
-    cpu -> resStaLoad = createCircularQueue(2);
-    cpu -> resStaStore = createCircularQueue(2);
-    cpu -> resStaFPadd = createCircularQueue(3);
-    cpu -> resStaFPmult = createCircularQueue(4);
-    cpu -> resStaFPdiv = createCircularQueue(2);
-    cpu -> resStaBU = createCircularQueue(2);
+    cpu -> resStaInt = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaMult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaLoad = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaStore = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaFPadd = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaFPmult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaFPdiv = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaBU = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     //Initialize Reorder buffer
     cpu -> reorderBuffer = createCircularQueue(NR);
 }
@@ -727,6 +729,14 @@ int getHashCodeFromBranchAddress(void *branchAddress){
 
 int compareTargetAddress(void *targetAddress1, void *targetAddress2){
     return *((int*)targetAddress1)  - *((int*)targetAddress2);
+}
+
+int getHashCodeFromROBNumber (void *ROBNumber) {
+    return *((int*)ROBNumber);
+}
+
+int compareROBNumber (void *ROBNumber1, void *ROBNumber2) {
+    return *((int *)ROBNumber1) - *((int *)ROBNumber2);
 }
 
 
