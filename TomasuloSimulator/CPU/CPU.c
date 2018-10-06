@@ -16,6 +16,7 @@ int compareTargetAddress(void *targetAddress1, void *targetAddress2);
 int getHashCodeFromROBNumber (void *ROBNumber);
 int compareROBNumber (void *ROBNumber1, void *ROBNumber2);
 DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat);
+void printPipeline(void *instruction, char *pipeline, int entering);
 
 int fetchMultiInstructionUnit(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
@@ -106,6 +107,9 @@ void initializeCPU (int NI, int NR) {
     cpu -> resStaFPmult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPdiv = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaBU = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    //Initialize load/store buffers
+    cpu -> loadBuffer = createCircularQueue(4);
+    cpu -> storeBuffer = createCircularQueue(6);
     //Initialize Reorder buffer
     cpu -> reorderBuffer = createCircularQueue(NR);
 }
@@ -548,157 +552,275 @@ CompletedInstruction **execute(Instruction * instruction){
   	DictionaryEntry *dataCacheElement;
   	CompletedInstruction *instructionAndResult = malloc(sizeof(CompletedInstruction));
     instructionAndResult -> instruction = instruction;
-    void *reservationStationEntry;
+    RSint *rsint;
+    RSfloat *rsfloat;
     DictionaryEntry *dictEntry;
-    //Array for instructions moving from Reservation Stations to execution units
+    //Array for instructions moving from Reservation Stations to execution units. Contains DictionaryValues.
     void **instructionsToExec = malloc(sizeof(void*)*10);
     //Array for outputs of Units. See Unit enum in DataTypes.h
     static CompletedInstruction *unitOutputs[7];
-    int i;
-
-//    cpu -> resStaInt = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-//    cpu -> resStaMult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-//    cpu -> resStaLoad = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-//    cpu -> resStaStore = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-//    cpu -> resStaFPadd = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-//    cpu -> resStaFPmult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-//    cpu -> resStaFPdiv = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-//    cpu -> resStaBU = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    int i,j, bufferCount;
+    char *pipelineString;
 
     dictEntry = (DictionaryEntry *)cpu -> resStaInt -> head;
-    instructionsToExec[0] = checkReservationStation(dictEntry, 0);
+    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
+    if (rsint != NULL) {
+        instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, &(rsint -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaInt, &(rsint -> Dest));
+    } else {
+        instructionsToExec[0] = NULL;
+    }
     dictEntry = (DictionaryEntry *)cpu -> resStaMult -> head;
-    instructionsToExec[1] = checkReservationStation(dictEntry, 0);
+    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
+    if (rsint != NULL) {
+        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaMult, &(rsint -> Dest));
+    } else {
+        instructionsToExec[1] = NULL;
+    }
     dictEntry = (DictionaryEntry *)cpu -> resStaLoad -> head;
-    instructionsToExec[2] = checkReservationStation(dictEntry, 0);
+    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
+    if (rsint != NULL) {
+        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> resStaLoad, &(rsint -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaLoad, &(rsint -> Dest));
+    } else {
+        instructionsToExec[2] = NULL;
+    }
     dictEntry = (DictionaryEntry *)cpu -> resStaStore -> head;
-    instructionsToExec[3] = checkReservationStation(dictEntry, 0);
+    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
+    if (rsint != NULL) {
+        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> resStaStore, &(rsint -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaStore, &(rsint -> Dest));
+    } else {
+        instructionsToExec[3] = NULL;
+    }
     dictEntry = (DictionaryEntry *)cpu -> resStaFPadd -> head;
-    instructionsToExec[4] = checkReservationStation(dictEntry, 1);
+    rsfloat = (RSfloat *)((DictionaryValue *)checkReservationStation (dictEntry, 1) -> value);
+    if (rsfloat != NULL) {
+        instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
+    } else {
+        instructionsToExec[4] = NULL;
+    }
     dictEntry = (DictionaryEntry *)cpu -> resStaFPmult -> head;
-    instructionsToExec[5] = checkReservationStation(dictEntry, 1);
-    dictEntry = (DictionaryEntry *)cpu -> resStaFPdiv -> head;
-    instructionsToExec[6] = checkReservationStation(dictEntry, 1);
+    rsfloat = (RSfloat *)((DictionaryValue *)checkReservationStation (dictEntry, 1) -> value);
+    if (rsfloat != NULL) {
+        instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
+    } else {
+        instructionsToExec[5] = NULL;
+    }
+    if (!(cpu -> FPdivPipelineBusy)) {
+        dictEntry = (DictionaryEntry *)cpu -> resStaFPdiv -> head;
+        rsfloat = (RSfloat *)((DictionaryValue *)checkReservationStation (dictEntry, 1) -> value);
+        if (rsfloat != NULL) {
+            instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
+            removeDictionaryEntriesByKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
+        } else {
+            instructionsToExec[6] = NULL;
+        }
+    }
     dictEntry = (DictionaryEntry *)cpu -> resStaBU -> head;
-    instructionsToExec[7] = checkReservationStation(dictEntry, 0);
-
-    for (i = 0; i < 8; i++) {
-
+    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
+    if (rsint != NULL) {
+        instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, &(rsint -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaBU, &(rsint -> Dest));
+    } else {
+        instructionsToExec[7] = NULL;
     }
 
-    //pipelined
-    switch (instruction->op) {
-        case ANDI:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data & instruction->immediate;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case AND:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data & cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case ORI:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data | instruction->immediate;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case OR:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data | cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case SLTI:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data < instruction->immediate ? 1 : 0;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case SLT:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data < cpu->integerRegisters[instruction->rt]->data ? 1 : 0;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case DADDI:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case DADD:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data + cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case DSUB:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data - cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
-        case DMUL:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data * cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> MULTPipeline, instructionAndResult);
-            break;
-        case ADD_D:
-            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data + cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
-            break;
-        case SUB_D:
-            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data - cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
-            break;
-        case MUL_D:
-            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data * cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> FPmultPipeline, instructionAndResult);
-            break;
-        case DIV_D:
-            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data / cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> FPdivPipeline, instructionAndResult);
-            cpu -> FPdivPipelineBusy = 1;
-            break;
-        case L_D:
-            cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            * ((int*)addrPtr) = cpu->memoryAddress;
-            dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-            valuePtr = dataCacheElement->value->value;
-            instructionAndResult -> fpResult = *((double*)valuePtr);
-            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-            break;
-        case LD:
-            cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            * ((int*)addrPtr) = cpu->memoryAddress;
-            dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-            valuePtr = dataCacheElement->value->value;
-            instructionAndResult -> intResult = (int)*((double*)valuePtr);
-            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-            break;
-        case SD:
-            instructionAndResult -> address = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-            break;
-        case S_D:
-            instructionAndResult -> address = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            instructionAndResult -> intResult = cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-            break;
-        case BNE:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data != cpu->integerRegisters[instruction->rt]->data ? 0 : -1;
-            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
-            break;
-        case BNEZ:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data != 0 ? 0 : -1;
-            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
-            break;
-        case BEQ:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data == cpu->integerRegisters[instruction->rt]->data ? 0 : -1;
-            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
-            break;
-        case BEQZ:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data == 0 ? 0 : -1;
-            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
-            break;
-        default:
-            break;
+    for (i = 0; i < 8; i++) {
+        if (instructionsToExec[i] == NULL) { //if reservation station did not provide instruction
+            continue;
+        }
+        if(i > 3 || i < 7) {
+            rsfloat = (RSfloat *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
+            instruction = rsfloat -> instruction;
+        } else {
+            rsint = (RSint *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
+            instruction = rsint -> instruction;
+        }
+        switch (instruction->op) {
+            case ANDI:
+                instructionAndResult -> intResult = rsint -> Vj & instruction->immediate;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case AND:
+                instructionAndResult -> intResult = rsint -> Vj & rsint -> Vk;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case ORI:
+                instructionAndResult -> intResult = rsint -> Vj | instruction->immediate;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case OR:
+                instructionAndResult -> intResult = rsint -> Vj | rsint -> Vk;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case SLTI:
+                instructionAndResult -> intResult = rsint -> Vj < instruction->immediate ? 1 : 0;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case SLT:
+                instructionAndResult -> intResult = rsint -> Vj < rsint -> Vk ? 1 : 0;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DADDI:
+                instructionAndResult -> intResult = rsint -> Vj + instruction->immediate;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DADD:
+                instructionAndResult -> intResult = rsint -> Vj + rsint -> Vk;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DSUB:
+                instructionAndResult -> intResult = rsint -> Vj - rsint -> Vk;
+                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DMUL:
+                instructionAndResult -> intResult = rsint -> Vj * rsint -> Vk;
+                enqueueCircular (cpu -> MULTPipeline, instructionAndResult);
+                pipelineString = "MULT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case ADD_D:
+                instructionAndResult -> fpResult = rsfloat -> Vj + rsfloat -> Vk;
+                enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
+                pipelineString = "FPadd";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case SUB_D:
+                instructionAndResult -> fpResult = rsfloat -> Vj - rsfloat -> Vk;
+                enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
+                pipelineString = "FPadd";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case MUL_D:
+                instructionAndResult -> fpResult = rsfloat -> Vj * rsfloat -> Vk;
+                enqueueCircular (cpu -> FPmultPipeline, instructionAndResult);
+                pipelineString = "FPmult";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DIV_D:
+                instructionAndResult -> fpResult = rsfloat -> Vj / rsfloat -> Vk;
+                enqueueCircular (cpu -> FPdivPipeline, instructionAndResult);
+                cpu -> FPdivPipelineBusy = 1;
+                pipelineString = "FPdiv";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+//            case L_D:
+//                cpu->memoryAddress = rsint -> Vj + instruction->immediate;
+//                * ((int*)addrPtr) = cpu->memoryAddress;
+//                bufferCount = getCountCircularQueue (cpu -> storeBuffer);
+//                for (j = 0; j < bufferCount; j++) {
+//                    if ()
+//                }
+//                dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+//                valuePtr = dataCacheElement->value->value;
+//                instructionAndResult -> fpResult = *((double*)valuePtr);
+//                enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+//                break;
+//            case LD:
+//                cpu->memoryAddress = rsint -> Vj + instruction->immediate;
+//                * ((int*)addrPtr) = cpu->memoryAddress;
+//                dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+//                valuePtr = dataCacheElement->value->value;
+//                instructionAndResult -> intResult = (int)*((double*)valuePtr);
+//                enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+//                break;
+//            case SD:
+//                instructionAndResult -> address = rsint -> Vj + instruction->immediate;
+//                instructionAndResult -> intResult = cpu->integerRegisters[instruction->rt]->data;
+//                enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+//                break;
+//            case S_D:
+//                instructionAndResult -> address = rsint -> Vj + instruction->immediate;
+//                instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->ft]->data;
+//                enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+//                break;
+            case BNE:
+                instructionAndResult -> intResult = rsint -> Vj != rsint -> Vk ? 0 : -1;
+                enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+                pipelineString = "BU";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case BNEZ:
+                instructionAndResult -> intResult = rsint -> Vj != 0 ? 0 : -1;
+                enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+                pipelineString = "BU";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case BEQ:
+                instructionAndResult -> intResult = rsint -> Vj == rsint -> Vk ? 0 : -1;
+                enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+                pipelineString = "BU";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case BEQZ:
+                instructionAndResult -> intResult = rsint -> Vj == 0 ? 0 : -1;
+                enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+                pipelineString = "BU";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            default:
+                break;
+        }
     }
 
     //Take outputs from Units
     unitOutputs[INT] = executePipelinedUnit (cpu -> INTPipeline);
+    if (unitOutputs[INT] != NULL) {
+        pipelineString = "INT";
+        printPipeline(unitOutputs[INT], pipelineString, 0);
+    }
     unitOutputs[MULT] = executePipelinedUnit (cpu -> MULTPipeline);
+    if (unitOutputs[MULT] != NULL) {
+        pipelineString = "MULT";
+        printPipeline(unitOutputs[MULT], pipelineString, 0);
+    }
     unitOutputs[LS] = executePipelinedUnit (cpu -> LoadStorePipeline);
+    if (unitOutputs[LS] != NULL) {
+        pipelineString = "Load/Store";
+        printPipeline(unitOutputs[LS], pipelineString, 0);
+    }
     unitOutputs[FPadd] = executePipelinedUnit (cpu -> FPaddPipeline);
+    if (unitOutputs[FPadd] != NULL) {
+        pipelineString = "FPadd";
+        printPipeline(unitOutputs[FPadd], pipelineString, 0);
+    }
     unitOutputs[FPmult] = executePipelinedUnit (cpu -> FPmultPipeline);
+    if (unitOutputs[FPmult] != NULL) {
+        pipelineString = "FPmult";
+        printPipeline(unitOutputs[FPmult], pipelineString, 0);
+    }
     unitOutputs[FPdiv] = executeFPDivUnit (cpu -> FPdivPipeline);
+    if (unitOutputs[FPdiv] != NULL) {
+        pipelineString = "FPdiv";
+        printPipeline(unitOutputs[FPdiv], pipelineString, 0);
+    }
     unitOutputs[BU] = executePipelinedUnit (cpu -> BUPipeline);
+    if (unitOutputs[BU] != NULL) {
+        pipelineString = "BU";
+        printPipeline(unitOutputs[BU], pipelineString, 0);
+    }
 
     return unitOutputs;
 
@@ -948,6 +1070,25 @@ DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat
                 dictEntry = dictEntry -> next;
             }
         }
+    }
+    return NULL;
+}
+
+/**
+ * Prints information about instruction entering or leaving a pipeline.
+ * @param Instruction *instruction The instruction entering or leaving.
+ * @param char *pipeline String name of pipeline.
+ * @param int entering 1 if entering the pipeline, 0 if exiting.
+ */
+void printPipeline(void *instruction, char *pipeline, int entering) {
+    if (entering) {
+        Instruction *inst = (Instruction *)instruction;
+        printf("Instruction %s at address %d entered %s pipeline.\n",
+         getOpcodeString ((int) (inst -> op)), inst -> address, pipeline);
+    } else {
+        CompletedInstruction *inst = (CompletedInstruction *)instruction;
+        printf("%s unit output: %s at PC %d with ROB number %d\n",
+         pipeline, getOpcodeString ((int) (inst -> instruction -> op)), inst -> instruction -> address, inst -> ROB_number);
     }
 }
 
