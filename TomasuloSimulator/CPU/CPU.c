@@ -507,6 +507,125 @@ Instruction * decodeInstruction(char *instruction_str, int instructionAddress){
     return instruction;
 }
 
+
+//Issue an instruction
+void issueInstruction(Instruction *instruction){
+    if isFullCircularQueue(cpu -> reorderBuffer){
+        cpu -> stallFullROB = cpu -> stallFullROB + 1;
+        return
+    }
+    int counterUnit;
+    switch (instruction->op) {
+        case ANDI:
+            counterUnit = countDictionaryLen(cpu -> resStaInt);
+
+
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data & instruction->immediate;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case AND:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data & cpu->integerRegisters[instruction->rt]->data;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case ORI:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data | instruction->immediate;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case OR:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data | cpu->integerRegisters[instruction->rt]->data;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case SLTI:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data < instruction->immediate ? 1 : 0;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case SLT:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data < cpu->integerRegisters[instruction->rt]->data ? 1 : 0;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case DADDI:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case DADD:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data + cpu->integerRegisters[instruction->rt]->data;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case DSUB:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data - cpu->integerRegisters[instruction->rt]->data;
+            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            break;
+        case DMUL:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data * cpu->integerRegisters[instruction->rt]->data;
+            enqueueCircular (cpu -> MULTPipeline, instructionAndResult);
+            break;
+        case ADD_D:
+            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data + cpu->floatingPointRegisters[instruction->ft]->data;
+            enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
+            break;
+        case SUB_D:
+            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data - cpu->floatingPointRegisters[instruction->ft]->data;
+            enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
+            break;
+        case MUL_D:
+            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data * cpu->floatingPointRegisters[instruction->ft]->data;
+            enqueueCircular (cpu -> FPmultPipeline, instructionAndResult);
+            break;
+        case DIV_D:
+            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data / cpu->floatingPointRegisters[instruction->ft]->data;
+            enqueueCircular (cpu -> FPdivPipeline, instructionAndResult);
+            cpu -> FPdivPipelineBusy = 1;
+            break;
+        case L_D:
+            cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
+            * ((int*)addrPtr) = cpu->memoryAddress;
+            dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+            valuePtr = dataCacheElement->value->value;
+            instructionAndResult -> fpResult = *((double*)valuePtr);
+            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+            break;
+        case LD:
+            cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
+            * ((int*)addrPtr) = cpu->memoryAddress;
+            dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+            valuePtr = dataCacheElement->value->value;
+            instructionAndResult -> intResult = (int)*((double*)valuePtr);
+            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+            break;
+        case SD:
+            instructionAndResult -> address = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rt]->data;
+            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+            break;
+        case S_D:
+            instructionAndResult -> address = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
+            instructionAndResult -> intResult = cpu->floatingPointRegisters[instruction->ft]->data;
+            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+            break;
+        case BNE:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data != cpu->integerRegisters[instruction->rt]->data ? 0 : -1;
+            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+            break;
+        case BNEZ:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data != 0 ? 0 : -1;
+            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+            break;
+        case BEQ:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data == cpu->integerRegisters[instruction->rt]->data ? 0 : -1;
+            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+            break;
+        case BEQZ:
+            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data == 0 ? 0 : -1;
+            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+            break;
+        default:
+            break;
+
+}
+
+void issueUnit(){
+
+}
 /**
  * Method that simulates pipelined Unit.
  * @return pointer to output instruction of the pipeline.

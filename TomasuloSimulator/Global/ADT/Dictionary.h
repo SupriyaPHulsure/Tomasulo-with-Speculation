@@ -204,6 +204,22 @@ static inline void appendDictionaryEntry (Dictionary *table, DictionaryEntry *ne
     return;
 }
 
+static inline int countDictionaryLen (Dictionary *table){
+    if (table == NULL){
+        return 0;
+    }else{
+
+        int count = 0;
+        DictionaryEntry *previous;
+        DictionaryEntry *current;
+
+        for (current = table -> head; current != NULL; previous = current, current = current -> next){
+            count ++;
+        }
+        return count;
+    }
+}
+
 /*
 static inline int getDictionaryLen (Dictionary *table){
     DictionaryEntry *current = table -> head;

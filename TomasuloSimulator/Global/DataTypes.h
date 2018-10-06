@@ -135,6 +135,7 @@ typedef struct _RSfloat{
 //Data Structure for renaming register
 typedef struct _RenameReg{
     int reorderNum;
+    int regNum;
     int busy;
 }RenameReg;
 
@@ -188,6 +189,8 @@ typedef struct _cpu {
     CircularQueue *BUPipeline;
     //Install flag
     int stallNextFetch;
+    //Stall counter
+    stallFullROB;
 
 } CPU;
 

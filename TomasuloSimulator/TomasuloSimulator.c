@@ -15,6 +15,7 @@ int instructionCacheBaseAddress = 1000; //ICBA
 int cacheLineSize = 4; //CLS
 
 
+
 int main(int argc, char** argv) {
 	//Validate command line argument
 
