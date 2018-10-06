@@ -100,14 +100,14 @@ typedef struct _FPReg {
 
 typedef struct _ROB{
     int ROB_number;
-	Instruction * instruction;
+	Instruction *instruction;
 	int DestReg;
-	int DestValueInt;
+	int DestValueInt; //Value to be written
 	float DestValueFP;
 	int isReady;
 	int isINT;
 	int isStore;
-	int DestAddr; // optional, DestReg can replace it
+	int DestAddr; // optional, memory address to write
 }ROB;
 
 //Data structure for reservation stations
