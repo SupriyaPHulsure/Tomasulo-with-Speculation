@@ -134,6 +134,18 @@ typedef struct _RSfloat{
 	int isReady;
 }RSfloat;
 
+typedef struct _RSmem{
+    Instruction *instruction;
+    int Vj; //value of input register j
+    int address; //address for memory operation (Vj + instruction -> immediate)
+    int iVk; //value of input register k if int
+    float fpVk; //value of input register k if float
+    int Qj; //ROB number of input register j
+	int Qk;  //ROB number of input register k
+	int Dest; //ROB number of destination register
+	int isReady;
+} RSmem;
+
 //Data Structure for renaming register
 typedef struct _RenameReg{
     int reorderNum;

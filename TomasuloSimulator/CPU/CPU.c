@@ -819,14 +819,22 @@ void issueUnit(int NW){
 
 
 /**
+ * Takes an instruction and adds it to the given reservation station.
+ * @return int 1 if successfully added, 0 otherwise.
+ */
+int addLoadStoreToResSta(Instruction *instruction, Dictionary *reservationStation, int ROB_number) {
+
+}
+
+/**
  * Method that simulates pipelined Unit.
  * @return pointer to output instruction of the pipeline.
  */
 
 CompletedInstruction *executePipelinedUnit (CircularQueue *pipeline) {
-    CompletedInstruction *output = dequeueCircular (pipeline);
+    CompletedInstruction *output = (CompletedInstruction *)dequeueCircular (pipeline);
 
-    if (pipeline -> count < pipeline -> size) {
+    if (pipeline -> count < pipeline -> size - 1) {
         enqueueCircular (pipeline, NULL);
     }
 
@@ -855,65 +863,87 @@ CompletedInstruction *executeFPDivUnit (CircularQueue *pipeline) {
 }
 
 //Execution
-CompletedInstruction **execute(Instruction * instruction){
+CompletedInstruction **execute(){
+    Instruction *instruction = malloc(sizeof(Instruction));
     void *valuePtr = malloc(sizeof(double));
     void *addrPtr = malloc(sizeof(int));
   	DictionaryEntry *dataCacheElement;
   	CompletedInstruction *instructionAndResult = malloc(sizeof(CompletedInstruction));
-    instructionAndResult -> instruction = instruction;
     RSint *rsint;
     RSfloat *rsfloat;
+    RSmem *rsmem;
     DictionaryEntry *dictEntry;
+    DictionaryValue *dictVal;
     //Array for instructions moving from Reservation Stations to execution units. Contains DictionaryValues.
-    void **instructionsToExec = malloc(sizeof(void*)*10);
+    //void **instructionsToExec = malloc(sizeof(void*)*8);
+    DictionaryEntry **instructionsToExec = malloc(sizeof(DictionaryEntry *)*8);
     //Array for outputs of Units. See Unit enum in DataTypes.h
     static CompletedInstruction *unitOutputs[7];
-    int i,j, bufferCount;
+    int i, j, bufferCount, index, LSbufferInsert;
     char *pipelineString;
+    RSmem *bufferItem;
+    //Temp pipelines to hold changes during execution
+    CompletedInstruction *INTPipelineTemp = NULL;
+    CompletedInstruction *MULTPipelineTemp = NULL;
+    CompletedInstruction *LoadPipelineTemp = NULL;
+    CompletedInstruction *StorePipelineTemp = NULL;
+    int loadStoreFirst = 0; //1 if load first, 2 if store first
+    CompletedInstruction *FPaddPipelineTemp = NULL;
+    CompletedInstruction *FPmultPipelineTemp = NULL;
+    CompletedInstruction *FPdivPipelineTemp = NULL;
+    CompletedInstruction *BUPipelineTemp = NULL;
+
+
 
     dictEntry = (DictionaryEntry *)cpu -> resStaInt -> head;
-    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
-    if (rsint != NULL) {
+    dictVal = checkReservationStation (dictEntry, 0);
+    if (dictVal != NULL) {
+        rsint = (RSint *)(dictVal -> value);
         instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, &(rsint -> Dest));
         removeDictionaryEntriesByKey (cpu -> resStaInt, &(rsint -> Dest));
     } else {
         instructionsToExec[0] = NULL;
     }
     dictEntry = (DictionaryEntry *)cpu -> resStaMult -> head;
-    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
-    if (rsint != NULL) {
+    dictVal = checkReservationStation (dictEntry, 0);
+    if (dictVal != NULL) {
+        rsint = (RSint *)(dictVal -> value);
         instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
         removeDictionaryEntriesByKey (cpu -> resStaMult, &(rsint -> Dest));
     } else {
         instructionsToExec[1] = NULL;
     }
     dictEntry = (DictionaryEntry *)cpu -> resStaLoad -> head;
-    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
-    if (rsint != NULL) {
-        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> resStaLoad, &(rsint -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaLoad, &(rsint -> Dest));
+    dictVal = checkReservationStation (dictEntry, 2);
+    if (dictVal != NULL) {
+        rsmem = (RSmem *)(dictVal -> value);
+        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> resStaLoad, &(rsmem -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaLoad, &(rsmem -> Dest));
     } else {
         instructionsToExec[2] = NULL;
     }
     dictEntry = (DictionaryEntry *)cpu -> resStaStore -> head;
-    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
-    if (rsint != NULL) {
-        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> resStaStore, &(rsint -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaStore, &(rsint -> Dest));
+    dictVal = checkReservationStation (dictEntry, 2);
+    if (dictVal != NULL) {
+        rsmem = (RSmem *)(dictVal -> value);
+        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> resStaStore, &(rsmem -> Dest));
+        removeDictionaryEntriesByKey (cpu -> resStaStore, &(rsmem -> Dest));
     } else {
         instructionsToExec[3] = NULL;
     }
     dictEntry = (DictionaryEntry *)cpu -> resStaFPadd -> head;
-    rsfloat = (RSfloat *)((DictionaryValue *)checkReservationStation (dictEntry, 1) -> value);
-    if (rsfloat != NULL) {
+    dictVal = checkReservationStation (dictEntry, 1);
+    if (dictVal != NULL) {
+        rsfloat = (RSfloat *)(dictVal -> value);
         instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
         removeDictionaryEntriesByKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
     } else {
         instructionsToExec[4] = NULL;
     }
     dictEntry = (DictionaryEntry *)cpu -> resStaFPmult -> head;
-    rsfloat = (RSfloat *)((DictionaryValue *)checkReservationStation (dictEntry, 1) -> value);
-    if (rsfloat != NULL) {
+    dictVal = checkReservationStation (dictEntry, 1);
+    if (dictVal != NULL) {
+        rsfloat = (RSfloat *)(dictVal -> value);
         instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
         removeDictionaryEntriesByKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
     } else {
@@ -921,8 +951,9 @@ CompletedInstruction **execute(Instruction * instruction){
     }
     if (!(cpu -> FPdivPipelineBusy)) {
         dictEntry = (DictionaryEntry *)cpu -> resStaFPdiv -> head;
-        rsfloat = (RSfloat *)((DictionaryValue *)checkReservationStation (dictEntry, 1) -> value);
-        if (rsfloat != NULL) {
+        dictVal = checkReservationStation (dictEntry, 1);
+        if (dictVal != NULL) {
+            rsfloat = (RSfloat *)(dictVal -> value);
             instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
             removeDictionaryEntriesByKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
         } else {
@@ -930,8 +961,9 @@ CompletedInstruction **execute(Instruction * instruction){
         }
     }
     dictEntry = (DictionaryEntry *)cpu -> resStaBU -> head;
-    rsint = (RSint *)((DictionaryValue *)checkReservationStation (dictEntry, 0) -> value);
-    if (rsint != NULL) {
+    dictVal = checkReservationStation (dictEntry, 0);
+    if (dictVal != NULL) {
+        rsint = (RSint *)(dictVal -> value);
         instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, &(rsint -> Dest));
         removeDictionaryEntriesByKey (cpu -> resStaBU, &(rsint -> Dest));
     } else {
@@ -942,150 +974,272 @@ CompletedInstruction **execute(Instruction * instruction){
         if (instructionsToExec[i] == NULL) { //if reservation station did not provide instruction
             continue;
         }
-        if(i > 3 || i < 7) {
-            rsfloat = (RSfloat *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
-            instruction = rsfloat -> instruction;
-        } else {
+        if (i < 2 || i > 6) {
             rsint = (RSint *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
             instruction = rsint -> instruction;
+        } else if (i == 2 || i == 3) {
+            rsmem = (RSmem *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
+            instruction = rsmem -> instruction;
+        } else {
+            rsfloat = (RSfloat *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
+            instruction = rsfloat -> instruction;
         }
+        instructionAndResult -> instruction = instruction;
         switch (instruction->op) {
             case ANDI:
                 instructionAndResult -> intResult = rsint -> Vj & instruction->immediate;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case AND:
                 instructionAndResult -> intResult = rsint -> Vj & rsint -> Vk;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case ORI:
                 instructionAndResult -> intResult = rsint -> Vj | instruction->immediate;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case OR:
                 instructionAndResult -> intResult = rsint -> Vj | rsint -> Vk;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case SLTI:
                 instructionAndResult -> intResult = rsint -> Vj < instruction->immediate ? 1 : 0;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case SLT:
                 instructionAndResult -> intResult = rsint -> Vj < rsint -> Vk ? 1 : 0;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case DADDI:
                 instructionAndResult -> intResult = rsint -> Vj + instruction->immediate;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case DADD:
                 instructionAndResult -> intResult = rsint -> Vj + rsint -> Vk;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case DSUB:
                 instructionAndResult -> intResult = rsint -> Vj - rsint -> Vk;
-                enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "INT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case DMUL:
                 instructionAndResult -> intResult = rsint -> Vj * rsint -> Vk;
-                enqueueCircular (cpu -> MULTPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                MULTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(MULTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "MULT";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case ADD_D:
                 instructionAndResult -> fpResult = rsfloat -> Vj + rsfloat -> Vk;
-                enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsfloat -> Dest;
+                FPaddPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(FPaddPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "FPadd";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case SUB_D:
                 instructionAndResult -> fpResult = rsfloat -> Vj - rsfloat -> Vk;
-                enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsfloat -> Dest;
+                FPaddPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(FPaddPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "FPadd";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case MUL_D:
                 instructionAndResult -> fpResult = rsfloat -> Vj * rsfloat -> Vk;
-                enqueueCircular (cpu -> FPmultPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsfloat -> Dest;
+                FPmultPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(FPmultPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "FPmult";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case DIV_D:
                 instructionAndResult -> fpResult = rsfloat -> Vj / rsfloat -> Vk;
-                enqueueCircular (cpu -> FPdivPipeline, instructionAndResult);
+                instructionAndResult -> ROB_number = rsfloat -> Dest;
+                FPdivPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(FPdivPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 cpu -> FPdivPipelineBusy = 1;
                 pipelineString = "FPdiv";
                 printPipeline(instruction, pipelineString, 1);
                 break;
-//            case L_D:
-//                cpu->memoryAddress = rsint -> Vj + instruction->immediate;
-//                * ((int*)addrPtr) = cpu->memoryAddress;
-//                bufferCount = getCountCircularQueue (cpu -> storeBuffer);
-//                for (j = 0; j < bufferCount; j++) {
-//                    if ()
-//                }
-//                dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-//                valuePtr = dataCacheElement->value->value;
-//                instructionAndResult -> fpResult = *((double*)valuePtr);
-//                enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-//                break;
-//            case LD:
-//                cpu->memoryAddress = rsint -> Vj + instruction->immediate;
-//                * ((int*)addrPtr) = cpu->memoryAddress;
-//                dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-//                valuePtr = dataCacheElement->value->value;
-//                instructionAndResult -> intResult = (int)*((double*)valuePtr);
-//                enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-//                break;
-//            case SD:
-//                instructionAndResult -> address = rsint -> Vj + instruction->immediate;
-//                instructionAndResult -> intResult = cpu->integerRegisters[instruction->rt]->data;
-//                enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-//                break;
-//            case S_D:
-//                instructionAndResult -> address = rsint -> Vj + instruction->immediate;
-//                instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->ft]->data;
-//                enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-//                break;
+            case L_D:
+                LSbufferInsert = 1;
+                rsmem -> address = rsmem -> Vj + instruction->immediate;
+                cpu->memoryAddress = rsmem -> address;
+                * ((int*)addrPtr) = cpu->memoryAddress;
+                bufferCount = getCountCircularQueue (cpu -> storeBuffer);
+                for (j = 0; j < bufferCount; j++) {
+                    index = (cpu -> storeBuffer -> head + j) % cpu -> storeBuffer -> size;
+                    bufferItem = (RSmem *)(cpu -> storeBuffer -> items[index]);
+                    if (bufferItem -> address == rsmem -> address) {
+                        LSbufferInsert = 0;
+                    }
+                }
+                if (LSbufferInsert && !loadStoreFirst) {
+                    loadStoreFirst = 1;
+                    enqueueCircular (cpu -> loadBuffer, rsmem);
+                    dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+                    valuePtr = dataCacheElement->value->value;
+                    instructionAndResult -> fpResult = *((double*)valuePtr);
+                    instructionAndResult -> ROB_number = rsmem -> Dest;
+                    LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                    memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                } else {
+                    addDictionaryEntry (cpu -> resStaLoad, &(rsmem -> Dest), rsmem);
+                }
+                break;
+            case LD:
+                LSbufferInsert = 1;
+                rsmem -> address = rsmem -> Vj + instruction->immediate;
+                cpu->memoryAddress = rsmem -> address;
+                * ((int*)addrPtr) = cpu->memoryAddress;
+                bufferCount = getCountCircularQueue (cpu -> storeBuffer);
+                for (j = 0; j < bufferCount; j++) {
+                    index = (cpu -> storeBuffer -> head + j) % cpu -> storeBuffer -> size;
+                    bufferItem = (RSmem *)(cpu -> storeBuffer -> items[index]);
+                    if (bufferItem -> address == rsmem -> address) {
+                        LSbufferInsert = 0;
+                    }
+                }
+                if (LSbufferInsert && !loadStoreFirst) {
+                    loadStoreFirst = 1;
+                    enqueueCircular (cpu -> loadBuffer, rsmem);
+                    dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+                    valuePtr = dataCacheElement->value->value;
+                    instructionAndResult -> intResult = (int)*((double*)valuePtr);
+                    instructionAndResult -> ROB_number = rsmem -> Dest;
+                    LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                    memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                } else {
+                    addDictionaryEntry (cpu -> resStaLoad, &(rsmem -> Dest), rsmem);
+                }
+                break;
+            case SD:
+                LSbufferInsert = 1;
+                rsmem -> address = rsmem -> Vj + instruction->immediate;
+                bufferCount = getCountCircularQueue (cpu -> loadBuffer);
+                for (j = 0; j < bufferCount; j++) {
+                    index = (cpu -> loadBuffer -> head + j) % cpu -> loadBuffer -> size;
+                    bufferItem = (RSmem *)(cpu -> loadBuffer -> items[index]);
+                    if (bufferItem -> address == rsmem -> address) {
+                        LSbufferInsert = 0;
+                    }
+                }
+                if (LSbufferInsert) {
+                    bufferCount = getCountCircularQueue (cpu -> storeBuffer);
+                    for (j = 0; j < bufferCount; j++) {
+                        index = (cpu -> storeBuffer -> head + j) % cpu -> storeBuffer -> size;
+                        bufferItem = (RSmem *)(cpu -> storeBuffer -> items[index]);
+                        if (bufferItem -> address == rsmem -> address) {
+                            LSbufferInsert = 0;
+                        }
+                    }
+                }
+                if (LSbufferInsert && !loadStoreFirst) {
+                    loadStoreFirst = 2;
+                    enqueueCircular (cpu -> storeBuffer, rsmem);
+                    instructionAndResult -> address = rsmem -> address;
+                    instructionAndResult -> intResult = rsmem -> iVk;
+                    StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                    memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                } else {
+                    addDictionaryEntry (cpu -> resStaStore, &(rsmem -> Dest), rsmem);
+                }
+                break;
+            case S_D:
+                LSbufferInsert = 1;
+                rsmem -> address = rsmem -> Vj + instruction->immediate;
+                bufferCount = getCountCircularQueue (cpu -> loadBuffer);
+                for (j = 0; j < bufferCount; j++) {
+                    index = (cpu -> loadBuffer -> head + j) % cpu -> loadBuffer -> size;
+                    bufferItem = (RSmem *)(cpu -> loadBuffer -> items[index]);
+                    if (bufferItem -> address == rsmem -> address) {
+                        LSbufferInsert = 0;
+                    }
+                }
+                if (LSbufferInsert ) {
+                    bufferCount = getCountCircularQueue (cpu -> storeBuffer);
+                    for (j = 0; j < bufferCount; j++) {
+                        index = (cpu -> storeBuffer -> head + j) % cpu -> storeBuffer -> size;
+                        bufferItem = (RSmem *)(cpu -> storeBuffer -> items[index]);
+                        if (bufferItem -> address == rsmem -> address) {
+                            LSbufferInsert = 0;
+                        }
+                    }
+                }
+                if (LSbufferInsert && !loadStoreFirst) {
+                    loadStoreFirst = 2;
+                    enqueueCircular (cpu -> storeBuffer, rsmem);
+                    instructionAndResult -> address = rsmem -> address;
+                    instructionAndResult -> fpResult = rsmem -> fpVk;
+                    StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                    memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                } else {
+                    addDictionaryEntry (cpu -> resStaStore, &(rsmem -> Dest), rsmem);
+                }
+                break;
             case BNE:
                 instructionAndResult -> intResult = rsint -> Vj != rsint -> Vk ? 0 : -1;
-                enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+                BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case BNEZ:
                 instructionAndResult -> intResult = rsint -> Vj != 0 ? 0 : -1;
-                enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+                BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case BEQ:
                 instructionAndResult -> intResult = rsint -> Vj == rsint -> Vk ? 0 : -1;
-                enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+                BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case BEQZ:
                 instructionAndResult -> intResult = rsint -> Vj == 0 ? 0 : -1;
-                enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+                BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
                 printPipeline(instruction, pipelineString, 1);
                 break;
@@ -1100,35 +1254,65 @@ CompletedInstruction **execute(Instruction * instruction){
         pipelineString = "INT";
         printPipeline(unitOutputs[INT], pipelineString, 0);
     }
+    if (INTPipelineTemp != NULL) {
+        enqueueCircular (cpu -> INTPipeline, INTPipelineTemp);
+    }
     unitOutputs[MULT] = executePipelinedUnit (cpu -> MULTPipeline);
     if (unitOutputs[MULT] != NULL) {
         pipelineString = "MULT";
         printPipeline(unitOutputs[MULT], pipelineString, 0);
     }
+    if (MULTPipelineTemp != NULL) {
+        enqueueCircular (cpu -> MULTPipeline, MULTPipelineTemp);
+    }
     unitOutputs[LS] = executePipelinedUnit (cpu -> LoadStorePipeline);
     if (unitOutputs[LS] != NULL) {
+        if (unitOutputs[LS] -> instruction -> op == LD || unitOutputs[LS] -> instruction -> op == L_D) {
+            dequeueCircular (cpu -> loadBuffer);
+        } else if (unitOutputs[LS] -> instruction -> op == SD || unitOutputs[LS] -> instruction -> op == S_D) {
+            dequeueCircular (cpu -> storeBuffer);
+        } else {
+            printf ("Error: Opcode = %d", unitOutputs[LS] -> instruction -> op); //sanity check
+        }
         pipelineString = "Load/Store";
         printPipeline(unitOutputs[LS], pipelineString, 0);
+    }
+    if (loadStoreFirst == 1) {
+        enqueueCircular (cpu -> LoadStorePipeline, LoadPipelineTemp);
+    } else if (loadStoreFirst == 2) {
+        enqueueCircular (cpu -> LoadStorePipeline, StorePipelineTemp);
     }
     unitOutputs[FPadd] = executePipelinedUnit (cpu -> FPaddPipeline);
     if (unitOutputs[FPadd] != NULL) {
         pipelineString = "FPadd";
         printPipeline(unitOutputs[FPadd], pipelineString, 0);
     }
+    if (FPaddPipelineTemp != NULL) {
+        enqueueCircular (cpu -> FPaddPipeline, FPaddPipelineTemp);
+    }
     unitOutputs[FPmult] = executePipelinedUnit (cpu -> FPmultPipeline);
     if (unitOutputs[FPmult] != NULL) {
         pipelineString = "FPmult";
         printPipeline(unitOutputs[FPmult], pipelineString, 0);
+    }
+    if (FPmultPipelineTemp != NULL) {
+        enqueueCircular (cpu -> FPmultPipeline, FPmultPipelineTemp);
     }
     unitOutputs[FPdiv] = executeFPDivUnit (cpu -> FPdivPipeline);
     if (unitOutputs[FPdiv] != NULL) {
         pipelineString = "FPdiv";
         printPipeline(unitOutputs[FPdiv], pipelineString, 0);
     }
+    if (FPdivPipelineTemp != NULL) {
+        enqueueCircular (cpu -> FPdivPipeline, FPdivPipelineTemp);
+    }
     unitOutputs[BU] = executePipelinedUnit (cpu -> BUPipeline);
     if (unitOutputs[BU] != NULL) {
         pipelineString = "BU";
         printPipeline(unitOutputs[BU], pipelineString, 0);
+    }
+    if (BUPipelineTemp != NULL) {
+        enqueueCircular (cpu -> BUPipeline, BUPipelineTemp);
     }
 
     return unitOutputs;
@@ -1284,8 +1468,8 @@ int runClockCycle (int NF, int NI, int NW) {
 
     printf("Finished update.\n");
 
-
     //execute(instruction);
+
 
 	return 1;
 
@@ -1348,8 +1532,15 @@ int compareRegNumber (void *RegNumber1, void *RegNumber2) {
 
 DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat) {
     while (dictEntry != NULL) {
-        if (isFloat) {
+        if (isFloat == 1) {
             RSfloat *RS = (RSfloat *)((DictionaryEntry *)dictEntry -> value -> value);
+            if (RS -> isReady) {
+                return ((DictionaryEntry *)dictEntry) -> value;
+            } else {
+                dictEntry = dictEntry -> next;
+            }
+        } else if (isFloat == 2) {
+            RSmem *RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
             if (RS -> isReady) {
                 return ((DictionaryEntry *)dictEntry) -> value;
             } else {
