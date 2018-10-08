@@ -875,7 +875,6 @@ CompletedInstruction **execute(){
     DictionaryEntry *dictEntry;
     DictionaryValue *dictVal;
     //Array for instructions moving from Reservation Stations to execution units. Contains DictionaryValues.
-    //void **instructionsToExec = malloc(sizeof(void*)*8);
     DictionaryEntry **instructionsToExec = malloc(sizeof(DictionaryEntry *)*8);
     //Array for outputs of Units. See Unit enum in DataTypes.h
     static CompletedInstruction *unitOutputs[7];
@@ -1449,6 +1448,7 @@ int runClockCycle (int NF, int NI, int NW) {
 	cpu -> cycle++; //increment cycle counter
 
 	printf ("\nCycle %d\n", cpu -> cycle);
+    execute();
 
     fetchMultiInstructionUnit(NF);
 
@@ -1468,7 +1468,6 @@ int runClockCycle (int NF, int NI, int NW) {
 
     printf("Finished update.\n");
 
-    //execute(instruction);
 
 
 	return 1;
@@ -1571,8 +1570,13 @@ void printPipeline(void *instruction, char *pipeline, int entering) {
          getOpcodeString ((int) (inst -> op)), inst -> address, pipeline);
     } else {
         CompletedInstruction *inst = (CompletedInstruction *)instruction;
-        printf("%s unit output: %s at PC %d with ROB number %d\n",
-         pipeline, getOpcodeString ((int) (inst -> instruction -> op)), inst -> instruction -> address, inst -> ROB_number);
+        Instruction *i = inst -> instruction;
+        char *instructionString = malloc (90 * sizeof(char));
+        sprintf (instructionString, "%d: %s, rd=%d, rs=%d, rt=%d, fd=%d, fs=%d, ft=%d, immediate=%d, target=%d",
+         i -> address, getOpcodeString ((int) i -> op), i-> rd, i-> rs, i-> rt, i-> fd, i-> fs, i-> ft, i-> immediate,
+          i-> target);
+        printf("%s unit output PC %s with ROB number %d\n", pipeline, instructionString, inst -> ROB_number);
+        free (instructionString);
     }
 }
 
