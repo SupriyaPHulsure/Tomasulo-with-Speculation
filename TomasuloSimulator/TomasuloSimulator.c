@@ -13,8 +13,19 @@ int numberOfFPRegisters = 32; //NFPR
 int instructionCacheBaseAddress = 1000; //ICBA
 
 int cacheLineSize = 4; //CLS
-int robCounter = 0;
 
+//Number of reservation stations of each unit
+int numberRSint = 4;
+int numberRSmult = 2;
+int numberRSload = 2;
+int numberRSstore = 2;
+int numberRSfpAdd = 3;
+int numberRSfpMult = 4;
+int numberRSfpDiv = 2;
+int numberRSbu = 2;
+
+//Number of renaming registers
+int numberRenameReg = 8;
 
 int main(int argc, char** argv) {
 	//Validate command line argument
@@ -42,9 +53,15 @@ int main(int argc, char** argv) {
 	initializeCPU (NI, NR); //initialize CPU data structure
 
     int test_cycle;
-    for (test_cycle = 0; test_cycle < 10; test_cycle ++){
+    for (test_cycle = 0; test_cycle < 5; test_cycle ++){
         runClockCycle(NF, NI, NW);
         //printFetchBuffer();
+
+        printInstructionQueue();
+        printReservationStations();
+        printRenamingRegisters();
+        printROB();
+
 
     }
 	printROB();

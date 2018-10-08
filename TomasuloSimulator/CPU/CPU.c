@@ -15,13 +15,28 @@ int getHashCodeFromBranchAddress(void *branchAddress);
 int compareTargetAddress(void *targetAddress1, void *targetAddress2);
 int getHashCodeFromROBNumber (void *ROBNumber);
 int compareROBNumber (void *ROBNumber1, void *ROBNumber2);
+int getHashCodeFromRegNumber (void *RegNumber);
+int compareRegNumber (void *RegNumber1, void *RegNumber2);
+
 DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat);
 void printPipeline(void *instruction, char *pipeline, int entering);
 
 int fetchMultiInstructionUnit(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
 int decodeInstructionsUnit(int NI);
+void updateFetchBuffer();
+void updateInstructionQueue();
+void updateReservationStations();
+int renameRegIsFull(Dictionary *renameReg, int d);
+int addInstruction2RSint(Dictionary *renameReg, Dictionary *resSta, Dictionary *resStaResult,
+                      char* rsType, int maxLenRS, Instruction *instruction);
+int addInstruction2RSfloat(Dictionary *renameReg, Dictionary *resSta, Dictionary *resStaResult,
+                      char* rsType, int maxLenRS, Instruction *instruction);
+int issueInstruction(Instruction *instruction);
+void issueUnit(int NW);
 
+
+ROB * InitializeROBEntry(Instruction * instructionP);
 
 
 /**
@@ -85,19 +100,12 @@ void initializeCPU (int NI, int NR) {
 	cpu -> instructionQueueResult = createCircularQueue(NI);
 	//Initialize BTB
 	cpu -> branchTargetBuffer = createDictionary(getHashCodeFromBranchAddress, compareTargetAddress);
-
+    //Flag for next fetch unit
 	cpu -> stallNextFetch = 0;
     //Initialize renaming register
-	cpu -> renameRegInt = createCircularQueue(8);
-	cpu -> renameRegFP = createCircularQueue(8);
-	RenameReg *renameReg;
-	renameReg = (RenameReg *) malloc (sizeof(RenameReg));
-	renameReg -> busy = 0;
-	renameReg -> reorderNum = -1;
-	for (i = 0; i < 8; i++) {
-	    enqueueCircular (cpu -> renameRegInt, renameReg);
-	    enqueueCircular(cpu -> renameRegFP, renameReg);
-    }
+	cpu -> renameRegInt = createDictionary(getHashCodeFromRegNumber, compareRegNumber);
+	cpu -> renameRegFP = createDictionary(getHashCodeFromRegNumber, compareRegNumber);
+
     //Initialize reservation stations
     cpu -> resStaInt = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaMult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
@@ -107,13 +115,23 @@ void initializeCPU (int NI, int NR) {
     cpu -> resStaFPmult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPdiv = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaBU = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaIntResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaMultResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaLoadResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaStoreResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaFPaddResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaFPmultResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaFPdivResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> resStaBUResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     //Initialize load/store buffers
     cpu -> loadBuffer = createCircularQueue(4);
     cpu -> storeBuffer = createCircularQueue(6);
     //Initialize Reorder buffer
     cpu -> reorderBuffer = createCircularQueue(NR);
+    //Initialize Stall counters
+    cpu -> stallFullROB = 0;
+    cpu -> stallFullRS = 0;
 }
-
 
 //Fetch Instructions Unit
 int fetchMultiInstructionUnit(int NF){
@@ -153,13 +171,10 @@ int fetchMultiInstructionUnit(int NF){
                         printf("target address %d.\n", targetAddress);
                         cpu -> PC = targetAddress;
                         return 1;
-
                     }
                 }
             }
-
             cpu -> PC = cpu -> PC + 4;
-
         }
     }
     else{
@@ -172,7 +187,7 @@ int fetchMultiInstructionUnit(int NF){
 //Decode instruction unit
 int decodeInstructionsUnit(int NI){
     while(cpu -> fetchBuffer -> head!= NULL){
-        if (isFullCircularQueue(cpu -> instructionQueueResult)){
+        if ((cpu->instructionQueue->count + cpu->instructionQueueResult->count) >= cpu->instructionQueue->size){
             printf("Cannot decode all fetched instructions because the instruction queue is full.\n");
             cpu -> stallNextFetch = 1;
             return 1;
@@ -197,7 +212,44 @@ void updateFetchBuffer(){
     return;
 }
 
-//TODO: update instruction queue
+//Update instruction queue
+void updateInstructionQueue(){
+    Instruction *instruction;
+    while((instruction = dequeueCircular(cpu->instructionQueueResult))!= NULL){
+        enqueueCircular(cpu->instructionQueue, instruction);
+    }
+    return;
+}
+
+//Update reservation stations
+void updateReservationStations(){
+    DictionaryEntry *RSEntry;
+    while((RSEntry = popDictionaryEntry(cpu -> resStaIntResult)) != NULL){
+        appendDictionaryEntry(cpu -> resStaInt, RSEntry);
+    }
+    while((RSEntry = popDictionaryEntry(cpu -> resStaMultResult)) != NULL){
+        appendDictionaryEntry(cpu -> resStaMult, RSEntry);
+    }
+    while((RSEntry = popDictionaryEntry(cpu -> resStaLoadResult)) != NULL){
+        appendDictionaryEntry(cpu -> resStaLoad, RSEntry);
+    }
+    while((RSEntry = popDictionaryEntry(cpu -> resStaStoreResult)) != NULL){
+        appendDictionaryEntry(cpu -> resStaStore, RSEntry);
+    }
+    while((RSEntry = popDictionaryEntry(cpu -> resStaFPaddResult)) != NULL){
+        appendDictionaryEntry(cpu -> resStaFPadd, RSEntry);
+    }
+    while((RSEntry = popDictionaryEntry(cpu -> resStaFPmultResult)) != NULL){
+        appendDictionaryEntry(cpu -> resStaFPmult, RSEntry);
+    }
+    while((RSEntry = popDictionaryEntry(cpu -> resStaFPdivResult)) != NULL){
+        appendDictionaryEntry(cpu -> resStaFPdiv, RSEntry);
+    }
+    while((RSEntry = popDictionaryEntry(cpu -> resStaBUResult)) != NULL){
+        appendDictionaryEntry(cpu -> resStaBU, RSEntry);
+    }
+    return;
+}
 
 //Decode an instruction
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress){
@@ -512,129 +564,265 @@ Instruction * decodeInstruction(char *instruction_str, int instructionAddress){
     return instruction;
 }
 
+//Check if renaming registers is full
+int renameRegIsFull(Dictionary *renameReg, int d){
+    int counterRenameReg;
+    counterRenameReg = countDictionaryLen(renameReg);
+    if (counterRenameReg == numberRenameReg){
+        DictionaryEntry *renameRegDest = getValueChainByDictionaryKey(renameReg, &d);
+        if (renameRegDest == NULL){
+            printf("Stall during IssueUnit because renaming register is full.\n");
+            return 1;
+        }
+    }
+    return 0;
+}
+
+//Add instruction to reservation stations of type integer
+int addInstruction2RSint(Dictionary *renameReg, Dictionary *resSta, Dictionary *resStaResult,
+                      char* rsType, int maxLenRS, Instruction *instruction){
+    int counterUnit;
+    int counterUnitResult;
+    RSint* RS = (RSint*) malloc (sizeof(RSint));
+    counterUnit = countDictionaryLen(resSta);
+    counterUnitResult = countDictionaryLen(resStaResult);
+    if (maxLenRS - counterUnit - counterUnitResult > 0){
+        int DestROBnum = cpu -> reorderBuffer->tail;
+        DictionaryEntry *renameRegEntry = getValueChainByDictionaryKey(renameReg, &instruction->rs);
+        if (renameRegEntry != NULL){
+            int robNum = ((RenameReg *)renameRegEntry -> value -> value) -> reorderNum;
+            if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
+                RS -> Vj = ((ROB *)cpu -> reorderBuffer -> items[robNum]) -> DestValueIntReg;
+                RS -> Qj = -1;
+                RS->isReady = 1;
+            }
+            else{
+                RS -> Qj = robNum;
+                RS->isReady = 0;
+            }
+        }else{
+            RS -> Vj = cpu->integerRegisters[instruction->rs]->data;
+            RS -> Qj = -1;
+            RS->isReady = 1;
+        }
+        if (instruction->rt >= 0){
+            DictionaryEntry *renameRegEntry = getValueChainByDictionaryKey(renameReg, &instruction->rt);
+            if (renameRegEntry!=NULL){
+                int robNum = ((RenameReg *)renameRegEntry -> value -> value) -> reorderNum;
+                if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
+                    RS -> Vk = ((ROB *)cpu -> reorderBuffer -> items[robNum]) -> DestValueIntReg;
+                    RS -> Qk = -1;
+                    if(RS->isReady == 1)
+                        RS->isReady = 1;
+                }
+                else{
+                    RS -> Qk = robNum;
+                    RS->isReady = 0;
+                }
+            }else{
+                RS -> Vk = cpu->integerRegisters[instruction->rt]->data;
+                RS -> Qk = -1;
+                if(RS->isReady == 1)
+                    RS->isReady = 1;
+            }
+        }
+        //Append to reservation stations
+        RS->Dest = DestROBnum;
+        RS->instruction = instruction;
+        addDictionaryEntry(resStaResult, &(RS->Dest), RS);
+        //Add to renaming registers
+        RenameReg *renamingReg = (RenameReg*)malloc(sizeof(RenameReg));
+        renamingReg -> reorderNum = DestROBnum;
+        renamingReg -> busy = 1;
+        removeDictionaryEntriesByKey(renameReg, &(instruction->rd));
+        addDictionaryEntry(renameReg, &(instruction->rd), renamingReg);
+        printf("Issued instruction %d: %s\n", instruction->address, getOpcodeString ((int) instruction->op));
+        return 1;
+
+    }else{
+        cpu -> stallFullRS ++;
+        printf("Stall during IssueUnit because reservation stations %s is full.\n", rsType);
+        return 0;
+    }
+}
+
+//Add instruction to reservation stations of type floating pointer
+int addInstruction2RSfloat(Dictionary *renameReg, Dictionary *resSta, Dictionary *resStaResult,
+                      char* rsType, int maxLenRS, Instruction *instruction){
+    int counterUnit;
+    int counterUnitResult;
+    RSfloat* RS = (RSfloat*) malloc (sizeof(RSfloat));
+    counterUnit = countDictionaryLen(resSta);
+    counterUnitResult = countDictionaryLen(resStaResult);
+    if (maxLenRS - counterUnit - counterUnitResult > 0){
+        int DestROBnum = cpu -> reorderBuffer->tail;
+        DictionaryEntry *renameRegEntry = getValueChainByDictionaryKey(renameReg, &instruction->fs);
+        if (renameRegEntry != NULL){
+            int robNum = ((RenameReg *)renameRegEntry -> value -> value) -> reorderNum;
+            if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
+                RS -> Vj = ((ROB *)cpu -> reorderBuffer -> items[robNum]) -> DestValueIntReg;
+                RS -> Qj = -1;
+                RS->isReady = 1;
+            }
+            else{
+                RS -> Qj = robNum;
+                RS->isReady = 0;
+            }
+        }else{
+            RS -> Vj = cpu->floatingPointRegisters[instruction->fs]->data;
+            RS -> Qj = -1;
+            RS->isReady = 1;
+        }
+        if (instruction->ft >= 0){
+            DictionaryEntry *renameRegEntry = getValueChainByDictionaryKey(renameReg, &instruction->ft);
+            if (renameRegEntry!=NULL){
+                int robNum = ((RenameReg *)renameRegEntry -> value -> value) -> reorderNum;
+                if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
+                    RS -> Vk = ((ROB *)cpu -> reorderBuffer -> items[robNum]) -> DestValueIntReg;
+                    RS -> Qk = -1;
+                    if(RS->isReady == 1)
+                        RS->isReady = 1;
+                }
+                else{
+                    RS -> Qk = robNum;
+                    RS->isReady = 0;
+                }
+            }else{
+                RS -> Vk = cpu->floatingPointRegisters[instruction->ft]->data;
+                RS -> Qk = -1;
+                if(RS->isReady == 1)
+                    RS->isReady = 1;
+            }
+        }
+        RS->Dest = DestROBnum;
+        RS->instruction = instruction;
+        addDictionaryEntry(resStaResult, &(RS->Dest), RS);
+        RenameReg *renamingReg = (RenameReg*)malloc(sizeof(RenameReg));
+        renamingReg -> reorderNum = DestROBnum;
+        renamingReg -> busy = 1;
+        removeDictionaryEntriesByKey(renameReg, &instruction->fd);
+        addDictionaryEntry(renameReg, &instruction->fd, renamingReg);
+        printf("Issued instruction %d: %s\n", instruction->address, getOpcodeString ((int) instruction->op));
+        return 1;
+
+    }else{
+        cpu -> stallFullRS ++;
+        printf("Stall during IssueUnit because reservation stations %s is full.\n", rsType);
+        return 0;
+    }
+}
 
 //Issue an instruction
-void issueInstruction(Instruction *instruction){
-    if isFullCircularQueue(cpu -> reorderBuffer){
-        cpu -> stallFullROB = cpu -> stallFullROB + 1;
-        return
+int issueInstruction(Instruction *instruction){
+    if (isFullCircularQueue(cpu -> reorderBuffer)){
+        cpu -> stallFullROB ++;
+        printf("Stall during IssueUnit because reorder buffer is full.\n");
+        return 0;
     }
-    int counterUnit;
+    int issued = 0;
+    int renameRegFull = 1;
     switch (instruction->op) {
         case ANDI:
-            counterUnit = countDictionaryLen(cpu -> resStaInt);
-
-
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data & instruction->immediate;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
         case AND:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data & cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
         case ORI:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data | instruction->immediate;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
         case OR:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data | cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
         case SLTI:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data < instruction->immediate ? 1 : 0;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
         case SLT:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data < cpu->integerRegisters[instruction->rt]->data ? 1 : 0;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
         case DADDI:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
         case DADD:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data + cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
-            break;
         case DSUB:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data - cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> INTPipeline, instructionAndResult);
+            renameRegFull = renameRegIsFull(cpu->renameRegInt, instruction -> rd);
+            if (renameRegFull!=1){
+                char* rsType = "INT";
+                issued = addInstruction2RSint(cpu->renameRegInt, cpu->resStaInt, cpu->resStaIntResult, rsType, numberRSint,
+                                            instruction);
+            }
             break;
         case DMUL:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data * cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> MULTPipeline, instructionAndResult);
+            renameRegFull = renameRegIsFull(cpu->renameRegInt, instruction -> rd);
+            if (renameRegFull!=1){
+                char* rsType = "MULT";
+                issued = addInstruction2RSint(cpu->renameRegInt, cpu->resStaMult, cpu->resStaMultResult,
+                                           rsType, numberRSmult, instruction);
+            }
             break;
         case ADD_D:
-            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data + cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
-            break;
         case SUB_D:
-            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data - cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> FPaddPipeline, instructionAndResult);
+            renameRegFull = renameRegIsFull(cpu->renameRegFP, instruction -> fd);
+            if (renameRegFull!=1){
+                char* rsType = "FPadd";
+                issued = addInstruction2RSfloat(cpu->renameRegFP, cpu->resStaFPadd, cpu->resStaFPaddResult,
+                                               rsType, numberRSfpAdd, instruction);
+            }
             break;
         case MUL_D:
-            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data * cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> FPmultPipeline, instructionAndResult);
+            renameRegFull = renameRegIsFull(cpu->renameRegFP, instruction -> fd);
+            if (renameRegFull!=1){
+                char* rsType = "FPmult";
+                issued = addInstruction2RSfloat(cpu->renameRegFP, cpu->resStaFPmult, cpu->resStaFPmultResult,
+                                               rsType, numberRSfpMult, instruction);
+            }
             break;
         case DIV_D:
-            instructionAndResult -> fpResult = cpu->floatingPointRegisters[instruction->fs]->data / cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> FPdivPipeline, instructionAndResult);
-            cpu -> FPdivPipelineBusy = 1;
+            renameRegFull = renameRegIsFull(cpu->renameRegFP, instruction -> fd);
+            if (renameRegFull!=1){
+                char* rsType = "FPdiv";
+                issued = addInstruction2RSfloat(cpu->renameRegFP, cpu->resStaFPdiv, cpu->resStaFPdivResult,
+                                               rsType, numberRSfpDiv, instruction);
+            }
             break;
         case L_D:
-            cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            * ((int*)addrPtr) = cpu->memoryAddress;
-            dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-            valuePtr = dataCacheElement->value->value;
-            instructionAndResult -> fpResult = *((double*)valuePtr);
-            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-            break;
         case LD:
-            cpu->memoryAddress = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            * ((int*)addrPtr) = cpu->memoryAddress;
-            dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-            valuePtr = dataCacheElement->value->value;
-            instructionAndResult -> intResult = (int)*((double*)valuePtr);
-            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-            break;
+            //TODO:merge with Dillon's code
         case SD:
-            instructionAndResult -> address = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rt]->data;
-            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
-            break;
         case S_D:
-            instructionAndResult -> address = cpu->integerRegisters[instruction->rs]->data + instruction->immediate;
-            instructionAndResult -> intResult = cpu->floatingPointRegisters[instruction->ft]->data;
-            enqueueCircular (cpu -> LoadStorePipeline, instructionAndResult);
+            //Do not need to check renameRegFull
+            //TODO: merge with Dillon's code
             break;
         case BNE:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data != cpu->integerRegisters[instruction->rt]->data ? 0 : -1;
-            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
-            break;
         case BNEZ:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data != 0 ? 0 : -1;
-            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
-            break;
         case BEQ:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data == cpu->integerRegisters[instruction->rt]->data ? 0 : -1;
-            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
-            break;
         case BEQZ:
-            instructionAndResult -> intResult = cpu->integerRegisters[instruction->rs]->data == 0 ? 0 : -1;
-            enqueueCircular (cpu -> BUPipeline, instructionAndResult);
+            //char* rsType = "BU";
+            //RSint *rsInt = (RSint*) malloc (sizeof(RSint));
+            //rsHasPlace = addInstruction2RS(cpu->renameRegInt, rsInt, cpu->resStaBU, cpu->resStaBUResult, cpu->integerRegisters,
+            //                               instruction -> rs, instruction->rt，instruction->rd, rsType, numberRSbu);
+            //TODO
             break;
         default:
             break;
-
+    }
+    if (issued == 1){
+        enqueueCircular(cpu->reorderBuffer, InitializeROBEntry(instruction));
+        return 1;
+    }else
+        return 0;
 }
 
-void issueUnit(){
-
+void issueUnit(int NW){
+    int i;
+    int issued;
+    Instruction *instruction;
+    for(i=0; i<NW; i++){
+        if((instruction = getHeadCircularQueue(cpu -> instructionQueue))!= NULL){
+            issued = issueInstruction(instruction);
+            if (issued == 0)
+                return;
+            else
+                dequeueCircular(cpu -> instructionQueue);
+        }
+        else
+            return;
+    }
 }
+
+
+
 /**
  * Method that simulates pipelined Unit.
  * @return pointer to output instruction of the pipeline.
  */
+
 CompletedInstruction *executePipelinedUnit (CircularQueue *pipeline) {
     CompletedInstruction *output = dequeueCircular (pipeline);
 
@@ -645,10 +833,12 @@ CompletedInstruction *executePipelinedUnit (CircularQueue *pipeline) {
     return output;
 }
 
+
 /**
  * Method that simulates FPdiv unit.
  * @return Pointer to the output instruction of the pipeline. NULL in case of bubbles or while executing.
  */
+
 CompletedInstruction *executeFPDivUnit (CircularQueue *pipeline) {
     CompletedInstruction *output;
 
@@ -946,11 +1136,9 @@ CompletedInstruction **execute(Instruction * instruction){
 }
 
 
-
 //Initialize ROB struct
 ROB * InitializeROBEntry(Instruction * instructionP)
 {
-	robCounter++;
 	ROB * ROBEntry ;
 	OpCode op;
 	
@@ -1056,7 +1244,6 @@ ROB * InitializeROBEntry(Instruction * instructionP)
             break;
     }
 	
-	ROBEntry->ROB_number = robCounter;
 	ROBEntry->instruction = instructionP;
 	ROBEntry->state = "I";
 	ROBEntry->DestValueIntReg = 0;
@@ -1067,38 +1254,6 @@ ROB * InitializeROBEntry(Instruction * instructionP)
 }
 
 
-// AddtoROB
-void addSingleEntrytoROB(Instruction *instructionL){
-	if (isFullCircularQueue(cpu->reorderBuffer) == 1)
-				{
-						printf("Stall the issue beacause ROB is full\n");
-				}
-				else{
-					enqueueCircular(cpu->reorderBuffer, InitializeROBEntry(instructionL));
-				/* 	ROB * drob = (ROB *) malloc (sizeof(ROB));
-					drob = dequeueCircular(cpu->reorderBuffer); */				
-		} 
-}
-
-/// addall issued istructions to ROB from instruction queue
-void addMultipleEntriestoROB(int NW)
-{
-	int i;
-	Instruction *instruction = (Instruction *) malloc (sizeof(Instruction));
-	for(i =0; i<NW; i++){
-		if((instruction = dequeueCircular(cpu -> instructionQueue)) != NULL)
-		{
-			if (isFullCircularQueue(cpu->reorderBuffer) == 1)
-				{
-						printf(" ROB is full\n");
-				}
-				else{
-					enqueueCircular(cpu->reorderBuffer, InitializeROBEntry(instruction));
-						
-			}
-		}		
-	}
-}
 
 
 /**
@@ -1113,12 +1268,23 @@ int runClockCycle (int NF, int NI, int NW) {
 
     fetchMultiInstructionUnit(NF);
 
+    printf("Finished fetching.\n");
+
     decodeInstructionsUnit(NI);
 
-    updateFetchBuffer();
+    printf("Finished decoding.\n");
 
-	
-	addMultipleEntriestoROB(NW);
+    issueUnit(NW);
+
+    printf("Finished issue.\n");
+
+    updateFetchBuffer();
+    updateInstructionQueue();
+    updateReservationStations();
+
+    printf("Finished update.\n");
+
+
     //execute(instruction);
 
 	return 1;
@@ -1170,6 +1336,14 @@ int getHashCodeFromROBNumber (void *ROBNumber) {
 
 int compareROBNumber (void *ROBNumber1, void *ROBNumber2) {
     return *((int *)ROBNumber1) - *((int *)ROBNumber2);
+}
+
+int getHashCodeFromRegNumber (void *RegNumber) {
+    return *((int*)RegNumber);
+}
+
+int compareRegNumber (void *RegNumber1, void *RegNumber2) {
+    return *((int *)RegNumber1) - *((int *)RegNumber2);
 }
 
 DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat) {

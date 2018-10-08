@@ -28,6 +28,7 @@
 
 #define MAX_LINE  4096
 
+
 //global variables populated from configuration 
 int numberOfIntRegisters; //NIR
 int numberOfFPRegisters; //NFPR
@@ -38,13 +39,27 @@ int cacheLineSize; //CLS
 
 int numberOfInstruction;
 
+
+//Number of reservation stations of each unit
+int numberRSint;
+int numberRSmult;
+int numberRSload;
+int numberRSstore;
+int numberRSfpAdd;
+int numberRSfpMult;
+int numberRSfpDiv;
+int numberRSbu;
+
+//Number of renaming registers
+int numberRenameReg;
+
 Dictionary *instructionCache;
 Dictionary *dataCache;
 Dictionary *codeLabels;
-int NR;
-int NW;
-int robCounter; //ROB name Counter
+
 CPU *cpu;
+
+
 
 void fillInstructionAndDataCache (char *fileName);
 
@@ -56,5 +71,10 @@ void printCodeLabels ();
 void printDataCache ();
 void printIntegerRegisters ();
 void printFPRegisters ();
+void printInstructionQueue ();
+void printReservationStations();
+void printROB();
+void printRenamingRegisters ();
+void printInstructionQueueResult ();
 
 #endif /* GLOBAL_TOMASULOSIMULATOR_H_ */

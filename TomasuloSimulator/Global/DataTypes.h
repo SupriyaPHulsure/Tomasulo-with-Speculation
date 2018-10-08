@@ -102,7 +102,6 @@ typedef struct _FPReg {
 
 // data structure for Reorder Buffer
 typedef struct _ROB{
-	int ROB_number;
 	Instruction * instruction;
 	char * state;
 	int DestReg;
@@ -130,7 +129,7 @@ typedef struct _RSfloat{
 	float Vj; //value of input register j
 	float Vk; //value of input register k
 	int Qj; //ROB number of input register j
-	int Qk;  //ROB number of input register k
+	int Qk;  //ROB number of input register j
 	int Dest; //ROB number of destination register
 	int isReady;
 }RSfloat;
@@ -138,7 +137,6 @@ typedef struct _RSfloat{
 //Data Structure for renaming register
 typedef struct _RenameReg{
     int reorderNum;
-    int regNum;
     int busy;
 }RenameReg;
 
@@ -178,9 +176,18 @@ typedef struct _cpu {
     Dictionary *resStaFPmult;
     Dictionary *resStaFPdiv;
     Dictionary *resStaBU;
+
+    Dictionary *resStaIntResult;
+    Dictionary *resStaMultResult;
+    Dictionary *resStaLoadResult;
+    Dictionary *resStaStoreResult;
+    Dictionary *resStaFPaddResult;
+    Dictionary *resStaFPmultResult;
+    Dictionary *resStaFPdivResult;
+    Dictionary *resStaBUResult;
     //Renaming registers
-    CircularQueue *renameRegInt;
-    CircularQueue *renameRegFP;
+    Dictionary *renameRegInt;
+    Dictionary *renameRegFP;
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
@@ -196,7 +203,11 @@ typedef struct _cpu {
     //Install flag
     int stallNextFetch;
     //Stall counter
-    stallFullROB;
+    int stallFullROB;
+    int stallFullRS;
+    //ROB name Counter
+    int robCounter; 
+
 
 } CPU;
 
