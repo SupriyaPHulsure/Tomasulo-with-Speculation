@@ -1448,7 +1448,6 @@ int runClockCycle (int NF, int NI, int NW) {
 	cpu -> cycle++; //increment cycle counter
 
 	printf ("\nCycle %d\n", cpu -> cycle);
-    execute();
 
     fetchMultiInstructionUnit(NF);
 
@@ -1461,6 +1460,10 @@ int runClockCycle (int NF, int NI, int NW) {
     issueUnit(NW);
 
     printf("Finished issue.\n");
+
+    execute();
+
+    printf ("Finished execute.\n");
 
     updateFetchBuffer();
     updateInstructionQueue();
