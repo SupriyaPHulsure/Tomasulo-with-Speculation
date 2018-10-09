@@ -104,9 +104,8 @@ typedef struct _FPReg {
 typedef struct _ROB{
 	Instruction * instruction;
 	char * state;
-	int DestReg;
-	int DestValueIntReg;
-	float DestValueFloatReg;
+	int DestReg; //Destination register number
+	int DestRenameReg; //Destination renaming register number
 	int isReady;
 	int isINT;
 	int isStore;
