@@ -113,7 +113,7 @@ typedef struct _ROB{
 	int DestAddr; // optional, memory address to write
 	int isBranch;
 	int isAfterBranch;
-	int istaken;
+	int isCorrectPredicted;
 }ROB;
 
 //data structure for Common Data bus
@@ -167,7 +167,6 @@ typedef struct _RegStatus{
     int reorderNum;
     int busy;
 }RegStatus;
-
 
 
 //main data structure representing CPU
@@ -225,9 +224,11 @@ typedef struct _cpu {
     //Renaming registers
     Dictionary *renameRegInt;
     Dictionary *renameRegFP;
-	 //Register status table
+
+	//Register status table
     RegStatus **IntRegStatus;
     RegStatus **FPRegStatus;
+	
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
