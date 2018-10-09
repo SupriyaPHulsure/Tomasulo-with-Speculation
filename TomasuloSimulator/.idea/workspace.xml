@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="76212c9c-3a17-4421-a457-94f53e0b66e4" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CPU/CPU.c" beforeDir="false" afterPath="$PROJECT_DIR$/CPU/CPU.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Global/DataTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Global/DataTypes.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Global/Utils/PrintUtility.c" beforeDir="false" afterPath="$PROJECT_DIR$/Global/Utils/PrintUtility.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Debug/TomasuloSimulator" beforeDir="false" afterPath="$PROJECT_DIR$/Debug/TomasuloSimulator" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TomasuloSimulator.c" beforeDir="false" afterPath="$PROJECT_DIR$/TomasuloSimulator.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -17,13 +16,13 @@
     <session id="-1536914193">
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="c" value="10187" />
+          <entry key="c" value="10215" />
           <entry key="h" value="2452" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="C++" value="12639" />
+          <entry key="C++" value="12667" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -66,8 +65,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/CPU/CPU.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="493">
-              <caret line="154" column="29" selection-start-line="154" selection-start-column="29" selection-end-line="154" selection-end-column="29" />
+            <state relative-caret-position="450">
+              <caret line="652" column="26" selection-start-line="652" selection-start-column="26" selection-end-line="652" selection-end-column="26" />
             </state>
           </provider>
         </entry>
@@ -75,8 +74,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/TomasuloSimulator.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="61" column="33" selection-start-line="61" selection-start-column="33" selection-end-line="61" selection-end-column="33" />
+            <state relative-caret-position="270">
+              <caret line="55" column="40" selection-start-line="55" selection-start-column="40" selection-end-line="55" selection-end-column="40" />
             </state>
           </provider>
         </entry>
@@ -167,9 +166,9 @@
         <option value="$PROJECT_DIR$/CacheEmulator/EmulateCache.c" />
         <option value="$PROJECT_DIR$/Global/ADT/Dictionary.h" />
         <option value="$PROJECT_DIR$/Global/TomasuloSimulator.h" />
-        <option value="$PROJECT_DIR$/TomasuloSimulator.c" />
         <option value="$PROJECT_DIR$/Global/DataTypes.h" />
         <option value="$PROJECT_DIR$/Global/Utils/PrintUtility.c" />
+        <option value="$PROJECT_DIR$/TomasuloSimulator.c" />
         <option value="$PROJECT_DIR$/CPU/CPU.c" />
       </list>
     </option>
@@ -329,13 +328,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/TomasuloSimulator.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="61" column="33" selection-start-line="61" selection-start-column="33" selection-end-line="61" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Global/DataTypes.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="435">
@@ -343,10 +335,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/TomasuloSimulator.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="55" column="40" selection-start-line="55" selection-start-column="40" selection-end-line="55" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/CPU/CPU.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="493">
-          <caret line="154" column="29" selection-start-line="154" selection-start-column="29" selection-end-line="154" selection-end-column="29" />
+        <state relative-caret-position="450">
+          <caret line="652" column="26" selection-start-line="652" selection-start-column="26" selection-end-line="652" selection-end-column="26" />
         </state>
       </provider>
     </entry>

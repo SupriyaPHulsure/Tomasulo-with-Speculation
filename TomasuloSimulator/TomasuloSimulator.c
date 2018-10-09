@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
 	initializeCPU (NI, NR); //initialize CPU data structure
 
     int test_cycle;
-    for (test_cycle = 0; test_cycle < 5; test_cycle ++){
+    for (test_cycle = 0; test_cycle < 10; test_cycle ++){
         runClockCycle(NF, NI, NW);
         //printFetchBuffer();
 

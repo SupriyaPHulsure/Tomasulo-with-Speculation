@@ -649,6 +649,8 @@ int addInstruction2RSint(Dictionary *renameRegInt, Dictionary *resSta, Dictionar
                 if(RS->isReady == 1)
                     RS->isReady = 1;
             }
+        }else{
+            RS -> Qk = -1;
         }
         //Append to reservation stations
         RS->Dest = DestROBnum;
@@ -722,6 +724,8 @@ int addInstruction2RSfloat(Dictionary *renameRegFP, Dictionary *resSta, Dictiona
                 if(RS->isReady == 1)
                     RS->isReady = 1;
             }
+        }else{
+            RS -> Qk = -1;
         }
          //Append to reservation stations
         RS->Dest = DestROBnum;
@@ -794,6 +798,8 @@ int addInstruction2RSbranch(Dictionary *renameRegInt, Dictionary *resSta, Dictio
                 if(RS->isReady == 1)
                     RS->isReady = 1;
             }
+        }else{
+            RS -> Qk = -1;
         }
         //Append to reservation stations
         RS->Dest = DestROBnum;
