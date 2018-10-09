@@ -142,7 +142,7 @@ void printRenamingRegisters () {
 		printf ("-----------------\n");
 		printf ("Renaming Integer Registers\n");
 		printf ("-----------------\n");
-        RenameReg *renamingReg;
+        RegStatus *renamingReg;
 		for (current = cpu -> renameRegInt -> head; current != NULL; current = current -> next){
 		    renamingReg = current -> value -> value;
 			printf ("Register number %d: reorder number %d\n", *((int*)current -> key), renamingReg -> reorderNum);
@@ -152,7 +152,7 @@ void printRenamingRegisters () {
 		printf ("-----------------\n");
 		printf ("Renaming Floating Pointer Registers\n");
 		printf ("-----------------\n");
-        RenameReg *renamingReg;
+        RegStatus *renamingReg;
 		for (current = cpu -> renameRegFP -> head; current != NULL; current = current -> next){
 		    renamingReg = current -> value -> value;
 			printf ("Register number %d: reorder number %d\n", *((int*)current -> key), renamingReg -> reorderNum);
@@ -250,16 +250,31 @@ void printROB()
 		printf ("-----------------\n");
 		printf ("Reored Buffer\n");
 		printf ("-----------------\n");
-		printf("ROB_number  |Instr add|State| Dest Reg  | Dest Value   |  isReady  |  isIntegerReg | DestValueFloatReg | isStore\n");
+		printf("ROB_number  |Instr add|State| Dest Reg  |  isReady  |  isIntegerReg | isStore\n");
 			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
 		ROBentry = cpu->reorderBuffer -> items[i];
 		while(ROBentry != NULL){
 
-			printf("%d\t\t\%d\t\t%s\t\t%d\t%d\t\t%d\t\t%d\t%f\t%d\n", i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> DestValueIntReg, ROBentry -> isReady, ROBentry->isINT, ROBentry -> DestValueFloatReg, ROBentry ->isStore);
+			printf("%d\t\t\%d\t\t%s\t%d\t\t%d\t\t%d\t%d\n", i , ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> isReady, ROBentry->isINT, ROBentry ->isStore);
+
 			i++;
 			ROBentry = cpu->reorderBuffer -> items[i];
 			
 		}
+	}
+}
+
+
+void printWriteBackBuffer () {
+	DictionaryEntry *current;
+
+	if (cpu -> WriteBackBuffer != NULL) {
+		printf ("-----------------\n");
+		printf ("Write Back Buffer\n");
+		printf ("-----------------\n");
+
+		for (current = cpu -> WriteBackBuffer -> head; current != NULL; current = current -> next)
+			printf ("%d: \n", *((int*)current -> key)); //getOpcodeString ((int) (current -> value -> value -> instruction -> op)));
 	}
 }
 

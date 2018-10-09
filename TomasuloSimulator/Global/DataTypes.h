@@ -85,6 +85,7 @@ typedef struct _completedInstruction {
     double fpResult;
     int address; //used to keep address for SD and S.D
     int ROB_number;
+	int RRNo;
 } CompletedInstruction;
 
 //data structure for each item in integer registers and work as well register status
@@ -104,14 +105,29 @@ typedef struct _FPReg {
 typedef struct _ROB{
 	Instruction * instruction;
 	char * state;
-	int DestReg;
-	int DestValueIntReg;
-	float DestValueFloatReg;
+	int DestReg; //Destination register number
+	int DestRenameReg; //Destination renaming register number
 	int isReady;
 	int isINT;
 	int isStore;
 	int DestAddr; // optional, memory address to write
+	int isBranch;
+	int isAfterBranch;
+	int istaken;
 }ROB;
+
+//data structure for Common Data bus
+typedef struct _cdb{
+	int ROB_number;
+	Instruction *instruction;
+	int IntResult;
+	int floatResult;
+	int memaddress; // for store instructions
+	int isROBCommit;
+	int isINT;
+	int isStore;
+	int isBranch;
+}CDB;
 
 //Data structure for reservation stations
 typedef struct _RSint{
@@ -146,11 +162,13 @@ typedef struct _RSmem{
 	int isReady;
 } RSmem;
 
-//Data Structure for renaming register
-typedef struct _RenameReg{
+//Data Structure for register status table
+typedef struct _RegStatus{
     int reorderNum;
     int busy;
-}RenameReg;
+}RegStatus;
+
+
 
 //main data structure representing CPU
 typedef struct _cpu {
@@ -177,8 +195,14 @@ typedef struct _cpu {
     CircularQueue *instructionQueue;
     CircularQueue *instructionQueueResult;
     Dictionary *branchTargetBuffer;
+	
     //Reorder buffer
     CircularQueue *reorderBuffer;
+	CircularQueue *reorderBufferResult;
+	CircularQueue *CDBBuffer;  
+	Dictionary *WriteBackBuffer;
+	Dictionary *WriteBackBufferResult;
+	
     //Reservation station
     Dictionary *resStaInt;
     Dictionary *resStaMult;
@@ -188,6 +212,7 @@ typedef struct _cpu {
     Dictionary *resStaFPmult;
     Dictionary *resStaFPdiv;
     Dictionary *resStaBU;
+
 
     Dictionary *resStaIntResult;
     Dictionary *resStaMultResult;
@@ -200,6 +225,9 @@ typedef struct _cpu {
     //Renaming registers
     Dictionary *renameRegInt;
     Dictionary *renameRegFP;
+	 //Register status table
+    RegStatus **IntRegStatus;
+    RegStatus **FPRegStatus;
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
@@ -209,9 +237,11 @@ typedef struct _cpu {
     CircularQueue *FPdivPipeline;
     int FPdivPipelineBusy;
     CircularQueue *BUPipeline;
+	
     //Load and Store buffer
     CircularQueue *loadBuffer;
     CircularQueue *storeBuffer;
+	
     //Install flag
     int stallNextFetch;
     //Stall counter

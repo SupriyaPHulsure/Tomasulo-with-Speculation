@@ -63,8 +63,8 @@ CPU *cpu;
 
 void fillInstructionAndDataCache (char *fileName);
 
-void initializeCPU (int NI, int NR);
-int runClockCycle (int NF, int NI, int NW);
+void initializeCPU (int NI, int NR, int NB);
+int runClockCycle (int NF, int NI, int NW, int NB);
 
 void printInstructionCache ();
 void printCodeLabels ();
