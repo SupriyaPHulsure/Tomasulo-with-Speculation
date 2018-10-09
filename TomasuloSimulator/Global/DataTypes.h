@@ -145,11 +145,11 @@ typedef struct _RSmem{
 	int isReady;
 } RSmem;
 
-//Data Structure for renaming register
-typedef struct _RenameReg{
+//Data Structure for register status table
+typedef struct _RegStatus{
     int reorderNum;
     int busy;
-}RenameReg;
+}RegStatus;
 
 //main data structure representing CPU
 typedef struct _cpu {
