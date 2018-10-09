@@ -112,6 +112,7 @@ typedef struct _ROB{
 	int DestAddr; // optional, memory address to write
 	int isBranch;
 	int isAfterBranch;
+	int isCorrectPredict;
 }ROB;
 
 //Data structure for reservation stations
