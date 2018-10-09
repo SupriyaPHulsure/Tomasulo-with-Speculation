@@ -84,6 +84,32 @@ void printFPRegisters () {
 	}
 }
 
+void printIntegerRegistersStatus () {
+	int i;
+
+	printf ("-----------------\n");
+	printf ("Integer Registers Status\n");
+	printf ("-----------------\n");
+
+	for (i = 0; i < numberOfIntRegisters; i++) {
+	    if(cpu -> IntRegStatus [i]->busy == 1)
+		    printf ("Int_Reg[%d] is busy with reorder buffer number %d\n", i, cpu -> IntRegStatus [i] -> reorderNum);
+	}
+}
+
+void printFPRegistersStatus () {
+	int i;
+
+	printf ("-----------------\n");
+	printf ("Floating Point Registers Status\n");
+	printf ("-----------------\n");
+
+	for (i = 0; i < numberOfIntRegisters; i++) {
+	    if(cpu -> FPRegStatus [i]->busy == 1)
+		    printf ("FP_Reg[%d] is busy with reorder buffer number %d\n", i, cpu -> FPRegStatus [i] -> reorderNum);
+	}
+}
+
 void printFetchBuffer () {
 	DictionaryEntry *current;
 
@@ -142,20 +168,16 @@ void printRenamingRegisters () {
 		printf ("-----------------\n");
 		printf ("Renaming Integer Registers\n");
 		printf ("-----------------\n");
-        RenameReg *renamingReg;
 		for (current = cpu -> renameRegInt -> head; current != NULL; current = current -> next){
-		    renamingReg = current -> value -> value;
-			printf ("Register number %d: reorder number %d\n", *((int*)current -> key), renamingReg -> reorderNum);
+			printf ("Renaming register number %d: value %d\n", *((int*)current -> key), *((int*)current -> value -> value));
 	    }
 	}
 	if (cpu -> renameRegFP != NULL) {
 		printf ("-----------------\n");
 		printf ("Renaming Floating Pointer Registers\n");
 		printf ("-----------------\n");
-        RenameReg *renamingReg;
 		for (current = cpu -> renameRegFP -> head; current != NULL; current = current -> next){
-		    renamingReg = current -> value -> value;
-			printf ("Register number %d: reorder number %d\n", *((int*)current -> key), renamingReg -> reorderNum);
+			printf ("Renaming register number %d: value %f\n", *((int*)current -> key), *((float*)current -> value -> value));
 	    }
 	}
 }
@@ -250,12 +272,12 @@ void printROB()
 		printf ("-----------------\n");
 		printf ("Reored Buffer\n");
 		printf ("-----------------\n");
-		printf("ROB_number  |Instr add|State| Dest Reg  | Dest Value   |  isReady  |  isIntegerReg | DestValueFloatReg | isStore\n");
+		printf("ROB_number  |Instr add|State| Dest Reg  | isReady  |  isIntegerReg | isStore\n");
 			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
 		ROBentry = cpu->reorderBuffer -> items[i];
 		while(ROBentry != NULL){
 
-			printf("%d\t\t\%d\t\t%s\t\t%d\t%d\t\t%d\t\t%d\t%f\t%d\n", i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> DestValueIntReg, ROBentry -> isReady, ROBentry->isINT, ROBentry -> DestValueFloatReg, ROBentry ->isStore);
+			printf("%d\t\t%d\t\t%s\t\t%d\t%d\t\t%d\t\t%d\n", i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> isReady, ROBentry->isINT, ROBentry ->isStore);
 			i++;
 			ROBentry = cpu->reorderBuffer -> items[i];
 			

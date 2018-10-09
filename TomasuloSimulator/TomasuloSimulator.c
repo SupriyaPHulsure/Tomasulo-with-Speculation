@@ -60,8 +60,9 @@ int main(int argc, char** argv) {
         printInstructionQueue();
         printReservationStations();
         printRenamingRegisters();
+        printIntegerRegistersStatus();
+        printFPRegistersStatus();
         printROB();
-
 
     }
 	printROB();
