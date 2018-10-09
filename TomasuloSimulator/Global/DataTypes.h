@@ -223,7 +223,9 @@ typedef struct _cpu {
     int stallFullROB;
     int stallFullRS;
     //ROB name Counter
-    int robCounter; 
+    int robCounter;
+    //Flag of instructions after a predicted branch.
+    int isAfterBranch;
 
 
 } CPU;
