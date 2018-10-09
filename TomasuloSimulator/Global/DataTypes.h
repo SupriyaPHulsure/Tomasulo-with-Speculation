@@ -110,6 +110,8 @@ typedef struct _ROB{
 	int isINT;
 	int isStore;
 	int DestAddr; // optional, memory address to write
+	int isBranch;
+	int isAfterBranch;
 }ROB;
 
 //Data structure for reservation stations
@@ -199,6 +201,9 @@ typedef struct _cpu {
     //Renaming registers
     Dictionary *renameRegInt;
     Dictionary *renameRegFP;
+    //Register status table
+    RegStatus **IntRegStatus;
+    RegStatus **FPRegStatus;
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
