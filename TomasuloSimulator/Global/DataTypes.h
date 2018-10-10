@@ -142,8 +142,8 @@ typedef struct _RSint{
 
 typedef struct _RSfloat{
 	Instruction *instruction;
-	float Vj; //value of input register j
-	float Vk; //value of input register k
+	double Vj; //value of input register j
+	double Vk; //value of input register k
 	int Qj; //ROB number of input register j
 	int Qk;  //ROB number of input register j
 	int Dest; //ROB number of destination register
@@ -155,7 +155,7 @@ typedef struct _RSmem{
     int Vj; //value of input register j
     int address; //address for memory operation (Vj + instruction -> immediate)
     int iVk; //value of input register k if int
-    float fpVk; //value of input register k if float
+    double fpVk; //value of input register k if float
     int Qj; //ROB number of input register j
 	int Qk;  //ROB number of input register k
 	int Dest; //ROB number of destination register

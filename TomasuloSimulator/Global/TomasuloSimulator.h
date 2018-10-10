@@ -76,5 +76,7 @@ void printReservationStations();
 void printROB();
 void printRenamingRegisters ();
 void printInstructionQueueResult ();
+void printIntegerRegistersStatus ();
+void printFPRegistersStatus () ;
 
 #endif /* GLOBAL_TOMASULOSIMULATOR_H_ */
