@@ -85,7 +85,6 @@ typedef struct _completedInstruction {
     double fpResult;
     int address; //used to keep address for SD and S.D
     int ROB_number;
-	int RRNo;
 } CompletedInstruction;
 
 //data structure for each item in integer registers and work as well register status
@@ -113,21 +112,8 @@ typedef struct _ROB{
 	int DestAddr; // optional, memory address to write
 	int isBranch;
 	int isAfterBranch;
-	int isCorrectPredicted;
+	int isCorrectPredict;
 }ROB;
-
-//data structure for Common Data bus
-typedef struct _cdb{
-	int ROB_number;
-	Instruction *instruction;
-	int IntResult;
-	int floatResult;
-	int memaddress; // for store instructions
-	int isROBCommit;
-	int isINT;
-	int isStore;
-	int isBranch;
-}CDB;
 
 //Data structure for reservation stations
 typedef struct _RSint{
@@ -249,7 +235,9 @@ typedef struct _cpu {
     int stallFullROB;
     int stallFullRS;
     //ROB name Counter
-    int robCounter; 
+    int robCounter;
+    //Flag of instructions after a predicted branch.
+    int isAfterBranch;
 
 
 } CPU;
