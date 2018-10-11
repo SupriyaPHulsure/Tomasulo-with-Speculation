@@ -43,8 +43,8 @@ int numberOfInstruction;
 //Number of reservation stations of each unit
 int numberRSint;
 int numberRSmult;
-int numberRSload;
-int numberRSstore;
+int numberBufferLoad;
+int numberBufferStore;
 int numberRSfpAdd;
 int numberRSfpMult;
 int numberRSfpDiv;

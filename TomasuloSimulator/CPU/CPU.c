@@ -997,13 +997,27 @@ int issueInstruction(Instruction *instruction){
             }
             break;
         case L_D:
+        	renameRegFull = renameRegIsFull(cpu->renameRegFP, instruction -> ft);
+            if (renameRegFull!=1){
+                rsType = "Load";
+                issued = addLoadStore2Buffer(cpu->loadBuffer, cpu->loadBufferResult,
+                         rsType, numberBufferLoad, instruction);
+            }
+            break;
+
         case LD:
-            //TODO:merge with Dillon's code
+        	renameRegFull = renameRegIsFull(cpu->renameRegInt, instruction -> rt);
+            if (renameRegFull!=1){
+                rsType = "Load";
+                issued = addLoadStore2Buffer(cpu->loadBuffer, cpu->loadBufferResult,
+                         rsType, numberBufferLoad, instruction);
+            }
+            break;
         case SD:
         case S_D:
-            //Do not need to check renameRegFull
-            //TODO: merge with Dillon's code
-            issued = 1;
+            rsType = "Store";
+            issued = addLoadStore2Buffer(cpu->loadBuffer, cpu->loadBufferResult,
+                     rsType, numberBufferLoad, instruction);           
             break;
         case BNE:
         case BNEZ:
@@ -2013,19 +2027,15 @@ int runClockCycle (int NF, int NI, int NW, int NB) {
     issueUnit(NW);
 
     printf("Finished issue.\n");
+    
+	insertintoWriteBackBuffer();
+	CommitUnit(NB);
 
-    //execute();
-
-    printf ("Finished execute.\n");
-
-    updateFetchBuffer();
+	updateFetchBuffer();
     updateInstructionQueue();
     updateReservationStations();
 
     printf("Finished update.\n");
-
-	insertintoWriteBackBuffer();
-	CommitUnit(NB);
 	
 
 

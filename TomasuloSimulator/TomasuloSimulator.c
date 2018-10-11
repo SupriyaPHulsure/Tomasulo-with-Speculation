@@ -17,8 +17,8 @@ int cacheLineSize = 4; //CLS
 //Number of reservation stations of each unit
 int numberRSint = 4;
 int numberRSmult = 2;
-int numberRSload = 2;
-int numberRSstore = 2;
+int numberBufferLoad = 2;
+int numberBufferStore = 2;
 int numberRSfpAdd = 3;
 int numberRSfpMult = 4;
 int numberRSfpDiv = 2;

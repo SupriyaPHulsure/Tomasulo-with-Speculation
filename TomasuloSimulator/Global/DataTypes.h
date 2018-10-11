@@ -191,13 +191,13 @@ typedef struct _cpu {
     //Reservation station
     Dictionary *resStaInt;
     Dictionary *resStaMult;
-    Dictionary *resStaLoad;
-    Dictionary *resStaStore;
     Dictionary *resStaFPadd;
     Dictionary *resStaFPmult;
     Dictionary *resStaFPdiv;
     Dictionary *resStaBU;
-
+ 	//Load and Store buffer
+    Dictionary *loadBuffer;
+    Dictionary *storeBuffer;
 
     Dictionary *resStaIntResult;
     Dictionary *resStaMultResult;
@@ -224,10 +224,7 @@ typedef struct _cpu {
     CircularQueue *FPdivPipeline;
     int FPdivPipelineBusy;
     CircularQueue *BUPipeline;
-	
-    //Load and Store buffer
-    Dictionary *loadBuffer;
-    Dictionary *storeBuffer;
+
     //Install flag
     int stallNextFetch;
     //Stall counter
