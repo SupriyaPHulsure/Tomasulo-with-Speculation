@@ -112,6 +112,7 @@ typedef struct _ROB{
 	int DestAddr; // optional, memory address to write
 	int isBranch;
 	int isAfterBranch;
+	int isCorrectPredict;
 }ROB;
 
 //Data structure for reservation stations
@@ -127,8 +128,8 @@ typedef struct _RSint{
 
 typedef struct _RSfloat{
 	Instruction *instruction;
-	float Vj; //value of input register j
-	float Vk; //value of input register k
+	double Vj; //value of input register j
+	double Vk; //value of input register k
 	int Qj; //ROB number of input register j
 	int Qk;  //ROB number of input register j
 	int Dest; //ROB number of destination register
@@ -140,7 +141,7 @@ typedef struct _RSmem{
     int Vj; //value of input register j
     int address; //address for memory operation (Vj + instruction -> immediate)
     int iVk; //value of input register k if int
-    float fpVk; //value of input register k if float
+    double fpVk; //value of input register k if float
     int Qj; //ROB number of input register j
 	int Qk;  //ROB number of input register k
 	int Dest; //ROB number of destination register
@@ -152,6 +153,7 @@ typedef struct _RegStatus{
     int reorderNum;
     int busy;
 }RegStatus;
+
 
 //main data structure representing CPU
 typedef struct _cpu {
@@ -178,8 +180,14 @@ typedef struct _cpu {
     CircularQueue *instructionQueue;
     CircularQueue *instructionQueueResult;
     Dictionary *branchTargetBuffer;
+	
     //Reorder buffer
     CircularQueue *reorderBuffer;
+	CircularQueue *reorderBufferResult;
+	CircularQueue *CDBBuffer;  
+	Dictionary *WriteBackBuffer;
+	Dictionary *WriteBackBufferResult;
+	
     //Reservation station
     Dictionary *resStaInt;
     Dictionary *resStaMult;
@@ -190,10 +198,11 @@ typedef struct _cpu {
     Dictionary *resStaFPdiv;
     Dictionary *resStaBU;
 
+
     Dictionary *resStaIntResult;
     Dictionary *resStaMultResult;
-    Dictionary *resStaLoadResult;
-    Dictionary *resStaStoreResult;
+    Dictionary *loadBufferResult;
+    Dictionary *storeBufferResult;
     Dictionary *resStaFPaddResult;
     Dictionary *resStaFPmultResult;
     Dictionary *resStaFPdivResult;
@@ -201,9 +210,11 @@ typedef struct _cpu {
     //Renaming registers
     Dictionary *renameRegInt;
     Dictionary *renameRegFP;
-    //Register status table
+
+	//Register status table
     RegStatus **IntRegStatus;
     RegStatus **FPRegStatus;
+	
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
@@ -213,6 +224,7 @@ typedef struct _cpu {
     CircularQueue *FPdivPipeline;
     int FPdivPipelineBusy;
     CircularQueue *BUPipeline;
+	
     //Load and Store buffer
     Dictionary *loadBuffer;
     Dictionary *storeBuffer;
@@ -222,7 +234,9 @@ typedef struct _cpu {
     int stallFullROB;
     int stallFullRS;
     //ROB name Counter
-    int robCounter; 
+    int robCounter;
+    //Flag of instructions after a predicted branch.
+    int isAfterBranch;
 
 
 } CPU;

@@ -27,6 +27,7 @@ int numberRSbu = 2;
 //Number of renaming registers
 int numberRenameReg = 8;
 
+
 int main(int argc, char** argv) {
 	//Validate command line argument
 
@@ -50,30 +51,36 @@ int main(int argc, char** argv) {
 
 	printCodeLabels (); //print data cache
 
-	initializeCPU (NI, NR); //initialize CPU data structure
+	initializeCPU (NI, NR, NB); //initialize CPU data structure
 
     int test_cycle;
-    for (test_cycle = 0; test_cycle < 5; test_cycle ++){
-        runClockCycle(NF, NI, NW);
-        //printFetchBuffer();
 
+
+    for (test_cycle = 0; test_cycle < 10; test_cycle ++){
+        runClockCycle(NF, NI, NW, NB);
+
+        //printFetchBuffer();
+		
         printInstructionQueue();
         printReservationStations();
         printRenamingRegisters();
+        printIntegerRegistersStatus();
+        printFPRegistersStatus();
         printROB();
 
 
     }
-	printROB();
+	//printROB();
+	
 	//while (runClockCycle()); //loop emulating simulator clock cycles
 
     /*
 	printDataCache (); //print data cache
 
-
+*/
 	printIntegerRegisters (); //print integer registers
 	printFPRegisters (); //print floating point registers
-	*/
+	
 
 	return 0;
 }

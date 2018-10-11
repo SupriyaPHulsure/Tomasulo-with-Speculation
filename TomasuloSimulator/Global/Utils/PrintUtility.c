@@ -84,6 +84,32 @@ void printFPRegisters () {
 	}
 }
 
+void printIntegerRegistersStatus () {
+	int i;
+
+	printf ("-----------------\n");
+	printf ("Integer Registers Status\n");
+	printf ("-----------------\n");
+
+	for (i = 0; i < numberOfIntRegisters; i++) {
+	    if(cpu -> IntRegStatus [i]->busy == 1)
+		    printf ("Int_Reg[%d] is busy with reorder buffer number %d\n", i, cpu -> IntRegStatus [i] -> reorderNum);
+	}
+}
+
+void printFPRegistersStatus () {
+	int i;
+
+	printf ("-----------------\n");
+	printf ("Floating Point Registers Status\n");
+	printf ("-----------------\n");
+
+	for (i = 0; i < numberOfIntRegisters; i++) {
+	    if(cpu -> FPRegStatus [i]->busy == 1)
+		    printf ("FP_Reg[%d] is busy with reorder buffer number %d\n", i, cpu -> FPRegStatus [i] -> reorderNum);
+	}
+}
+
 void printFetchBuffer () {
 	DictionaryEntry *current;
 
@@ -142,20 +168,16 @@ void printRenamingRegisters () {
 		printf ("-----------------\n");
 		printf ("Renaming Integer Registers\n");
 		printf ("-----------------\n");
-        RenameReg *renamingReg;
 		for (current = cpu -> renameRegInt -> head; current != NULL; current = current -> next){
-		    renamingReg = current -> value -> value;
-			printf ("Register number %d: reorder number %d\n", *((int*)current -> key), renamingReg -> reorderNum);
+			printf ("Renaming register number %d: value %d\n", *((int*)current -> key), *((int*)current -> value -> value));
 	    }
 	}
 	if (cpu -> renameRegFP != NULL) {
 		printf ("-----------------\n");
 		printf ("Renaming Floating Pointer Registers\n");
 		printf ("-----------------\n");
-        RenameReg *renamingReg;
 		for (current = cpu -> renameRegFP -> head; current != NULL; current = current -> next){
-		    renamingReg = current -> value -> value;
-			printf ("Register number %d: reorder number %d\n", *((int*)current -> key), renamingReg -> reorderNum);
+			printf ("Renaming register number %d: value %f\n", *((int*)current -> key), *((float*)current -> value -> value));
 	    }
 	}
 }
@@ -165,14 +187,14 @@ void printReservationStations () {
 		printf ("-----------------\n");
 		printf ("Reservation Station INT\n");
 		printf ("-----------------\n");
-		printf("Instruction address|Op code| Vj|Vk|Qj|Qk|Destination ROB#|isReady\n");
+		printf("Instruction address|  Op code  |  Vj  |  Vk  |  Qj  |  Qk  |Destination ROB#|isReady\n");
         printf ("------------------------------------------------------------------------------------------------\n");
 
         DictionaryEntry *current;
         RSint *RS;
 		for (current = cpu -> resStaInt -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("%d\t%s\t%d\t%d\t%d\t%d\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t%d\t\t%s\t  %d\t%d\t%d\t%d\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady);
 		}
 	}
@@ -180,14 +202,14 @@ void printReservationStations () {
 		printf ("-----------------\n");
 		printf ("Reservation Station MULT\n");
 		printf ("-----------------\n");
-		printf("Instruction address|Op code| Vj|Vk|Qj|Qk|Destination ROB#|isReady\n");
+		printf("Instruction address|  Op code  |  Vj  |  Vk  |  Qj  |  Qk  |Destination ROB#|isReady\n");
         printf ("------------------------------------------------------------------------------------------------\n");
 
         DictionaryEntry *current;
         RSint *RS;
 		for (current = cpu -> resStaMult -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("%d\t%s\t%d\t%d\t%d\t%d\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t%d\t\t%s\t  %d\t%d\t%d\t%d\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady);
 		}
 	}
@@ -195,14 +217,14 @@ void printReservationStations () {
 		printf ("-----------------\n");
 		printf ("Reservation Station FPadd\n");
 		printf ("-----------------\n");
-		printf("Instruction address|Op code| Vj|Vk|Qj|Qk|Destination ROB#|isReady\n");
+		printf("Instruction address|  Op code  |  Vj  |  Vk  |  Qj  |  Qk  |Destination ROB#|isReady\n");
         printf ("------------------------------------------------------------------------------------------------\n");
 
         DictionaryEntry *current;
         RSfloat *RS;
 		for (current = cpu -> resStaFPadd -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("%d\t%s\t%f\t%f\t%d\t%d\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t%d\t\t%s\t  %.1f\t%.1f\t%d\t%d\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady);
 		}
 	}
@@ -210,14 +232,14 @@ void printReservationStations () {
 		printf ("-----------------\n");
 		printf ("Reservation Station FPmult\n");
 		printf ("-----------------\n");
-		printf("Instruction address|Op code| Vj|Vk|Qj|Qk|Destination ROB#|isReady\n");
+		printf("Instruction address|  Op code  |  Vj  |  Vk  |  Qj  |  Qk  |Destination ROB#|isReady\n");
         printf ("------------------------------------------------------------------------------------------------\n");
 
         DictionaryEntry *current;
         RSfloat *RS;
 		for (current = cpu -> resStaFPmult -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("%d\t%s\t%f\t%f\t%d\t%d\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t%d\t\t%s\t  %.1f\t%.1f\t%d\t%d\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady);
 		}
 	}
@@ -225,20 +247,35 @@ void printReservationStations () {
 		printf ("-----------------\n");
 		printf ("Reservation Station FPdiv\n");
 		printf ("-----------------\n");
-		printf("Instruction address|Op code| Vj|Vk|Qj|Qk|Destination ROB#|isReady\n");
+		printf("Instruction address|  Op code  |  Vj  |  Vk  |  Qj  |  Qk  |Destination ROB#|isReady\n");
         printf ("------------------------------------------------------------------------------------------------\n");
 
         DictionaryEntry *current;
         RSfloat *RS;
 		for (current = cpu -> resStaFPdiv -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("%d\t%s\t%f\t%f\t%d\t%d\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t%d\t\t%s\t  %.1f\t%.1f\t%d\t%d\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady);
+		}
+	}
+
+	if (cpu -> resStaBU != NULL) {
+		printf ("-----------------\n");
+		printf ("Reservation Station BU\n");
+		printf ("-----------------\n");
+		printf("Instruction address|  Op code  |  Vj  |  Vk  |  Qj  |  Qk  |Destination ROB#|isReady\n");
+        printf ("------------------------------------------------------------------------------------------------\n");
+
+        DictionaryEntry *current;
+        RSint *RS;
+		for (current = cpu -> resStaBU -> head; current != NULL; current = current -> next){
+		    RS = current -> value -> value;
+		    printf("\t%d\t\t%s\t  %d\t%d\t%d\t%d\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady);
 		}
 	}
 
 }
-
 
 
 void printROB()
@@ -250,16 +287,30 @@ void printROB()
 		printf ("-----------------\n");
 		printf ("Reored Buffer\n");
 		printf ("-----------------\n");
-		printf("ROB_number  |Instr add|State| Dest Reg  | Dest Value   |  isReady  |  isIntegerReg | DestValueFloatReg | isStore\n");
+		printf("ROB_number  |Instr add|State| Dest Reg  | isReady  |  isIntegerReg | isStore | isBranch   | isAfterBranch  | isCorrectPredict\n");
+
 			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
 		ROBentry = cpu->reorderBuffer -> items[i];
 		while(ROBentry != NULL){
-
-			printf("%d\t\t\%d\t\t%s\t\t%d\t%d\t\t%d\t\t%d\t%f\t%d\n", i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> DestValueIntReg, ROBentry -> isReady, ROBentry->isINT, ROBentry -> DestValueFloatReg, ROBentry ->isStore);
+			printf("%d\t\t%d\t%s\t%d\t\t%d\t%d\t\t%d\t %d\t%d\t%d\n", i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> isReady, ROBentry->isINT, ROBentry ->isStore,ROBentry ->  isBranch,ROBentry -> isAfterBranch, ROBentry ->  isCorrectPredict);
 			i++;
 			ROBentry = cpu->reorderBuffer -> items[i];
 			
 		}
+	}
+}
+
+
+void printWriteBackBuffer () {
+	DictionaryEntry *current;
+
+	if (cpu -> WriteBackBuffer != NULL) {
+		printf ("-----------------\n");
+		printf ("Write Back Buffer\n");
+		printf ("-----------------\n");
+
+		for (current = cpu -> WriteBackBuffer -> head; current != NULL; current = current -> next)
+			printf ("%d: \n", *((int*)current -> key)); //getOpcodeString ((int) (current -> value -> value -> instruction -> op)));
 	}
 }
 
