@@ -125,6 +125,7 @@ typedef struct _RSint{
 	int Qk;  //ROB number of input register k
 	int Dest; //ROB number of destination register
 	int isReady;
+	int isExecuting;
 }RSint;
 
 typedef struct _RSfloat{
@@ -135,6 +136,7 @@ typedef struct _RSfloat{
 	int Qk;  //ROB number of input register j
 	int Dest; //ROB number of destination register
 	int isReady;
+	int isExecuting;
 }RSfloat;
 
 typedef struct _RSmem{
@@ -147,6 +149,7 @@ typedef struct _RSmem{
 	int Qk;  //ROB number of input register k
 	int Dest; //ROB number of destination register
 	int isReady;
+	int isExecuting;
 } RSmem;
 
 //Data Structure for register status table
