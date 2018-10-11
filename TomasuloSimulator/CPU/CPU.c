@@ -910,16 +910,20 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
         }
         RS -> address = -1;
         addDictionaryEntry(LOrSBufferResult, &(RS->Dest), RS);
-        //Add to renaming registers if load
+        //Add to renaming registers and update Register Status if load
         if (strcmp(buffType, "Load") == 0) {
             if (instruction -> op == L_D) {
                 RegStatusEntry = cpu -> FPRegStatus[instruction -> ft];
+                RegStatusEntry->busy = 1;
+        		RegStatusEntry->reorderNum = DestROBnum;
                 void *valuePtr = malloc(sizeof(double));
                 *((double*)valuePtr) = 0;
                 removeDictionaryEntriesByKey(cpu -> renameRegFP, &(RS -> Dest));
                 addDictionaryEntry(cpu -> renameRegFP, &(RS -> Dest), valuePtr);
             } else {
                 RegStatusEntry = cpu -> FPRegStatus[instruction -> rt];
+                RegStatusEntry->busy = 1;
+        		RegStatusEntry->reorderNum = DestROBnum;
                 void *valuePtr = malloc(sizeof(int));
                 *((int*)valuePtr) = 0;
                 removeDictionaryEntriesByKey(cpu -> renameRegInt, &(RS->Dest));
