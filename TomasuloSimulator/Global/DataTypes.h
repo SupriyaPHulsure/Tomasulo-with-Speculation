@@ -84,6 +84,7 @@ typedef struct _completedInstruction {
     int intResult;
     double fpResult;
     int address; //used to keep address for SD and S.D
+    int isCorrectPredict;
     int ROB_number;
 } CompletedInstruction;
 

@@ -20,6 +20,7 @@ int compareRegNumber (void *RegNumber1, void *RegNumber2);
 
 DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat);
 void printPipeline(void *instruction, char *pipeline, int entering);
+void branchHelper(CompletedInstruction *instructionAndResult);
 
 int fetchMultiInstructionUnit(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
@@ -1409,6 +1410,7 @@ CompletedInstruction **execute(){
                 break;
             case BNE:
                 instructionAndResult -> intResult = rsint -> Vj != rsint -> Vk ? 0 : -1;
+                branchHelper (instructionAndResult);
                 BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
@@ -1416,6 +1418,7 @@ CompletedInstruction **execute(){
                 break;
             case BNEZ:
                 instructionAndResult -> intResult = rsint -> Vj != 0 ? 0 : -1;
+                branchHelper (instructionAndResult);
                 BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
@@ -1423,6 +1426,7 @@ CompletedInstruction **execute(){
                 break;
             case BEQ:
                 instructionAndResult -> intResult = rsint -> Vj == rsint -> Vk ? 0 : -1;
+                branchHelper (instructionAndResult);
                 BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
@@ -1430,6 +1434,7 @@ CompletedInstruction **execute(){
                 break;
             case BEQZ:
                 instructionAndResult -> intResult = rsint -> Vj == 0 ? 0 : -1;
+                branchHelper (instructionAndResult);
                 BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
@@ -2158,5 +2163,43 @@ void flushInstructionQueueFetchBuffer(int NI){
 	//Set flag to 0
 	cpu->isAfterBranch = 0;
     }
+
+/*
+ * Determines if branch was predicted correctly or not and updates CPU accordingly.
+ */
+void branchHelper (CompletedInstruction *instructionAndResult) {
+    int NI = cpu -> instructionQueue -> size;
+    int *targetAddress = &(instructionAndResult -> instruction -> target);
+    DictionaryEntry *BTBEntry = getValueChainByDictionaryKey (cpu -> branchTargetBuffer, targetAddress);
+    if (instructionAndResult -> intResult == 0) { //branch taken
+        if (BTBEntry == NULL) { //predicted not taken
+            addDictionaryEntry (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address),
+             targetAddress);
+            instructionAndResult -> isCorrectPredict = 0;
+            flushInstructionQueueFetchBuffer (NI);
+            cpu -> PC = *targetAddress;
+        } else { //predicted taken
+            if (*(int *)(BTBEntry -> value -> value) == *targetAddress) {
+                instructionAndResult -> isCorrectPredict = 1;
+            } else {
+                removeDictionaryEntriesByKey (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address));
+                addDictionaryEntry (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address),
+                 targetAddress);
+                 instructionAndResult -> isCorrectPredict = 0;
+                 flushInstructionQueueFetchBuffer (NI);
+                 cpu -> PC = *targetAddress;
+            }
+        }
+    } else { //branch not taken
+        if (BTBEntry != NULL) { //predicted taken
+            removeDictionaryEntriesByKey (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address));
+            instructionAndResult -> isCorrectPredict = 0;
+            flushInstructionQueueFetchBuffer (NI);
+            cpu -> PC = instructionAndResult -> instruction -> address + 4;
+        } else { //predicted not taken
+            instructionAndResult -> isCorrectPredict = 1;
+        }
+    }
+}
 
 
