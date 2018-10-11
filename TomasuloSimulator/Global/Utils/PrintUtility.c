@@ -275,6 +275,38 @@ void printReservationStations () {
 		}
 	}
 
+	if (cpu -> loadBuffer != NULL) {
+		printf ("-----------------\n");
+		printf ("Load Buffer\n");
+		printf ("-----------------\n");
+		printf("Instruction address|  Op code  |  Vj  |  iVk  |  fpVk |  Qj  |  Qk  |Destination ROB#|isReady\n");
+        printf ("------------------------------------------------------------------------------------------------\n");
+
+        DictionaryEntry *current;
+        RSmem *RS;
+		for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
+		    RS = current -> value -> value;
+		    printf("\t%d\t\t%s\t  %d\t  %d\t%.1f\t%d\t%d\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    RS->Vj, RS->iVk, RS->fpVk, RS->Qj, RS->Qk, RS->Dest, RS->isReady);
+		}
+	}
+
+	if (cpu -> storeBuffer != NULL) {
+		printf ("-----------------\n");
+		printf ("Store Buffer\n");
+		printf ("-----------------\n");
+		printf("Instruction address|  Op code  |  Vj  |  iVk  |  fpVk |  Qj  |  Qk  |Destination ROB#|isReady\n");
+        printf ("------------------------------------------------------------------------------------------------\n");
+
+        DictionaryEntry *current;
+        RSmem *RS;
+		for (current = cpu -> storeBuffer -> head; current != NULL; current = current -> next){
+		    RS = current -> value -> value;
+		    printf("\t%d\t\t%s\t  %d\t  %d\t%.1f\t%d\t%d\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    RS->Vj, RS->iVk, RS->fpVk, RS->Qj, RS->Qk, RS->Dest, RS->isReady);
+		}
+	}
+
 }
 
 
