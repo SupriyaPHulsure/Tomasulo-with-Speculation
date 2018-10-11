@@ -214,8 +214,8 @@ typedef struct _cpu {
     int FPdivPipelineBusy;
     CircularQueue *BUPipeline;
     //Load and Store buffer
-    CircularQueue *loadBuffer;
-    CircularQueue *storeBuffer;
+    Dictionary *loadBuffer;
+    Dictionary *storeBuffer;
     //Install flag
     int stallNextFetch;
     //Stall counter

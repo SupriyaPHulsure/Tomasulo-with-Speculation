@@ -106,26 +106,26 @@ void initializeCPU (int NI, int NR) {
 	cpu -> renameRegInt = createDictionary(getHashCodeFromRegNumber, compareRegNumber);
 	cpu -> renameRegFP = createDictionary(getHashCodeFromRegNumber, compareRegNumber);
 
-    //Initialize reservation stations
+    //Initialize reservation stations and load/store buffers
     cpu -> resStaInt = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaMult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaLoad = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaStore = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> loadBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> storeBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPadd = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPmult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPdiv = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaBU = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaIntResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaMultResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaLoadResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaStoreResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> loadBufferResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+    cpu -> storeBufferResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPaddResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPmultResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPdivResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaBUResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     //Initialize load/store buffers
-    cpu -> loadBuffer = createCircularQueue(4);
-    cpu -> storeBuffer = createCircularQueue(6);
+//    cpu -> loadBuffer = createCircularQueue(4);
+//    cpu -> storeBuffer = createCircularQueue(6);
     //Initialize Reorder buffer
     cpu -> reorderBuffer = createCircularQueue(NR);
     //Initialize Stall counters
@@ -230,11 +230,17 @@ void updateReservationStations(){
     while((RSEntry = popDictionaryEntry(cpu -> resStaMultResult)) != NULL){
         appendDictionaryEntry(cpu -> resStaMult, RSEntry);
     }
-    while((RSEntry = popDictionaryEntry(cpu -> resStaLoadResult)) != NULL){
-        appendDictionaryEntry(cpu -> resStaLoad, RSEntry);
+//    while((RSEntry = popDictionaryEntry(cpu -> resStaLoadResult)) != NULL){
+//        appendDictionaryEntry(cpu -> resStaLoad, RSEntry);
+//    }
+//    while((RSEntry = popDictionaryEntry(cpu -> resStaStoreResult)) != NULL){
+//        appendDictionaryEntry(cpu -> resStaStore, RSEntry);
+//    }
+    while ((RSEntry = popDictionaryEntry (cpu -> loadBufferResult)) != NULL) {
+        appendDictionaryEntry (cpu -> loadBuffer, RSEntry);
     }
-    while((RSEntry = popDictionaryEntry(cpu -> resStaStoreResult)) != NULL){
-        appendDictionaryEntry(cpu -> resStaStore, RSEntry);
+    while ((RSEntry = popDictionaryEntry (cpu -> storeBufferResult)) != NULL) {
+        appendDictionaryEntry (cpu -> storeBuffer, RSEntry);
     }
     while((RSEntry = popDictionaryEntry(cpu -> resStaFPaddResult)) != NULL){
         appendDictionaryEntry(cpu -> resStaFPadd, RSEntry);
@@ -712,6 +718,107 @@ int addInstruction2RSfloat(Dictionary *renameReg, Dictionary *resSta, Dictionary
     }
 }
 
+/**
+ * Takes an instruction and adds it to the given reservation station.
+ * @return int 1 if successfully added, 0 otherwise.
+ */
+int addLoadStore2Buffer(Dictionary *renameReg, Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
+                         char *buffType, int maxLenBuff, Instruction *instruction) {
+    int counterUnit;
+    int counterUnitResult;
+    RSmem* RS = (RSmem*) malloc (sizeof(RSmem));
+    counterUnit = countDictionaryLen(LOrSBuffer);
+    counterUnitResult = countDictionaryLen(LOrSBufferResult);
+    if (strcmp(buffType, "Load") == 0 && countDictionaryLen (cpu -> storeBuffer) != 0) {
+        printf("Stall Load during Issue Unit because of earlier store in queue.\n");
+        return 0;
+    }
+    if (maxLenBuff - counterUnit - counterUnitResult > 0){
+        RSmem *bufferItem;
+        int i;
+        RS -> isReady = 1; //Will be set to 0 later if necessary
+        DictionaryEntry *renameRegEntry;
+        int DestROBnum = cpu -> reorderBuffer->tail;
+        renameRegEntry = getValueChainByDictionaryKey(renameReg, &instruction->rs);
+        if (renameRegEntry != NULL){
+            int robNum = ((RegStatus *)renameRegEntry -> value -> value) -> reorderNum;
+            if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
+                RS -> Vj = ((ROB *)cpu -> reorderBuffer -> items[robNum]) -> DestValueIntReg;
+                RS -> Qj = -1;
+            }
+            else{
+                RS -> Qj = robNum;
+                RS->isReady = 0;
+            }
+        }else{
+            RS -> Vj = cpu->integerRegisters[instruction->rs]->data;
+            RS -> Qj = -1;
+        }
+        RS->Dest = DestROBnum;
+        RS->instruction = instruction;
+         else if (strcmp(buffType, "Store") == 0) {
+            if (instruction -> op == S_D) {
+                renameRegEntry = getValueChainByDictionaryKey (renameReg, &instruction->ft);
+                if (renameRegEntry!=NULL){
+                    int robNum = ((RegStatus *)renameRegEntry -> value -> value) -> reorderNum;
+                    if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
+                        RS -> fpVk = ((ROB *)cpu -> reorderBuffer -> items[robNum]) -> DestValueFloatReg;
+                        RS -> Qk = -1;
+                    }
+                    else{
+                        RS -> Qk = robNum;
+                        RS->isReady = 0;
+                    }
+                }else{
+                    RS -> Vk = cpu->floatingPointRegisters[instruction->ft]->data;
+                    RS -> Qk = -1;
+                }
+            } else {
+                renameRegEntry = getValueChainByDictionaryKey(renameReg, &instruction->rt);
+                if (renameRegEntry!=NULL){
+                    int robNum = ((RenameReg *)renameRegEntry -> value -> value) -> reorderNum;
+                    if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
+                        RS -> iVk = ((ROB *)cpu -> reorderBuffer -> items[robNum]) -> DestValueIntReg;
+                        RS -> Qk = -1;
+                        if(RS->isReady == 1)
+                            RS->isReady = 1;
+                    }
+                    else{
+                        RS -> Qk = robNum;
+                        RS->isReady = 0;
+                    }
+                }else{
+                    RS -> iVk = cpu->integerRegisters[instruction->rt]->data;
+                    RS -> Qk = -1;
+                }
+            }
+        } else {
+            printf(buffType);
+        }
+        RS -> address = -1;
+        appendDictionaryEntry(LOrSBufferResult, &(RS->Dest), RS);
+        //Add to renaming registers if load
+        if (strcmp(buffType, "Load") == 0) {
+            RegStatus *renamingReg = (RenameReg*)malloc(sizeof(RenameReg));
+            renamingReg -> reorderNum = DestROBnum;
+            renamingReg -> busy = 1;
+            if (instruction -> op == L_D) {
+                removeDictionaryEntriesByKey(renameReg, &(instruction->ft));
+                addDictionaryEntry(renameReg, &(instruction->ft), renamingReg);
+            } else {
+                removeDictionaryEntriesByKey(renameReg, &(instruction->rt));
+                addDictionaryEntry(renameReg, &(instruction->rt), renamingReg);
+            }
+        }
+        printf("Issued instruction %d: %s\n", instruction->address, getOpcodeString ((int) instruction->op));
+        return 1;
+    } else {
+        cpu -> stallFullRS ++;
+        printf("Stall during IssueUnit because %s buffer is full.\n", buffType);
+        return 0;
+    }
+}
+
 //Issue an instruction
 int issueInstruction(Instruction *instruction){
     if (isFullCircularQueue(cpu -> reorderBuffer)){
@@ -816,16 +923,6 @@ void issueUnit(int NW){
     }
 }
 
-
-
-/**
- * Takes an instruction and adds it to the given reservation station.
- * @return int 1 if successfully added, 0 otherwise.
- */
-int addLoadStoreToResSta(Instruction *instruction, Dictionary *reservationStation, int ROB_number) {
-
-}
-
 /**
  * Method that simulates pipelined Unit.
  * @return pointer to output instruction of the pipeline.
@@ -878,9 +975,14 @@ CompletedInstruction **execute(){
     DictionaryEntry **instructionsToExec = malloc(sizeof(DictionaryEntry *)*8);
     //Array for outputs of Units. See Unit enum in DataTypes.h
     static CompletedInstruction *unitOutputs[7];
-    int i, j, bufferCount, index, LSbufferInsert;
+    int i, j, index, LSbufferInsert;
     char *pipelineString;
     RSmem *bufferItem;
+    //variables for loads
+    RSmem *RSint;
+    int instructionFoundOrBubble;
+    DictionaryEntry *dictEntry;
+    CircularQueue *buff;
     //Temp pipelines to hold changes during execution
     CompletedInstruction *INTPipelineTemp = NULL;
     CompletedInstruction *MULTPipelineTemp = NULL;
@@ -899,7 +1001,6 @@ CompletedInstruction **execute(){
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
         instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, &(rsint -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaInt, &(rsint -> Dest));
     } else {
         instructionsToExec[0] = NULL;
     }
@@ -908,25 +1009,22 @@ CompletedInstruction **execute(){
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
         instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaMult, &(rsint -> Dest));
     } else {
         instructionsToExec[1] = NULL;
     }
-    dictEntry = (DictionaryEntry *)cpu -> resStaLoad -> head;
-    dictVal = checkReservationStation (dictEntry, 2);
+    dictEntry = (DictionaryEntry *)cpu -> loadBuffer -> head;
+    dictVal = checkReservationStation (dictEntry, 3);
     if (dictVal != NULL) {
         rsmem = (RSmem *)(dictVal -> value);
-        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> resStaLoad, &(rsmem -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaLoad, &(rsmem -> Dest));
+        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> loadBuffer, &(rsmem -> Dest));
     } else {
         instructionsToExec[2] = NULL;
     }
-    dictEntry = (DictionaryEntry *)cpu -> resStaStore -> head;
+    dictEntry = (DictionaryEntry *)cpu -> storeBuffer -> head;
     dictVal = checkReservationStation (dictEntry, 2);
     if (dictVal != NULL) {
         rsmem = (RSmem *)(dictVal -> value);
-        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> resStaStore, &(rsmem -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaStore, &(rsmem -> Dest));
+        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> storeBuffer, &(rsmem -> Dest));
     } else {
         instructionsToExec[3] = NULL;
     }
@@ -935,7 +1033,6 @@ CompletedInstruction **execute(){
     if (dictVal != NULL) {
         rsfloat = (RSfloat *)(dictVal -> value);
         instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
     } else {
         instructionsToExec[4] = NULL;
     }
@@ -944,7 +1041,6 @@ CompletedInstruction **execute(){
     if (dictVal != NULL) {
         rsfloat = (RSfloat *)(dictVal -> value);
         instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
     } else {
         instructionsToExec[5] = NULL;
     }
@@ -954,7 +1050,6 @@ CompletedInstruction **execute(){
         if (dictVal != NULL) {
             rsfloat = (RSfloat *)(dictVal -> value);
             instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
-            removeDictionaryEntriesByKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
         } else {
             instructionsToExec[6] = NULL;
         }
@@ -964,7 +1059,6 @@ CompletedInstruction **execute(){
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
         instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, &(rsint -> Dest));
-        removeDictionaryEntriesByKey (cpu -> resStaBU, &(rsint -> Dest));
     } else {
         instructionsToExec[7] = NULL;
     }
@@ -1099,120 +1193,104 @@ CompletedInstruction **execute(){
                 printPipeline(instruction, pipelineString, 1);
                 break;
             case L_D:
-                LSbufferInsert = 1;
+                //Two-step
+                //First calculate address for earliest load that needs it
                 rsmem -> address = rsmem -> Vj + instruction->immediate;
-                cpu->memoryAddress = rsmem -> address;
-                * ((int*)addrPtr) = cpu->memoryAddress;
-                bufferCount = getCountCircularQueue (cpu -> storeBuffer);
-                for (j = 0; j < bufferCount; j++) {
-                    index = (cpu -> storeBuffer -> head + j) % cpu -> storeBuffer -> size;
-                    bufferItem = (RSmem *)(cpu -> storeBuffer -> items[index]);
-                    if (bufferItem -> address == rsmem -> address) {
-                        LSbufferInsert = 0;
+                //Then check if load can execute (i.e. no stores ahead of it in ROB with same address)
+                //Buff is reorder buffer but just for readability
+                buff = cpu -> reorderBuffer;
+                dictEntry = cpu -> loadBuffer -> head;
+                instructionFoundOrBubble = 0;
+                while (!instructionFoundOrBubble) { //1 for instruction, 2 for bubble
+                    RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+                    if (RS == NULL) {
+                        instructionFoundOrBubble = 2;
+                        continue;
+                    }
+                    if (RS -> isReady && RS -> address != -1) {
+                        for (i = 0; i < buff -> count && i != -1; i++) {
+                            if ((ROB *)(buff -> items[(buff -> head + i) % (buff->size)])-> DestAddr == RS -> address) {
+                                dictEntry = dictEntry -> next;
+                                i = -1; //break out of for loop
+                            }
+                            bufferItem = bufferItem -> next;
+                        }
+                        if (i != -1) {
+                            instructionFoundOrBubble = 1;
+                            rsmem = RS;
+                        }
+                    } else {
+                        dictEntry = dictEntry -> next;
                     }
                 }
-                if (LSbufferInsert && !loadStoreFirst) {
-                    loadStoreFirst = 1;
-                    enqueueCircular (cpu -> loadBuffer, rsmem);
-                    dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-                    valuePtr = dataCacheElement->value->value;
-                    instructionAndResult -> fpResult = *((double*)valuePtr);
-                    instructionAndResult -> ROB_number = rsmem -> Dest;
-                    LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
-                    memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
-                } else {
-                    addDictionaryEntry (cpu -> resStaLoad, &(rsmem -> Dest), rsmem);
-                }
+                * ((int*)addrPtr) = rsmem -> address;
+                dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+                valuePtr = dataCacheElement->value->value;
+                instructionAndResult -> fpResult = *((double*)valuePtr);
+                instructionAndResult -> ROB_number = rsmem -> Dest;
+                LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "Load/Store";
+                printPipeline(instruction, pipelineString, 1);
                 break;
             case LD:
-                LSbufferInsert = 1;
+                //Two-step
+                //First calculate address for earliest load that needs it
                 rsmem -> address = rsmem -> Vj + instruction->immediate;
-                cpu->memoryAddress = rsmem -> address;
-                * ((int*)addrPtr) = cpu->memoryAddress;
-                bufferCount = getCountCircularQueue (cpu -> storeBuffer);
-                for (j = 0; j < bufferCount; j++) {
-                    index = (cpu -> storeBuffer -> head + j) % cpu -> storeBuffer -> size;
-                    bufferItem = (RSmem *)(cpu -> storeBuffer -> items[index]);
-                    if (bufferItem -> address == rsmem -> address) {
-                        LSbufferInsert = 0;
+                //Then check if load can execute (i.e. no stores ahead of it in ROB with same address)
+                //Buff is reorder buffer but just for readability
+                buff = cpu -> reorderBuffer;
+                dictEntry = cpu -> loadBuffer -> head;
+                instructionFoundOrBubble = 0;
+                while (!instructionFoundOrBubble) { //1 for instruction, 2 for bubble
+                    RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+                    if (RS == NULL) {
+                        instructionFoundOrBubble = 2;
+                        continue;
+                    }
+                    if (RS -> isReady && RS -> address != -1) {
+                        for (i = 0; i < buff -> count && i != -1; i++) {
+                            if ((ROB *)(buff -> items[(buff -> head + i) % (buff->size)])-> DestAddr == RS -> address) {
+                                dictEntry = dictEntry -> next;
+                                i = -1; //break out of for loop
+                            }
+                            bufferItem = bufferItem -> next;
+                        }
+                        if (i != -1) {
+                            instructionFoundOrBubble = 1;
+                            rsmem = RS;
+                        }
+                    } else {
+                        dictEntry = dictEntry -> next;
                     }
                 }
-                if (LSbufferInsert && !loadStoreFirst) {
-                    loadStoreFirst = 1;
-                    enqueueCircular (cpu -> loadBuffer, rsmem);
-                    dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-                    valuePtr = dataCacheElement->value->value;
-                    instructionAndResult -> intResult = (int)*((double*)valuePtr);
-                    instructionAndResult -> ROB_number = rsmem -> Dest;
-                    LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
-                    memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
-                } else {
-                    addDictionaryEntry (cpu -> resStaLoad, &(rsmem -> Dest), rsmem);
-                }
+                * ((int*)addrPtr) = rsmem -> address;
+                dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+                valuePtr = dataCacheElement->value->value;
+                instructionAndResult -> intResult = (int)*((double*)valuePtr);
+                instructionAndResult -> ROB_number = rsmem -> Dest;
+                LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "Load/Store";
+                printPipeline(instruction, pipelineString, 1);
                 break;
             case SD:
-                LSbufferInsert = 1;
                 rsmem -> address = rsmem -> Vj + instruction->immediate;
-                bufferCount = getCountCircularQueue (cpu -> loadBuffer);
-                for (j = 0; j < bufferCount; j++) {
-                    index = (cpu -> loadBuffer -> head + j) % cpu -> loadBuffer -> size;
-                    bufferItem = (RSmem *)(cpu -> loadBuffer -> items[index]);
-                    if (bufferItem -> address == rsmem -> address) {
-                        LSbufferInsert = 0;
-                    }
-                }
-                if (LSbufferInsert) {
-                    bufferCount = getCountCircularQueue (cpu -> storeBuffer);
-                    for (j = 0; j < bufferCount; j++) {
-                        index = (cpu -> storeBuffer -> head + j) % cpu -> storeBuffer -> size;
-                        bufferItem = (RSmem *)(cpu -> storeBuffer -> items[index]);
-                        if (bufferItem -> address == rsmem -> address) {
-                            LSbufferInsert = 0;
-                        }
-                    }
-                }
-                if (LSbufferInsert && !loadStoreFirst) {
-                    loadStoreFirst = 2;
-                    enqueueCircular (cpu -> storeBuffer, rsmem);
-                    instructionAndResult -> address = rsmem -> address;
-                    instructionAndResult -> intResult = rsmem -> iVk;
-                    StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
-                    memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
-                } else {
-                    addDictionaryEntry (cpu -> resStaStore, &(rsmem -> Dest), rsmem);
-                }
+                instructionAndResult -> address = rsmem -> address;
+                instructionAndResult -> intResult = rsmem -> iVk;
+                StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "Load/Store";
+                printPipeline(instruction, pipelineString, 1);
                 break;
             case S_D:
-                LSbufferInsert = 1;
                 rsmem -> address = rsmem -> Vj + instruction->immediate;
-                bufferCount = getCountCircularQueue (cpu -> loadBuffer);
-                for (j = 0; j < bufferCount; j++) {
-                    index = (cpu -> loadBuffer -> head + j) % cpu -> loadBuffer -> size;
-                    bufferItem = (RSmem *)(cpu -> loadBuffer -> items[index]);
-                    if (bufferItem -> address == rsmem -> address) {
-                        LSbufferInsert = 0;
-                    }
-                }
-                if (LSbufferInsert ) {
-                    bufferCount = getCountCircularQueue (cpu -> storeBuffer);
-                    for (j = 0; j < bufferCount; j++) {
-                        index = (cpu -> storeBuffer -> head + j) % cpu -> storeBuffer -> size;
-                        bufferItem = (RSmem *)(cpu -> storeBuffer -> items[index]);
-                        if (bufferItem -> address == rsmem -> address) {
-                            LSbufferInsert = 0;
-                        }
-                    }
-                }
-                if (LSbufferInsert && !loadStoreFirst) {
-                    loadStoreFirst = 2;
-                    enqueueCircular (cpu -> storeBuffer, rsmem);
-                    instructionAndResult -> address = rsmem -> address;
-                    instructionAndResult -> fpResult = rsmem -> fpVk;
-                    StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
-                    memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
-                } else {
-                    addDictionaryEntry (cpu -> resStaStore, &(rsmem -> Dest), rsmem);
-                }
+                instructionAndResult -> address = rsmem -> address;
+                instructionAndResult -> fpResult = rsmem -> fpVk;
+                StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "Load/Store";
+                printPipeline(instruction, pipelineString, 1);
                 break;
             case BNE:
                 instructionAndResult -> intResult = rsint -> Vj != rsint -> Vk ? 0 : -1;
@@ -1250,6 +1328,7 @@ CompletedInstruction **execute(){
     //Take outputs from Units
     unitOutputs[INT] = executePipelinedUnit (cpu -> INTPipeline);
     if (unitOutputs[INT] != NULL) {
+        getValueChainByDictionaryKey (cpu -> renameRegInt, unitOutputs[INT] -> instruction)
         pipelineString = "INT";
         printPipeline(unitOutputs[INT], pipelineString, 0);
     }
@@ -1532,18 +1611,37 @@ int compareRegNumber (void *RegNumber1, void *RegNumber2) {
     return *((int *)RegNumber1) - *((int *)RegNumber2);
 }
 
-DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int isFloat) {
+/*
+ * Check reservation station for earliest ready value.
+ * @param int selectRS 0 to for RSint, 1 for RSfloat, 2 for Store, 4 for step 2 of load
+ */
+DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int selectRS) {
     while (dictEntry != NULL) {
-        if (isFloat == 1) {
+        if (selectRS == 1) {
             RSfloat *RS = (RSfloat *)((DictionaryEntry *)dictEntry -> value -> value);
             if (RS -> isReady) {
                 return ((DictionaryEntry *)dictEntry) -> value;
             } else {
                 dictEntry = dictEntry -> next;
             }
-        } else if (isFloat == 2) {
+        } else if (selectRS == 2) {
             RSmem *RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
             if (RS -> isReady) {
+                return ((DictionaryEntry *)dictEntry) -> value;
+            } else {
+                dictEntry = dictEntry -> next;
+            }
+        } else if (selectRS == 3) {
+            RSmem *RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+            if (RS -> isReady && RS -> address == -1) {
+                return ((DictionaryEntry *)dictEntry) -> value;
+            } else {
+                dictEntry = dictEntry -> next;
+            }
+        }
+        } else if (selectRS == 4) {
+            RSmem *RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+            if (RS -> isReady && RS -> address != -1) {
                 return ((DictionaryEntry *)dictEntry) -> value;
             } else {
                 dictEntry = dictEntry -> next;
