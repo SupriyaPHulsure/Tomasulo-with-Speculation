@@ -317,7 +317,7 @@ void printROB()
 	if(cpu->reorderBuffer != NULL)
 	{
 		printf ("-----------------\n");
-		printf ("Reored Buffer\n");
+		printf ("Reorder Buffer\n");
 		printf ("-----------------\n");
 		printf("ROB_number  |Instr add|State| Dest Reg  | isReady  |  isIntegerReg | isStore | isBranch   | isAfterBranch  | isCorrectPredict\n");
 

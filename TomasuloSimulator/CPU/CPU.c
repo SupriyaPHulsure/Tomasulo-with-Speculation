@@ -1807,7 +1807,7 @@ void Commit(int NB)
 {
 	// commit instructions from ROB
 	ROB * ROBEntry;
-	int i = 0, j;
+	RegStatus *RegStatusEntry ;
 	void *valuePtr = malloc(sizeof(double));
 		ROBEntry = getHeadCircularQueue(cpu -> reorderBuffer);
 		while(ROBEntry != NULL || NB != 0)
@@ -1823,6 +1823,9 @@ void Commit(int NB)
 							DestVal = *((int *)Current -> value -> value);
 							//DestVal = 0;
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
+							RegStatusEntry = cpu -> IntRegStatus[DestReg];
+							RegStatusEntry->busy = 0;
+							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction %d in integer register %d with value %d \n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NB --;
 					}
@@ -1830,10 +1833,12 @@ void Commit(int NB)
 						int DestRenameReg, DestReg; float DestVal;
 							DestRenameReg = ROBEntry -> DestRenameReg;
 							DestReg = ROBEntry -> DestReg;
-							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
-							DestVal = *((int *)Current -> value -> value);
+							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP , &DestRenameReg);
+							DestVal = *((double *)Current -> value -> value);
 							//DestVal = 0.00;
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
+							RegStatusEntry = cpu -> FPRegStatus[DestReg];
+							RegStatusEntry->busy = 0;
 							NB --;
 					}
 					else if(ROBEntry -> isStore == 1)
@@ -1843,24 +1848,24 @@ void Commit(int NB)
 							DestRenameReg = ROBEntry -> DestRenameReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
 							DestVal = *((int *)Current -> value -> value);
-							
 							//*((int*)addrPtr) = ROBEntry -> DestAddr;
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
-							*((double*)valuePtr) = DestVal; // value from rename register ;
-							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr); 
+							*((int*)valuePtr) = DestVal; // value from rename register ;
+							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
+							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							//DestVal = 0.00;
 							NB --;
 						}
 						else if(ROBEntry -> isINT == 0){
 							float DestVal; int DestRenameReg;
 							DestRenameReg = ROBEntry -> DestRenameReg;
-							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
-							DestVal = *((int *)Current -> value -> value);
-							
+							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP, &DestRenameReg);
+							DestVal = *((double *)Current -> value -> value);
 							//*((int*)addrPtr) = ROBEntry -> DestAddr;
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
 							*((double*)valuePtr) = (double) DestVal; // value from rename register ;
-							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr); 
+							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
+							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);						
 							//DestVal = 0;
 							NB --;
 						}
