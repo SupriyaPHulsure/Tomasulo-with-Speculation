@@ -177,7 +177,7 @@ void printRenamingRegisters () {
 		printf ("Renaming Floating Pointer Registers\n");
 		printf ("-----------------\n");
 		for (current = cpu -> renameRegFP -> head; current != NULL; current = current -> next){
-			printf ("Renaming register number %d: value %f\n", *((int*)current -> key), *((float*)current -> value -> value));
+			printf ("Renaming register number %d: value %f\n", *((int*)current -> key), *((double*)current -> value -> value));
 	    }
 	}
 }
@@ -322,11 +322,11 @@ void printROB()
 		printf("ROB_number  |Instr add|State| Dest Reg  | isReady  |  isIntegerReg | isStore | isBranch   | isAfterBranch  | isCorrectPredict\n");
 
 			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
-		ROBentry = cpu->reorderBuffer -> items[i];
+		ROBentry = getHeadCircularQueue(cpu -> reorderBuffer);
 		while(ROBentry != NULL){
-			printf("%d\t\t%d\t%s\t%d\t\t%d\t%d\t\t%d\t %d\t%d\t%d\n", i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> isReady, ROBentry->isINT, ROBentry ->isStore,ROBentry ->  isBranch,ROBentry -> isAfterBranch, ROBentry ->  isCorrectPredict);
+			printf("%d\t\t%d\t%s\t%d\t\t%d\t%d\t\t%d\t %d\t%d\t%d\n", cpu-> reorderBuffer -> head + i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> isReady, ROBentry->isINT, ROBentry ->isStore,ROBentry ->  isBranch,ROBentry -> isAfterBranch, ROBentry ->  isCorrectPredict);
 			i++;
-			ROBentry = cpu->reorderBuffer -> items[i];
+			ROBentry = cpu->reorderBuffer -> items[cpu-> reorderBuffer -> head + i];
 			
 		}
 	}

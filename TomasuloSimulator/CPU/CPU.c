@@ -46,7 +46,7 @@ void insertintoWriteBackBuffer();
 void writeBackUnit(int NB);
 void updateOutputRES(CompletedInstruction *instruction);
 int commitInstuctionCount();
-void Commit(int NB);
+void Commit(int NC);
 void CommitUnit(int NB);
 
 
@@ -1803,14 +1803,14 @@ void CommitUnit(int NB)
 }
 
 //commit instructions or flush ROB
-void Commit(int NB)
+void Commit(int NC)
 {
 	// commit instructions from ROB
 	ROB * ROBEntry;
 	RegStatus *RegStatusEntry ;
 	void *valuePtr = malloc(sizeof(double));
 		ROBEntry = getHeadCircularQueue(cpu -> reorderBuffer);
-		while(ROBEntry != NULL || NB != 0)
+		while(ROBEntry != NULL && NC != 0)
 		{
 				if((strcmp(ROBEntry -> state, "W") == 0) && ROBEntry -> isReady == 1)
 				{
@@ -1827,7 +1827,7 @@ void Commit(int NB)
 							RegStatusEntry->busy = 0;
 							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction %d in integer register %d with value %d \n", ROBEntry -> instruction -> address, DestReg, DestVal);
-							NB --;
+							NC --;
 					}
 					else if(ROBEntry -> isINT == 0 && ROBEntry -> isStore == 0 && ROBEntry -> isBranch == 0){
 						int DestRenameReg, DestReg; float DestVal;
@@ -1839,7 +1839,7 @@ void Commit(int NB)
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
 							RegStatusEntry->busy = 0;
-							NB --;
+							NC --;
 					}
 					else if(ROBEntry -> isStore == 1)
 					{
@@ -1854,7 +1854,7 @@ void Commit(int NB)
 							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
 							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							//DestVal = 0.00;
-							NB --;
+							NC --;
 						}
 						else if(ROBEntry -> isINT == 0){
 							float DestVal; int DestRenameReg;
@@ -1867,14 +1867,12 @@ void Commit(int NB)
 							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
 							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);						
 							//DestVal = 0;
-							NB --;
+							NC --;
 						}
 					}
 					else{
 						//Branch
 						if(ROBEntry ->isBranch == 1 && ROBEntry -> isCorrectPredict == 0){
-							// flush ROB or move its head to isafterbranch = 0;
-							//j = cpu -> reorderBuffer -> head;
 							while(ROBEntry != NULL || ROBEntry -> isAfterBranch == 0){
 								if(ROBEntry -> isAfterBranch == 0){
 									ROBEntry = dequeueCircular(cpu -> reorderBuffer);
@@ -1882,8 +1880,8 @@ void Commit(int NB)
 							}
 							
 						}
+						NC--;
 					}
-					
 				}
 		
 		else{
@@ -1892,7 +1890,7 @@ void Commit(int NB)
 		}
 		//i++;
 		
-		ROBEntry = getHeadCircularQueue(cpu -> reorderBuffer);
+		
 		}
 		printf("Completed Commit\n");
 }
@@ -1924,9 +1922,6 @@ void writeBackUnit(int NB){
 				}			
 			}
 			updateOutputRES(instruction);
-			// update RES
-			
-			
 		}
 	}
 }
@@ -1934,11 +1929,12 @@ void writeBackUnit(int NB){
 
 // update RES with output from execution
 void updateOutputRES(CompletedInstruction *instruction){
-	//printf("opcode - %d\n", instruction -> instruction -> op);
+	printf("RES update opcode - %d\t %d\n", instruction -> instruction -> op, instruction -> ROB_number);
 	int robnumber = instruction -> ROB_number;
 	DictionaryEntry *current;
 	RSint *RSint;
 	RSfloat *RSfloat;
+	RSmem *RSmem;
 	 switch (instruction -> instruction -> op) {
         case ANDI:
         case AND:
@@ -1949,6 +1945,20 @@ void updateOutputRES(CompletedInstruction *instruction){
         case DADDI:
         case DADD:
         case DSUB:
+		 case DMUL:
+		  case BNE:
+        case BNEZ:
+        case BEQ:
+        case BEQZ:
+			for (current = cpu -> resStaBU -> head; current != NULL; current = current -> next){
+				RSint = current -> value -> value;
+				if(RSint -> Qj == robnumber){
+						RSint -> Vj = instruction -> intResult;
+					}
+					if(RSint -> Qk == robnumber){
+						RSint -> Vk = instruction -> intResult;
+					}
+			}
 				for (current = cpu -> resStaInt -> head; current != NULL; current = current -> next){
 					RSint = current -> value -> value;
 					if(RSint -> Qj == robnumber){
@@ -1961,9 +1971,7 @@ void updateOutputRES(CompletedInstruction *instruction){
 					}
 				}
    
-            break;
-        case DMUL:		 
-			for (current = cpu -> resStaMult -> head; current != NULL; current = current -> next){
+         	for (current = cpu -> resStaMult -> head; current != NULL; current = current -> next){
 				RSint = current -> value -> value;
 				if(RSint -> Qj == robnumber){
 					RSint -> Vj = instruction -> intResult;
@@ -1974,10 +1982,12 @@ void updateOutputRES(CompletedInstruction *instruction){
 					printf(" mult Qk rob number matches\n");
 				}
 			}
-            break;
+   
         case ADD_D:
         case SUB_D:
-
+		case MUL_D:
+		case DIV_D:
+			case S_D:
 				for (current = cpu -> resStaFPadd -> head; current != NULL; current = current -> next){
 					RSfloat = current -> value -> value;
 					if(RSfloat -> Qj == robnumber){
@@ -1987,8 +1997,45 @@ void updateOutputRES(CompletedInstruction *instruction){
 						RSfloat -> Vk = instruction -> fpResult;
 					}
 				}
+				for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
+				RSmem = current -> value -> value;
+				if(RSmem -> Qj == robnumber){
+							RSmem -> fpVk = instruction -> fpResult;	
+						}
+						if(RSmem -> Qk == robnumber){
+							RSmem -> fpVk = instruction -> fpResult;
+						}
+				}
+				for (current = cpu -> resStaFPmult -> head; current != NULL; current = current -> next){
+				RSfloat = current -> value -> value;
+				if(RSfloat -> Qj == robnumber){
+						RSfloat -> Vj = instruction -> fpResult;	
+					}
+					if(RSfloat -> Qk == robnumber){
+						RSfloat -> Vk = instruction -> fpResult;
+					}
+			}  
+			for (current = cpu -> resStaFPdiv -> head; current != NULL; current = current -> next){
+					RSfloat = current -> value -> value;
+					if(RSfloat -> Qj == robnumber){
+						RSfloat -> Vj = instruction -> fpResult;	
+					}
+					if(RSfloat -> Qk == robnumber){
+						RSfloat -> Vk = instruction -> fpResult;
+					}
+				}
+			
+            for (current = cpu -> storeBuffer -> head; current != NULL; current = current -> next){
+					RSmem = current -> value -> value;
+					if(RSmem -> Qj == robnumber){
+						RSmem -> fpVk = instruction -> fpResult;	
+					}
+					if(RSmem -> Qk == robnumber){
+						RSmem -> fpVk = instruction -> fpResult;
+					}
+				}
             break;
-        case MUL_D:
+        /* case MUL_D:
 			for (current = cpu -> resStaFPmult -> head; current != NULL; current = current -> next){
 				RSfloat = current -> value -> value;
 				if(RSfloat -> Qj == robnumber){
@@ -2009,31 +2056,40 @@ void updateOutputRES(CompletedInstruction *instruction){
 						RSfloat -> Vk = instruction -> fpResult;
 					}
 				}
-            break;
-        case L_D:
-        case LD:
-				//Dictionary *loadBufferResult;
-				// not complete yet
+            break; */
+       /*  case L_D:
+		for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
+		    RSmem = current -> value -> value;
+			if(RSmem -> Qj == robnumber){
+						RSmem -> fpVk = instruction -> fpResult;	
+					}
+					if(RSmem -> Qk == robnumber){
+						RSmem -> fpVk = instruction -> fpResult;
+					}
+				} */
+    /*     case LD:
+				for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
+					RSmem = current -> value -> value;
+					if(RSmem -> Qj == robnumber){
+						RSmem -> iVk = instruction -> intResult;	
+					}
+					if(RSmem -> Qk == robnumber){
+						RSmem -> iVk = instruction -> intResult;
+					}
+				}
+				
         case SD:
-        case S_D:
-            // not complete yet
-			// Dictionary *storeBufferResult;
-
-            break;
-        case BNE:
-        case BNEZ:
-        case BEQ:
-        case BEQZ:
-			for (current = cpu -> resStaBU -> head; current != NULL; current = current -> next){
-				RSint = current -> value -> value;
-				if(RSint -> Qj == robnumber){
-						RSint -> Vj = instruction -> intResult;
+				for (current = cpu -> storeBuffer -> head; current != NULL; current = current -> next){
+					RSmem = current -> value -> value;
+					if(RSmem -> Qj == robnumber){
+						RSmem -> iVk = instruction -> intResult;	
 					}
-					if(RSint -> Qk == robnumber){
-						RSint -> Vk = instruction -> intResult;
+					if(RSmem -> Qk == robnumber){
+						RSmem -> iVk = instruction -> intResult;
 					}
-			}
-            break;
+				} */
+        
+   
         default:
             break;
 
@@ -2046,7 +2102,6 @@ void insertintoWriteBackBuffer()
 	int	*ROB_number = (int*) malloc(sizeof(int));
 	CompletedInstruction *instruction;
 	CompletedInstruction **unitOutputs;
-	void *valuePtr = malloc(sizeof(double));
 	unitOutputs = execute();
 	if(cpu -> WriteBackBuffer == NULL)
 	{
@@ -2057,9 +2112,9 @@ void insertintoWriteBackBuffer()
 		*ROB_number = instruction->ROB_number;
 		addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 		removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
-		*((int*)valuePtr) = instruction -> intResult;
-		addDictionaryEntry (cpu -> renameRegInt, ROB_number, valuePtr);
-		printf ("Added to  WriteBack Buffer %d: ROB - %d  Output - %d\n",  instruction -> instruction -> address, instruction -> ROB_number, instruction -> intResult);	
+		int* intresult = &(instruction -> intResult);
+		addDictionaryEntry (cpu -> renameRegInt, ROB_number, intresult);
+		printf ("Added to  WriteBack Buffer %d: ROB - %d  Output - %d\n",  instruction -> instruction -> address, instruction -> ROB_number, *intresult);	
 	}
 	if(unitOutputs[MULT] != NULL){
 			
@@ -2067,36 +2122,46 @@ void insertintoWriteBackBuffer()
 		*ROB_number = instruction->ROB_number;
 		addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 		removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
-		*((int*)valuePtr) = instruction -> intResult;
-		addDictionaryEntry (cpu -> renameRegInt, ROB_number, valuePtr);
-		printf ("Added to  WriteBack Buffer %d: %d\n",  instruction -> instruction -> address, instruction -> ROB_number);	
+		int* intresult = &(instruction -> intResult);
+		addDictionaryEntry (cpu -> renameRegInt, ROB_number, intresult);
+		printf ("Added to  WriteBack Buffer %d: ROB - %d Output - %d\n",  instruction -> instruction -> address, instruction -> ROB_number, *intresult);	
 	}
 	if(unitOutputs[FPadd] != NULL){
 		instruction = unitOutputs[FPadd];
 		*ROB_number = instruction->ROB_number;
 		addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
-		removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
-		*((double*)valuePtr) = (double)instruction -> fpResult;
-		addDictionaryEntry (cpu -> renameRegInt, ROB_number, valuePtr);
-		printf ("Added to  WriteBack Buffer %d: %d\n",  instruction -> instruction -> address, instruction -> ROB_number);	
+		removeDictionaryEntriesByKey (cpu -> renameRegFP , ROB_number);
+		double *fpresult = &(instruction -> fpResult);
+		addDictionaryEntry (cpu -> renameRegFP, ROB_number, fpresult);
+		printf ("Added to  WriteBack Buffer %d: ROB - %d Output - %f\n",  instruction -> instruction -> address, instruction -> ROB_number, *fpresult);	
 	}
 	if(unitOutputs[FPmult]!= NULL){
 		instruction = unitOutputs[FPmult];
 		*ROB_number = instruction->ROB_number;
-		removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
-		*((double*)valuePtr) = (double)instruction -> fpResult;
-		addDictionaryEntry (cpu -> renameRegInt, ROB_number, valuePtr);
+		removeDictionaryEntriesByKey (cpu -> renameRegFP, ROB_number);
+		double *fpresult = &(instruction -> fpResult);
+		addDictionaryEntry (cpu -> renameRegFP, ROB_number, fpresult);
 		addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
-		printf ("Added to  WriteBack Buffer %d: %d\n",  instruction -> instruction -> address, instruction -> ROB_number);	
+		printf ("Added to  WriteBack Buffer %d: ROB - %d Output - %f\n",  instruction -> instruction -> address, instruction -> ROB_number,*fpresult);	
 	}
 	if(unitOutputs[FPdiv] != NULL){
 		instruction = unitOutputs[FPdiv];
 		*ROB_number = instruction->ROB_number;
 		addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
+		removeDictionaryEntriesByKey (cpu -> renameRegFP, ROB_number);
+		double *fpresult = &(instruction -> fpResult);
+		addDictionaryEntry (cpu -> renameRegFP, ROB_number, fpresult);
+		printf ("Added to  WriteBack Buffer %d: ROB - %d Output - %f\n",  instruction -> instruction -> address, instruction -> ROB_number, *fpresult);	
+	}
+	if(unitOutputs[BU] != NULL){
+			
+		instruction = unitOutputs[BU];
+		*ROB_number = instruction->ROB_number;
+		addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 		removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
-		*((double*)valuePtr) = (double)instruction -> fpResult;
-		addDictionaryEntry (cpu -> renameRegInt, ROB_number, valuePtr);
-		printf ("Added to  WriteBack Buffer %d: %d\n",  instruction -> instruction -> address, instruction -> ROB_number);	
+		int* intresult = &(instruction -> intResult);
+		addDictionaryEntry (cpu -> renameRegInt, ROB_number, intresult);
+		printf ("Added to  WriteBack Buffer %d: ROB - %d Output - %d\n",  instruction -> instruction -> address, instruction -> ROB_number,  *intresult);	
 	}
 	if(unitOutputs[LS] != NULL){
 		instruction = unitOutputs[LS];
@@ -2106,20 +2171,42 @@ void insertintoWriteBackBuffer()
 			*ROB_number = instruction->ROB_number;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 			removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
-			*((double*)valuePtr) = instruction -> intResult;
-			addDictionaryEntry (cpu -> renameRegInt, ROB_number, valuePtr);
-			printf ("Added to  WriteBack Buffer %d: %d\n",  instruction -> instruction -> address, instruction -> ROB_number);	
+			int* intresult = &(instruction -> intResult);
+			addDictionaryEntry (cpu -> renameRegInt, ROB_number, intresult);
+			printf ("Added to  WriteBack Buffer %d: ROB - %d Output - %d\n",  instruction -> instruction -> address, instruction -> ROB_number, *intresult);	
 	
 		}
 		else if((strcmp(getOpcodeString (op), "S_D") == 0))
 		{
 			*ROB_number = instruction->ROB_number;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
-			removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
-			*((double*)valuePtr) = (double) instruction -> fpResult;
-			addDictionaryEntry (cpu -> renameRegInt, ROB_number, valuePtr);
-			printf ("Added to  WriteBack Buffer %d: %d\n",  instruction -> instruction -> address, instruction -> ROB_number);
+			removeDictionaryEntriesByKey (cpu -> renameRegFP, ROB_number);
+			double *fpresult = &(instruction -> fpResult);
+			addDictionaryEntry (cpu -> renameRegFP, ROB_number, fpresult);
+			
+			printf ("Added to  WriteBack Buffer %d: ROB - %d Output - %f\n",  instruction -> instruction -> address, instruction -> ROB_number, *fpresult);
 		}
+		if((strcmp(getOpcodeString (op) ,"LD") == 0))
+		{
+			*ROB_number = instruction->ROB_number;
+			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
+			removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
+			int* intresult = &(instruction -> intResult);
+			addDictionaryEntry (cpu -> renameRegInt, ROB_number, intresult);
+			printf ("Added to  WriteBack Buffer %d: LD  - ROB - %d Output - %d\n",  instruction -> instruction -> address, instruction -> ROB_number,  *intresult);	
+	
+		}
+		else if((strcmp(getOpcodeString (op), "L_D") == 0))
+		{
+			*ROB_number = instruction->ROB_number;
+			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
+			removeDictionaryEntriesByKey (cpu -> renameRegFP, ROB_number);
+			//*((double*)valuePtr) = (double) instruction -> fpResult;
+			double *fpresult = &(instruction -> fpResult);
+			addDictionaryEntry (cpu -> renameRegFP, ROB_number, fpresult);
+			printf ("Added to  WriteBack Buffer %d: L_D -  ROB - %d Output - %f\n",  instruction -> instruction -> address, instruction -> ROB_number, *fpresult);
+		}
+		
 	}
 }
 
