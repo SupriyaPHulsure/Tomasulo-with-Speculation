@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     int test_cycle;
 
 
-    for (test_cycle = 0; test_cycle < 30; test_cycle ++){
+    for (test_cycle = 0; test_cycle < 10; test_cycle ++){
         runClockCycle(NF, NI, NW, NB);
 
         //printFetchBuffer();

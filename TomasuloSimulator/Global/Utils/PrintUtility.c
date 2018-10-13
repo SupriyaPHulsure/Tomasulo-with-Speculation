@@ -319,12 +319,12 @@ void printROB()
 		printf ("-----------------\n");
 		printf ("Reorder Buffer\n");
 		printf ("-----------------\n");
-		printf("ROB_number  |Instr add|State| Dest Reg  | isReady  |  isIntegerReg | isStore | isBranch   | isAfterBranch  | isCorrectPredict\n");
+		printf("ROB_number  |Instr add|State| Dest Reg | DestAddr | isReady  |  isIntegerReg | isStore | isBranch   | isAfterBranch  | isCorrectPredict\n");
 
 			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
 		ROBentry = getHeadCircularQueue(cpu -> reorderBuffer);
 		while(ROBentry != NULL){
-			printf("%d\t\t%d\t%s\t%d\t\t%d\t%d\t\t%d\t %d\t%d\t%d\n", cpu-> reorderBuffer -> head + i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry -> isReady, ROBentry->isINT, ROBentry ->isStore,ROBentry ->  isBranch,ROBentry -> isAfterBranch, ROBentry ->  isCorrectPredict);
+			printf("%d\t\t%d\t%s\t%d\t%d\t%d\t%d\t\t%d\t %d\t%d\t%d\n", cpu-> reorderBuffer -> head + i, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry ->DestAddr,  ROBentry -> isReady, ROBentry->isINT, ROBentry ->isStore,ROBentry ->  isBranch,ROBentry -> isAfterBranch, ROBentry ->  isCorrectPredict);
 			i++;
 			ROBentry = cpu->reorderBuffer -> items[cpu-> reorderBuffer -> head + i];
 			
