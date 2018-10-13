@@ -1961,17 +1961,17 @@ void updateOutputRES(CompletedInstruction *instruction){
 						RSint -> Vk = instruction -> intResult;
 					}
 			}
-				for (current = cpu -> resStaInt -> head; current != NULL; current = current -> next){
-					RSint = current -> value -> value;
-					if(RSint -> Qj == robnumber){
-						RSint -> Vj = instruction -> intResult;
-						printf("Qj rob number matches\n");
-					}
-					if(RSint -> Qk == robnumber){
-						RSint -> Vk = instruction -> intResult;
-						printf("Qk rob number matches\n");
-					}
-				}
+            for (current = cpu -> resStaInt -> head; current != NULL; current = current -> next){
+                RSint = current -> value -> value;
+                if(RSint -> Qj == robnumber){
+                    RSint -> Vj = instruction -> intResult;
+                    printf("Qj rob number matches\n");
+                }
+                if(RSint -> Qk == robnumber){
+                    RSint -> Vk = instruction -> intResult;
+                    printf("Qk rob number matches\n");
+                }
+            }
    
          	for (current = cpu -> resStaMult -> head; current != NULL; current = current -> next){
 				RSint = current -> value -> value;
@@ -1993,15 +1993,13 @@ void updateOutputRES(CompletedInstruction *instruction){
 						RSmem -> iVk = instruction -> intResult;
 					}
 			}
-					for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
-					RSmem = current -> value -> value;
-					if(RSmem -> Qj == robnumber){
-						RSmem -> iVk = instruction -> intResult;	
-					}
-					if(RSmem -> Qk == robnumber){
-						RSmem -> iVk = instruction -> intResult;
-					}
-					}
+            for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
+                RSmem = current -> value -> value;
+                if(RSmem -> Qj == robnumber){
+                    RSmem -> iVk = instruction -> intResult;
+                }
+            }
+            break;
         case ADD_D:
         case SUB_D:
 		case MUL_D:
@@ -2021,9 +2019,6 @@ void updateOutputRES(CompletedInstruction *instruction){
 				RSmem = current -> value -> value;
 				if(RSmem -> Qj == robnumber){
 							RSmem -> fpVk = instruction -> fpResult;	
-						}
-						if(RSmem -> Qk == robnumber){
-							RSmem -> fpVk = instruction -> fpResult;
 						}
 				}
 				for (current = cpu -> resStaFPmult -> head; current != NULL; current = current -> next){
