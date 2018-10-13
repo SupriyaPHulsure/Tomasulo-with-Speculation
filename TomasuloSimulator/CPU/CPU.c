@@ -1954,12 +1954,20 @@ void updateOutputRES(CompletedInstruction *instruction){
 		case SD :
 			for (current = cpu -> resStaBU -> head; current != NULL; current = current -> next){
 				RSint = current -> value -> value;
-				if(RSint -> Qj == robnumber){
-						RSint -> Vj = instruction -> intResult;
-					}
-					if(RSint -> Qk == robnumber){
-						RSint -> Vk = instruction -> intResult;
-					}
+				if (RSint -> isReady == 0){
+                    if(RSint -> Qj == robnumber){
+                            RSint -> Vj = instruction -> intResult;
+                            RSint -> Qj = -1;
+                        }
+                    if(RSint -> Qk == robnumber){
+                        RSint -> Vk = instruction -> intResult;
+                        RSint -> Qk = -1;
+                    }
+
+                    if ((RSint -> Qj = -1) & (RSint -> Qk = -1)){
+                        RSint -> isReady = 1;
+                    }
+				}
 			}
             for (current = cpu -> resStaInt -> head; current != NULL; current = current -> next){
                 RSint = current -> value -> value;
