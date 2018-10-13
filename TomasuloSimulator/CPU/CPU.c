@@ -1945,11 +1945,13 @@ void updateOutputRES(CompletedInstruction *instruction){
         case DADDI:
         case DADD:
         case DSUB:
-		 case DMUL:
-		  case BNE:
+		case DMUL:
+		case BNE:
         case BNEZ:
         case BEQ:
         case BEQZ:
+		case LD:
+		case SD :
 			for (current = cpu -> resStaBU -> head; current != NULL; current = current -> next){
 				RSint = current -> value -> value;
 				if(RSint -> Qj == robnumber){
@@ -1982,12 +1984,30 @@ void updateOutputRES(CompletedInstruction *instruction){
 					printf(" mult Qk rob number matches\n");
 				}
 			}
-   
+			for (current = cpu -> storeBuffer -> head; current != NULL; current = current -> next){
+					RSmem = current -> value -> value;
+					if(RSmem -> Qj == robnumber){
+						RSmem -> iVk = instruction -> intResult;	
+					}
+					if(RSmem -> Qk == robnumber){
+						RSmem -> iVk = instruction -> intResult;
+					}
+			}
+					for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
+					RSmem = current -> value -> value;
+					if(RSmem -> Qj == robnumber){
+						RSmem -> iVk = instruction -> intResult;	
+					}
+					if(RSmem -> Qk == robnumber){
+						RSmem -> iVk = instruction -> intResult;
+					}
+					}
         case ADD_D:
         case SUB_D:
 		case MUL_D:
 		case DIV_D:
 			case S_D:
+			case L_D:
 				for (current = cpu -> resStaFPadd -> head; current != NULL; current = current -> next){
 					RSfloat = current -> value -> value;
 					if(RSfloat -> Qj == robnumber){
@@ -2035,61 +2055,7 @@ void updateOutputRES(CompletedInstruction *instruction){
 					}
 				}
             break;
-        /* case MUL_D:
-			for (current = cpu -> resStaFPmult -> head; current != NULL; current = current -> next){
-				RSfloat = current -> value -> value;
-				if(RSfloat -> Qj == robnumber){
-						RSfloat -> Vj = instruction -> fpResult;	
-					}
-					if(RSfloat -> Qk == robnumber){
-						RSfloat -> Vk = instruction -> fpResult;
-					}
-			}         
-            break;
-        case DIV_D:
-				for (current = cpu -> resStaFPdiv -> head; current != NULL; current = current -> next){
-					RSfloat = current -> value -> value;
-					if(RSfloat -> Qj == robnumber){
-						RSfloat -> Vj = instruction -> fpResult;	
-					}
-					if(RSfloat -> Qk == robnumber){
-						RSfloat -> Vk = instruction -> fpResult;
-					}
-				}
-            break; */
-       /*  case L_D:
-		for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
-		    RSmem = current -> value -> value;
-			if(RSmem -> Qj == robnumber){
-						RSmem -> fpVk = instruction -> fpResult;	
-					}
-					if(RSmem -> Qk == robnumber){
-						RSmem -> fpVk = instruction -> fpResult;
-					}
-				} */
-    /*     case LD:
-				for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
-					RSmem = current -> value -> value;
-					if(RSmem -> Qj == robnumber){
-						RSmem -> iVk = instruction -> intResult;	
-					}
-					if(RSmem -> Qk == robnumber){
-						RSmem -> iVk = instruction -> intResult;
-					}
-				}
-				
-        case SD:
-				for (current = cpu -> storeBuffer -> head; current != NULL; current = current -> next){
-					RSmem = current -> value -> value;
-					if(RSmem -> Qj == robnumber){
-						RSmem -> iVk = instruction -> intResult;	
-					}
-					if(RSmem -> Qk == robnumber){
-						RSmem -> iVk = instruction -> intResult;
-					}
-				} */
-        
-   
+     
         default:
             break;
 
