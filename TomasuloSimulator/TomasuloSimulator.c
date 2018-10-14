@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     int test_cycle;
 
 
-    for (test_cycle = 0; test_cycle < 10; test_cycle ++){
+    for (test_cycle = 0; test_cycle < 20; test_cycle ++){
         runClockCycle(NF, NI, NW, NB);
 
         //printFetchBuffer();
@@ -75,12 +75,12 @@ int main(int argc, char** argv) {
 	//while (runClockCycle()); //loop emulating simulator clock cycles
 
     
-	printDataCache (); //print data cache
+	/*printDataCache (); //print data cache
 
 
 	printIntegerRegisters (); //print integer registers
 	printFPRegisters (); //print floating point registers
 	
-
+*/
 	return 0;
 }
