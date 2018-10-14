@@ -48,6 +48,7 @@ void updateOutputRES(CompletedInstruction *instruction);
 int commitInstuctionCount();
 void Commit(int NC);
 void CommitUnit(int NB);
+int checkEnd();
 
 
 
@@ -201,7 +202,7 @@ int fetchMultiInstructionUnit(int NF){
                 if (BTBEntry != NULL){
 
                     if (*((int*)BTBEntry -> key) == *addrPtr){
-                        printf("Instruction %d is a branch in the BranchTargetBuffer with", *addrPtr);
+                        printf("Instruction %d is a branch in the BranchTargetBuffer with ", *addrPtr);
                         int targetAddress = *((int*)BTBEntry -> value -> value);
 
                         printf("target address %d.\n", targetAddress);
@@ -2290,6 +2291,7 @@ void CommitUnit(int NB)
  * @return: When the simulator stops
  */
 int runClockCycle (int NF, int NI, int NW, int NB) {
+    int isEnd;
 
 	cpu -> cycle++; //increment cycle counter
 
@@ -2315,10 +2317,14 @@ int runClockCycle (int NF, int NI, int NW, int NB) {
     updateReservationStations();
 
     printf("Finished update.\n");
-	
 
+    isEnd = checkEnd();
 
-	return 1;
+	if(isEnd==1){
+	    printf("Processor has finished working.\n");
+	    return 0;
+	}else
+	    return 1;
 
 }
 
@@ -2492,6 +2498,24 @@ void branchHelper (CompletedInstruction *instructionAndResult) {
         } else { //predicted not taken
             instructionAndResult -> isCorrectPredict = 1;
         }
+    }
+}
+
+//Determine if the run cycle should be ended
+int checkEnd(){
+    //check whether PC exceeds last instruction in cache
+    int fetchEnd = 0;
+    int robCount;
+    if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))) {
+        fetchEnd = 1;
+    }
+    //Check whether all instructions in ROB have been committed
+    robCount = getCountCircularQueue(cpu->reorderBuffer);
+
+    if((fetchEnd==1)&(robCount==0)){
+        return 1;
+    }else{
+        return 0;
     }
 }
 
