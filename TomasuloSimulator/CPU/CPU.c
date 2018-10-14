@@ -1020,8 +1020,8 @@ int issueInstruction(Instruction *instruction){
         case SD:
         case S_D:
             rsType = "Store";
-            issued = addLoadStore2Buffer(cpu->loadBuffer, cpu->loadBufferResult,
-                     rsType, numberBufferLoad, instruction);           
+            issued = addLoadStore2Buffer(cpu->storeBuffer, cpu->storeBufferResult,
+                     rsType, numberBufferStore, instruction);
             break;
         case BNE:
         case BNEZ:
@@ -1109,7 +1109,7 @@ CompletedInstruction **execute(int NB){
     DictionaryEntry **instructionsToExec = malloc(sizeof(DictionaryEntry *)*8);
     //Array for outputs of Units. See Unit enum in DataTypes.h
     static CompletedInstruction *unitOutputs[7];
-    int i;
+    int i, j;
     char *pipelineString;
     //variables for loads
     RSmem *RS;
@@ -1362,13 +1362,13 @@ CompletedInstruction **execute(int NB){
                     }
                     RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
                     if (RS -> isReady && RS -> address != -1) {
-                        for (i = 0; i < buff -> count && i != -1; i++) {
-                            if (((ROB *)(buff -> items[(buff -> head + i) % (buff->size)]))-> DestAddr == RS -> address) {
+                        for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
+                            if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)]))-> DestAddr == RS -> address) {
                                 dictEntry = dictEntry -> next;
-                                i = -1; //break out of for loop
+                                j = -2; //break out of for loop
                             }
                         }
-                        if (i != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                        if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
                             instructionFoundOrBubble = 1;
                             rsmem = RS;
                             rsmem -> isExecuting = 2;
@@ -1413,13 +1413,13 @@ CompletedInstruction **execute(int NB){
                         continue;
                     }
                     if (RS -> isReady && RS -> address != -1) {
-                        for (i = 0; i < buff -> count && i != -1; i++) {
-                            if (((ROB *)(buff -> items[(buff -> head + i) % (buff->size)])) -> DestAddr == RS -> address) {
+                        for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
+                            if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)])) -> DestAddr == RS -> address) {
                                 dictEntry = dictEntry -> next;
-                                i = -1; //break out of for loop
+                                j = -1; //break out of for loop
                             }
                         }
-                        if (i != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                        if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
                             instructionFoundOrBubble = 1;
                             rsmem = RS;
                             rsmem -> isExecuting = 2;
@@ -1640,7 +1640,7 @@ CompletedInstruction **execute(int NB){
             removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
             removeDictionaryEntriesByKey (cpu -> resStaInt, &(unitOutputs[BU] -> ROB_number));
-            branchHelper (instructionAndResult);
+            branchHelper (unitOutputs[BU]);
             pipelineString = "BU";
             printPipeline(unitOutputs[BU], pipelineString, 0);
         }
@@ -1995,7 +1995,7 @@ void updateOutputRES(CompletedInstruction *instruction){
 					printf("not ready\n");
 					if(RSmem -> Qj == robnumber){
 						printf("hfksjadhf\n");
-						RSmem -> iVk = instruction -> intResult;
+						RSmem -> Vj = instruction -> intResult;
 						RSmem -> Qj = -1;		
 					}
 					if (RSmem -> Qj == -1){
@@ -2257,7 +2257,7 @@ void writeBackUnit(int NB){
 				}
 				//printf("instruction %d  with ROB_number - %d updated with result\n", ROBentry -> instruction -> address, instruction ->ROB_number);
 			}
-			//updateOutputRES(instruction);
+			updateOutputRES(instruction);
 		}
 	}
 }
