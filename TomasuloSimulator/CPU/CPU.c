@@ -1347,6 +1347,8 @@ CompletedInstruction **execute(int NB){
                     rsmem -> isExecuting = 1;
                     rsmem -> address = rsmem -> Vj + instruction->immediate;
                     loadStallROBNumber = rsmem -> Dest;
+                    pipelineString = "Load/Store";
+                    printPipeline(instruction, pipelineString, 1);
                 } else {
                     rsmem = NULL;
                 }
@@ -1387,9 +1389,9 @@ CompletedInstruction **execute(int NB){
                     instructionAndResult -> ROB_number = rsmem -> Dest;
                     LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                     memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                    pipelineString = "MEM";
+                    printPipeline(instruction, pipelineString, 1);
                 }
-                pipelineString = "Load/Store";
-                printPipeline(instruction, pipelineString, 1);
                 break;
             case LD:
                 //Two-step
@@ -1398,6 +1400,8 @@ CompletedInstruction **execute(int NB){
                     rsmem -> isExecuting = 1;
                     rsmem -> address = rsmem -> Vj + instruction->immediate;
                     loadStallROBNumber = rsmem -> Dest;
+                    pipelineString = "Load/Store";
+                    printPipeline(instruction, pipelineString, 1);
                 } else {
                     rsmem = NULL;
                 }
@@ -1438,9 +1442,9 @@ CompletedInstruction **execute(int NB){
                     instructionAndResult -> ROB_number = rsmem -> Dest;
                     LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                     memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                    pipelineString = "MEM";
+                    printPipeline(instruction, pipelineString, 1);
                 }
-                pipelineString = "Load/Store";
-                printPipeline(instruction, pipelineString, 1);
                 break;
             case SD:
                 rsmem -> isExecuting = 1;
