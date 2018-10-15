@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 
 
 
-    for (test_cycle = 0; test_cycle < 30; test_cycle ++){
+    for (test_cycle = 0; test_cycle < 35; test_cycle ++){
     //while(runClockCycle(NF, NI, NW, NB)){//loop emulating simulator clock cycles
         runClockCycle(NF, NI, NW, NB);
 

@@ -154,16 +154,14 @@ void initializeCPU (int NI, int NR, int NB) {
     cpu -> resStaFPmultResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPdivResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaBUResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    //Initialize Reorder buffer
-    cpu -> reorderBuffer = createCircularQueue(NR);
-
+ 
     //Initialize Stall counters
     cpu -> stallFullROB = 0;
     cpu -> stallFullRS = 0;
 
-	cpu -> reorderBufferResult = createCircularQueue(NR);
+	// Initialize WB and ROB
+	cpu -> reorderBuffer = createCircularQueue(NR);
 	cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-	cpu -> WriteBackBufferResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
 
     //Initialize Flag of instructions after branch
     cpu -> isAfterBranch = 0;
@@ -1826,6 +1824,7 @@ void Commit(int NC)
 	ROB * ROBEntry;
 	RegStatus *RegStatusEntry;
 	void *valuePtr = malloc(sizeof(double));
+	int robnum;
 		ROBEntry = cpu -> reorderBuffer -> items[cpu->reorderBuffer ->head];
 //		while(ROBEntry != NULL && NC != 0)
 		while (cpu->reorderBuffer->count != 0 && NC != 0)
@@ -1843,9 +1842,11 @@ void Commit(int NC)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
-							//if(RegStatusEntry -> reorderNum == cpu->reorderBuffer ->head){
+							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
+							//printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, cpu->reorderBuffer->head);
+							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
-							//}
+							}
 							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction %d in integer register number %d with value %d \n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
@@ -1858,7 +1859,10 @@ void Commit(int NC)
 							DestVal = *((double *)Current -> value -> value);
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
-							RegStatusEntry->busy = 0;
+							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
+							if(RegStatusEntry -> reorderNum == robnum){
+								RegStatusEntry->busy = 0;
+							}
 							removeDictionaryEntriesByKey(cpu -> renameRegFP, &DestRenameReg);
 							printf("Committed instruction %d in floating point register number %d with value %f\n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
@@ -1908,6 +1912,10 @@ void Commit(int NC)
 										break;
 									}
 									else{
+										int robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+										if(cpu -> WriteBackBuffer != NULL){
+											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, &robnum); 
+										}
 										i++;
 										//go to next
 									}
@@ -2138,6 +2146,7 @@ void insertintoWriteBackBuffer(int NB)
 		if(unitOutputs[INT] != NULL){	
 			instruction = unitOutputs[INT];
 			*ROB_number = instruction->ROB_number;
+
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 			removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
 			int* intresult = &(instruction -> intResult);
