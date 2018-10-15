@@ -56,9 +56,9 @@ int main(int argc, char** argv) {
     int test_cycle;
 
 
-    //for (test_cycle = 0; test_cycle < 20; test_cycle ++){
-    while(runClockCycle(NF, NI, NW, NB)){//loop emulating simulator clock cycles
-        //runClockCycle(NF, NI, NW, NB);
+    for (test_cycle = 0; test_cycle < 20; test_cycle ++){
+    //while(runClockCycle(NF, NI, NW, NB)){//loop emulating simulator clock cycles
+        runClockCycle(NF, NI, NW, NB);
         printInstructionQueue();
         printReservationStations();
         printRenamingRegisters();
