@@ -1204,13 +1204,17 @@ CompletedInstruction **execute(int NB){
         if (i < 2 || i > 6) {
             rsint = (RSint *)((DictionaryEntry *)instructionsToExec[i] -> value -> value);
             instruction = rsint -> instruction;
+			printf("instruction exceuting has address %d and ROB %d\n", instruction ->address, rsint -> Dest);
         } else if (i == 2 || i == 3) {
             rsmem = (RSmem *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
             instruction = rsmem -> instruction;
+			printf("instruction exceuting has address %d and ROB %d\n", instruction ->address, rsmem -> Dest);
         } else {
             rsfloat = (RSfloat *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
             instruction = rsfloat -> instruction;
+			printf("instruction exceuting has address %d and ROB %d\n", instruction ->address, rsfloat -> Dest);
         }
+		//printf("instruction exceuting has address %d and ROB %d\n", instruction ->address, rsint -> Dest);
         instructionAndResult -> instruction = instruction;
         switch (instruction->op) {
             case ANDI:
@@ -1792,7 +1796,7 @@ ROB * InitializeROBEntry(Instruction * instructionP)
 				ROBEntry->DestReg = -1;
 				ROBEntry -> isINT = 0;
 				ROBEntry->isBranch = 1;
-				cpu->isAfterBranch = 1;
+				//cpu->isAfterBranch = 1;
             break;
         default:
             break;
@@ -2250,7 +2254,10 @@ void writeBackUnit(int NB){
 					if(ROBentry -> DestRenameReg == instruction -> ROB_number){
 						ROBentry -> state = "W";
 						ROBentry -> isReady = 1;
-						printf("instruction %d  with ROB_number - %d updated in reorder buffer\n", ROBentry -> instruction -> address, instruction ->ROB_number);
+						if(ROBentry -> isBranch == 1){
+							ROBentry -> isCorrectPredict = instruction -> isCorrectPredict;
+						}
+						printf("instruction %d  with ROB_number - %d updated in reorder buffer with %d \n", ROBentry -> instruction -> address, instruction -> ROB_number, instruction -> isCorrectPredict);
 					}
 					j++;
 					ROBentry = cpu->reorderBuffer -> items[cpu->reorderBuffer -> head + j];
@@ -2471,9 +2478,11 @@ void branchHelper (CompletedInstruction *instructionAndResult) {
             instructionAndResult -> isCorrectPredict = 0;
             flushInstructionQueueFetchBuffer (NI);
             cpu -> PC = *targetAddress;
+			printf("Branch taken but predicted as not taken\n");
         } else { //predicted taken
             if (*(int *)(BTBEntry -> value -> value) == *targetAddress) {
                 instructionAndResult -> isCorrectPredict = 1;
+				 printf("Branch taken and predicted as taken\n");
             } else {
                 removeDictionaryEntriesByKey (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address));
                 addDictionaryEntry (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address),
@@ -2481,6 +2490,7 @@ void branchHelper (CompletedInstruction *instructionAndResult) {
                  instructionAndResult -> isCorrectPredict = 0;
                  flushInstructionQueueFetchBuffer (NI);
                  cpu -> PC = *targetAddress;
+				 printf("Branch taken and predicted as not taken\n");
             }
         }
     } else { //branch not taken
@@ -2489,6 +2499,7 @@ void branchHelper (CompletedInstruction *instructionAndResult) {
             instructionAndResult -> isCorrectPredict = 0;
             flushInstructionQueueFetchBuffer (NI);
             cpu -> PC = instructionAndResult -> instruction -> address + 4;
+			printf("Branch taken but predicted as not taken\n");
         } else { //predicted not taken
             instructionAndResult -> isCorrectPredict = 1;
         }
