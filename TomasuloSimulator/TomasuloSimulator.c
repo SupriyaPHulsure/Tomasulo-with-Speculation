@@ -56,11 +56,10 @@ int main(int argc, char** argv) {
     int test_cycle;
 
 
-    for (test_cycle = 0; test_cycle < 30; test_cycle ++){
-        runClockCycle(NF, NI, NW, NB);
+    //for (test_cycle = 0; test_cycle < 20; test_cycle ++){
+    while(runClockCycle(NF, NI, NW, NB)){//loop emulating simulator clock cycles
+        //runClockCycle(NF, NI, NW, NB);
 
-        //printFetchBuffer();
-		
         printInstructionQueue();
         printReservationStations();
         printRenamingRegisters();
@@ -70,17 +69,13 @@ int main(int argc, char** argv) {
 
 
     }
-	//printROB();
+
+	//printDataCache (); //print data cache
+
+
+	//printIntegerRegisters (); //print integer registers
+	//printFPRegisters (); //print floating point registers
 	
-	//while (runClockCycle()); //loop emulating simulator clock cycles
 
-    
-	/*printDataCache (); //print data cache
-
-
-	printIntegerRegisters (); //print integer registers
-	printFPRegisters (); //print floating point registers
-	
-*/
 	return 0;
 }

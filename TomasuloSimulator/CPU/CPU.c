@@ -48,6 +48,7 @@ void updateOutputRES(CompletedInstruction *instruction);
 int commitInstuctionCount();
 void Commit(int NC);
 void CommitUnit(int NB);
+int checkEnd();
 
 
 
@@ -201,7 +202,7 @@ int fetchMultiInstructionUnit(int NF){
                 if (BTBEntry != NULL){
 
                     if (*((int*)BTBEntry -> key) == *addrPtr){
-                        printf("Instruction %d is a branch in the BranchTargetBuffer with", *addrPtr);
+                        printf("Instruction %d is a branch in the BranchTargetBuffer with ", *addrPtr);
                         int targetAddress = *((int*)BTBEntry -> value -> value);
 
                         printf("target address %d.\n", targetAddress);
@@ -846,10 +847,10 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
     RSmem* RS = (RSmem*) malloc (sizeof(RSmem));
     counterUnit = countDictionaryLen(LOrSBuffer);
     counterUnitResult = countDictionaryLen(LOrSBufferResult);
-    if (strcmp(buffType, "Load") == 0 && countDictionaryLen (cpu -> storeBuffer) != 0) {
-        printf("Stall Load during Issue Unit because of earlier store in queue.\n");
-        return 0;
-    }
+//    if (strcmp(buffType, "Load") == 0 && countDictionaryLen (cpu -> storeBuffer) != 0) {
+//        printf("Stall Load during Issue Unit because of earlier store in queue.\n");
+//        return 0;
+//    }
     if (maxLenBuff - counterUnit - counterUnitResult > 0){
         RS -> isReady = 1; //Will be set to 0 later if necessary
         int DestROBnum = cpu -> reorderBuffer->tail;
@@ -1364,28 +1365,31 @@ CompletedInstruction **execute(int NB){
                 while (!instructionFoundOrBubble) { //1 for instruction, 2 for bubble
                     if (dictEntry == NULL) {
                         instructionFoundOrBubble = 2;
-                        continue;
-                    }
-                    RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
-                    if (RS -> isReady && RS -> address != -1) {
-                        for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
-                            if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)]))-> DestAddr == RS -> address) {
-                                dictEntry = dictEntry -> next;
-                                j = -2; //break out of for loop
+                    } else {
+                        RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+                        if (RS -> isReady && RS -> address != -1) {
+                            for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
+                                if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)]))-> DestAddr == RS -> address) {
+                                    j = -2; //break out of for loop
+                                }
                             }
-                        }
-                        if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
-                            instructionFoundOrBubble = 1;
-                            rsmem = RS;
-                            rsmem -> isExecuting = 2;
+                            if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                                instructionFoundOrBubble = 1;
+                                rsmem = RS;
+                            } else {
+                                if (dictEntry == NULL) {
+                                }
+                                dictEntry = dictEntry -> next;
+                            }
                         } else {
+                            if (dictEntry == NULL) {
+                            }
                             dictEntry = dictEntry -> next;
                         }
-                    } else {
-                        dictEntry = dictEntry -> next;
                     }
                 }
-                if (instructionFoundOrBubble == 1) {
+                if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
                     valuePtr = dataCacheElement->value->value;
@@ -1423,14 +1427,12 @@ CompletedInstruction **execute(int NB){
                     if (RS -> isReady && RS -> address != -1) {
                         for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
                             if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)])) -> DestAddr == RS -> address) {
-                                dictEntry = dictEntry -> next;
                                 j = -1; //break out of for loop
                             }
                         }
                         if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
                             instructionFoundOrBubble = 1;
                             rsmem = RS;
-                            rsmem -> isExecuting = 2;
                         } else {
                             dictEntry = dictEntry -> next;
                         }
@@ -1438,7 +1440,8 @@ CompletedInstruction **execute(int NB){
                         dictEntry = dictEntry -> next;
                     }
                 }
-                if (instructionFoundOrBubble == 1) {
+                if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
                     valuePtr = dataCacheElement->value->value;
@@ -1455,6 +1458,7 @@ CompletedInstruction **execute(int NB){
                 rsmem -> address = rsmem -> Vj + instruction->immediate;
                 instructionAndResult -> address = rsmem -> address;
                 instructionAndResult -> intResult = rsmem -> iVk;
+                instructionAndResult -> ROB_number = rsmem -> Dest;
                 StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 storeFirst = 1;
@@ -1466,6 +1470,7 @@ CompletedInstruction **execute(int NB){
                 rsmem -> address = rsmem -> Vj + instruction->immediate;
                 instructionAndResult -> address = rsmem -> address;
                 instructionAndResult -> fpResult = rsmem -> fpVk;
+                instructionAndResult -> ROB_number = rsmem -> Dest;
                 StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 storeFirst = 1;
@@ -1475,6 +1480,7 @@ CompletedInstruction **execute(int NB){
             case BNE:
                 rsint -> isExecuting = 1;
                 instructionAndResult -> intResult = rsint -> Vj != rsint -> Vk ? 0 : -1;
+                instructionAndResult -> ROB_number = rsint -> Dest;
                 BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
@@ -1483,6 +1489,7 @@ CompletedInstruction **execute(int NB){
             case BNEZ:
                 rsint -> isExecuting = 1;
                 instructionAndResult -> intResult = rsint -> Vj != 0 ? 0 : -1;
+                instructionAndResult -> ROB_number = rsint -> Dest;
                 BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
@@ -1491,6 +1498,7 @@ CompletedInstruction **execute(int NB){
             case BEQ:
                 rsint -> isExecuting = 1;
                 instructionAndResult -> intResult = rsint -> Vj == rsint -> Vk ? 0 : -1;
+                instructionAndResult -> ROB_number = rsint -> Dest;
                 BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
@@ -1499,6 +1507,7 @@ CompletedInstruction **execute(int NB){
             case BEQZ:
                 rsint -> isExecuting = 1;
                 instructionAndResult -> intResult = rsint -> Vj == 0 ? 0 : -1;
+                instructionAndResult -> ROB_number = rsint -> Dest;
                 BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                 memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                 pipelineString = "BU";
@@ -1819,7 +1828,8 @@ void Commit(int NC)
 	RegStatus *RegStatusEntry;
 	void *valuePtr = malloc(sizeof(double));
 		ROBEntry = cpu -> reorderBuffer -> items[cpu->reorderBuffer ->head];
-		while(ROBEntry != NULL && NC != 0)
+//		while(ROBEntry != NULL && NC != 0)
+		while (cpu->reorderBuffer->count != 0 && NC != 0)
 		{
 				//printf("Checking instruction %d for commiting\n", ROBEntry -> instruction -> address);
 				if((strcmp(ROBEntry -> state, "W") == 0) && ROBEntry -> isReady == 1)
@@ -2250,7 +2260,8 @@ void writeBackUnit(int NB){
 			int j = 0;
 			if (cpu -> reorderBuffer != NULL){
 				ROBentry = cpu-> reorderBuffer -> items[cpu->reorderBuffer -> head];
-				while(ROBentry != NULL){
+				//while(ROBentry != NULL){
+				while (j < cpu->reorderBuffer->count) {
 					if(ROBentry -> DestRenameReg == instruction -> ROB_number){
 						ROBentry -> state = "W";
 						ROBentry -> isReady = 1;
@@ -2260,7 +2271,7 @@ void writeBackUnit(int NB){
 						printf("instruction %d  with ROB_number - %d updated in reorder buffer with %d \n", ROBentry -> instruction -> address, instruction -> ROB_number, instruction -> isCorrectPredict);
 					}
 					j++;
-					ROBentry = cpu->reorderBuffer -> items[cpu->reorderBuffer -> head + j];
+					ROBentry = cpu->reorderBuffer -> items[(cpu->reorderBuffer -> head + j)%cpu->reorderBuffer->size];
 				}
 			}
 			updateOutputRES(instruction);
@@ -2297,6 +2308,7 @@ void CommitUnit(int NB)
  * @return: When the simulator stops
  */
 int runClockCycle (int NF, int NI, int NW, int NB) {
+    int isEnd;
 
 	cpu -> cycle++; //increment cycle counter
 
@@ -2322,10 +2334,14 @@ int runClockCycle (int NF, int NI, int NW, int NB) {
     updateReservationStations();
 
     printf("Finished update.\n");
-	
 
+    isEnd = checkEnd();
 
-	return 1;
+	if(isEnd==1){
+	    printf("Processor has finished working.\n");
+	    return 0;
+	}else
+	    return 1;
 
 }
 
@@ -2503,6 +2519,25 @@ void branchHelper (CompletedInstruction *instructionAndResult) {
         } else { //predicted not taken
             instructionAndResult -> isCorrectPredict = 1;
         }
+    }
+}
+
+//Determine if the run cycle should be ended
+int checkEnd(){
+    //check whether PC exceeds last instruction in cache
+    int fetchEnd = 0;
+    int robCount, iQueueCount;
+    if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))) {
+        fetchEnd = 1;
+    }
+    //Check whether all instructions in ROB have been committed
+    iQueueCount = getCountCircularQueue(cpu->instructionQueue);
+    robCount = getCountCircularQueue(cpu->reorderBuffer);
+
+    if((fetchEnd==1)&&(robCount==0)&&iQueueCount == 0){
+        return 1;
+    }else{
+        return 0;
     }
 }
 
