@@ -1805,7 +1805,7 @@ ROB * InitializeROBEntry(Instruction * instructionP)
 				ROBEntry->DestReg = -1;
 				ROBEntry -> isINT = 0;
 				ROBEntry->isBranch = 1;
-				//cpu->isAfterBranch = 1;
+				cpu->isAfterBranch = 1;
             break;
         default:
             break;
@@ -1844,7 +1844,9 @@ void Commit(int NC)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
-							RegStatusEntry->busy = 0;
+							//if(RegStatusEntry -> reorderNum == cpu->reorderBuffer ->head){
+								RegStatusEntry->busy = 0;
+							//}
 							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction %d in integer register number %d with value %d \n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
@@ -1892,27 +1894,38 @@ void Commit(int NC)
 					}
 					else{
 						//Branch
+						printf("in branch\n");
 						if(ROBEntry ->isBranch == 1 ){
 						if( ROBEntry -> isCorrectPredict == 0){
-							while(ROBEntry != NULL || ROBEntry -> isAfterBranch == 0){
-								if(ROBEntry -> isAfterBranch == 0){
-									ROBEntry = dequeueCircular(cpu -> reorderBuffer);
-								}
-							}
+							// move head to isafterbranch == 0
+							/* int i = 0;
+							while (i < cpu->reorderBuffer->count) {
+									i++;
+									if(ROBEntry -> isAfterBranch != 0){
+										cpu -> reorderBuffer -> head = (cpu-> reorderBuffer -> head + i)%cpu->reorderBuffer->size;
+									//ROBentry = cpu->reorderBuffer -> items[(cpu-> reorderBuffer -> head + i)%cpu->reorderBuffer->size];
+									}
+									else{
+										break;
+									}
+			
+							} */
 							
 						}
 						printf("Committed branch instruction %d\n", ROBEntry -> instruction -> address);
-						NC--;
+						
 						}
+						NC--;
 					}
 				}
 		else{
 		
 			break;
 		}
-		ROBEntry = cpu -> reorderBuffer-> items[cpu->reorderBuffer ->head];
+		
+		ROBEntry = cpu -> reorderBuffer-> items[cpu->reorderBuffer->head];
 		}
-		//printf("Completed Commit\n");
+
 }
 
 
