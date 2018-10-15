@@ -676,6 +676,7 @@ int addInstruction2RSint(Dictionary *renameRegInt, Dictionary *resSta, Dictionar
         //Append to reservation stations
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
+        RS->isExecuting = 0;
         addDictionaryEntry(resStaResult, &(RS->Dest), RS);
         //Update register status
         RegStatusEntry = IntRegStatus[instruction->rd];
@@ -751,6 +752,7 @@ int addInstruction2RSfloat(Dictionary *renameRegFP, Dictionary *resSta, Dictiona
          //Append to reservation stations
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
+        RS->isExecuting = 0;
         addDictionaryEntry(resStaResult, &(RS->Dest), RS);
         //Update register status
         RegStatusEntry = FPRegStatus[instruction->fd];
@@ -825,6 +827,7 @@ int addInstruction2RSbranch(Dictionary *renameRegInt, Dictionary *resSta, Dictio
         //Append to reservation stations
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
+        RS->isExecuting = 0;
         addDictionaryEntry(resStaResult, &(RS->Dest), RS);
         printf("Issued instruction %d: %s\n", instruction->address, getOpcodeString ((int) instruction->op));
         return 1;
@@ -910,6 +913,7 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
             }
         }
         RS -> address = -1;
+        RS->isExecuting = 0;
         addDictionaryEntry(LOrSBufferResult, &(RS->Dest), RS);
         //Add to renaming registers and update Register Status if load
         if (strcmp(buffType, "Load") == 0) {
@@ -1128,7 +1132,7 @@ CompletedInstruction **execute(int NB){
     CompletedInstruction *FPmultPipelineTemp = NULL;
     CompletedInstruction *FPdivPipelineTemp = NULL;
     CompletedInstruction *BUPipelineTemp = NULL;
-
+    printf("Checkpoint 0\n");
 
 
     dictEntry = (DictionaryEntry *)cpu -> resStaInt -> head;
@@ -1373,13 +1377,9 @@ CompletedInstruction **execute(int NB){
                                 instructionFoundOrBubble = 1;
                                 rsmem = RS;
                             } else {
-                                if (dictEntry == NULL) {
-                                }
                                 dictEntry = dictEntry -> next;
                             }
                         } else {
-                            if (dictEntry == NULL) {
-                            }
                             dictEntry = dictEntry -> next;
                         }
                     }
@@ -1388,7 +1388,12 @@ CompletedInstruction **execute(int NB){
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-                    valuePtr = dataCacheElement->value->value;
+                    if (dataCacheElement != NULL) {
+                        valuePtr = dataCacheElement->value->value;
+
+                    } else {
+                        *((double *)valuePtr) = 0.0;
+                    }
                     instructionAndResult -> fpResult = *((double*)valuePtr);
                     instructionAndResult -> ROB_number = rsmem -> Dest;
                     LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
@@ -1440,7 +1445,11 @@ CompletedInstruction **execute(int NB){
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
-                    valuePtr = dataCacheElement->value->value;
+                    if (dataCacheElement != NULL) {
+                        valuePtr = dataCacheElement->value->value;
+                    } else {
+                        * ((int *)valuePtr) = 0;
+                    }
                     instructionAndResult -> intResult = (int)*((double*)valuePtr);
                     instructionAndResult -> ROB_number = rsmem -> Dest;
                     LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
@@ -2494,9 +2503,9 @@ void branchHelper (CompletedInstruction *instructionAndResult) {
                 removeDictionaryEntriesByKey (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address));
                 addDictionaryEntry (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address),
                  targetAddress);
-                 instructionAndResult -> isCorrectPredict = 0;
-                 flushInstructionQueueFetchBuffer (NI);
-                 cpu -> PC = *targetAddress;
+                instructionAndResult -> isCorrectPredict = 0;
+                flushInstructionQueueFetchBuffer (NI);
+                cpu -> PC = *targetAddress;
             }
         }
     } else { //branch not taken
