@@ -1893,23 +1893,31 @@ void Commit(int NC)
 					}
 					else{
 						//Branch
-						printf("in branch\n");
 						if(ROBEntry ->isBranch == 1 ){
 						if( ROBEntry -> isCorrectPredict == 0){
 							// move head to isafterbranch == 0
-							/* int i = 0;
-							while (i < cpu->reorderBuffer->count) {
-									i++;
-									if(ROBEntry -> isAfterBranch != 0){
-										cpu -> reorderBuffer -> head = (cpu-> reorderBuffer -> head + i)%cpu->reorderBuffer->size;
-									//ROBentry = cpu->reorderBuffer -> items[(cpu-> reorderBuffer -> head + i)%cpu->reorderBuffer->size];
-									}
-									else{
+							int i = 1;
+							ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
+							while(ROBentrySecond != NULL){
+								ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
+								if(ROBentrySecond != NULL){
+									if(ROBentrySecond -> isAfterBranch == 0)
+									{
+										cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+										printf("Branch mispredicted so flushed ROB.\n");
 										break;
 									}
-			
-							} */
-							
+									else{
+										i++;
+										//go to next
+									}
+								}
+								else{
+									cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+									printf("Branch mispredicted so flushed ROB.\n");
+									break;
+								}
+							}
 						}
 						printf("Committed branch instruction %d\n", ROBEntry -> instruction -> address);
 						
@@ -2250,7 +2258,7 @@ int commitInstuctionCount(){
 				break;
 			}
 			i++;
-			ROBentry = cpu->reorderBuffer -> items[cpu->reorderBuffer -> head + i];
+			ROBentry = cpu->reorderBuffer -> items[(cpu->reorderBuffer -> head + i)%cpu->reorderBuffer->size];
 		}
 	}
 	return count;
@@ -2302,18 +2310,18 @@ void CommitUnit(int NB)
 	if(wb_count == 0 && commit_count == 0){
 		printf("No instruction in Writeback and in ROB for Commit.\n");
 	}
-	else if(wb_count == 0)
+	else if(wb_count == 0 || commit_count >= NB)
 	{
 		Commit(NB);
 	}
-	else if(commit_count == 0){
+	else if(commit_count == 0 || wb_count >= NB ){
 		writeBackUnit(NB);
 	}
 	else{
-		Commit(commit_count);
-		writeBackUnit(NB - commit_count);
+			Commit(commit_count);
+			writeBackUnit(NB - commit_count);
+		}
 		// divide NB
-	}
 }
 /**
  * Method that simulates the looping cycle-wise
