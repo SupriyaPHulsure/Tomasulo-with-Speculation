@@ -1683,7 +1683,6 @@ ROB * InitializeROBEntry(Instruction * instructionP)
 	ROBEntry -> isStore = 0;
 	ROBEntry -> DestRenameReg = cpu->reorderBuffer -> tail;
 	ROBEntry -> isBranch = 0 ;
-	ROBEntry -> isAfterBranch = 0;
 	ROBEntry -> isCorrectPredict = 1;
 	ROBEntry -> DestAddr = 0;
 	op = instructionP -> op;
