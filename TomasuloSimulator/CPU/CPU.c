@@ -1651,7 +1651,7 @@ CompletedInstruction **execute(int NB){
             i++;
             removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaInt, &(unitOutputs[BU] -> ROB_number));
+            removeDictionaryEntriesByKey (cpu -> resStaBU, &(unitOutputs[BU] -> ROB_number));
             branchHelper (unitOutputs[BU]);
             pipelineString = "BU";
             printPipeline(unitOutputs[BU], pipelineString, 0);
