@@ -46,8 +46,8 @@ void insertintoWriteBackBuffer(int NB);
 void writeBackUnit(int NB);
 void updateOutputRES(CompletedInstruction *instruction);
 int commitInstuctionCount();
-void Commit(int NC);
-void CommitUnit(int NB);
+void Commit(int NC, int NR);
+void CommitUnit(int NB, int NR);
 int checkEnd();
 
 
@@ -1826,7 +1826,7 @@ ROB * InitializeROBEntry(Instruction * instructionP)
 
 
 //commit instructions or flush ROB
-void Commit(int NC)
+void Commit(int NC, int NR)
 {
 	// commit instructions from ROB
 	ROB * ROBEntry;
@@ -1911,10 +1911,16 @@ void Commit(int NC)
 							int i = 0;
 							ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
 							int robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
-							printf("testing ------------ ROB %d", robnum);
 							while(ROBentrySecond != NULL){
 								ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
+								robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
 								if(ROBentrySecond != NULL){
+									if(robnum == cpu -> reorderBuffer -> tail){
+										printf("ROB is empty now\n");
+										//cpu -> reorderBuffer -> head = cpu -> reorderBuffer -> tail;
+										cpu -> reorderBuffer = createCircularQueue(NR);
+										break;
+									}
 									if(ROBentrySecond -> isAfterBranch == 0)
 									{
 										cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
@@ -1922,7 +1928,6 @@ void Commit(int NC)
 										break;
 									}
 									else{
-										int robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, &robnum); 
 										}
@@ -2088,57 +2093,65 @@ void updateOutputRES(CompletedInstruction *instruction){
 				}
 				for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
 				RSmem = current -> value -> value;
-				if(RSmem -> Qj == robnumber){
-							RSmem -> Vj = instruction -> intResult;
-							RSmem -> Qj = -1;							
+				 if (RSmem -> isReady == 0){
+					if(RSmem -> Qj == robnumber){
+								RSmem -> Vj = instruction -> intResult;
+								RSmem -> Qj = -1;							
+							}
+							if (RSmem -> Qj == -1){
+									RSmem -> isReady = 1;
 						}
-						if (RSmem -> Qj == -1){
-								RSmem -> isReady = 1;
-					}
+				 }
 				}
 				for (current = cpu -> resStaFPmult -> head; current != NULL; current = current -> next){
 				RSfloat = current -> value -> value;
-				if(RSfloat -> Qj == robnumber){
-						RSfloat -> Vj = instruction -> fpResult;
-						RSfloat -> Qj = -1;						
-					}
-					if(RSfloat -> Qk == robnumber){
-						RSfloat -> Vk = instruction -> fpResult;
-						RSfloat -> Qk = -1;
-						
-					}
-					if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
-								RSfloat -> isReady = 1;
+					if (RSfloat -> isReady == 0){
+						if(RSfloat -> Qj == robnumber){
+							RSfloat -> Vj = instruction -> fpResult;
+							RSfloat -> Qj = -1;						
 						}
+						if(RSfloat -> Qk == robnumber){
+							RSfloat -> Vk = instruction -> fpResult;
+							RSfloat -> Qk = -1;
+							
+						}
+						if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
+									RSfloat -> isReady = 1;
+						}
+					}
 				}  
 			for (current = cpu -> resStaFPdiv -> head; current != NULL; current = current -> next){
 					RSfloat = current -> value -> value;
-					if(RSfloat -> Qj == robnumber){
-						RSfloat -> Vj = instruction -> fpResult;
-						RSfloat -> Qj = -1;						
-					}
-					if(RSfloat -> Qk == robnumber){
-						RSfloat -> Vk = instruction -> fpResult;
-						RSfloat -> Qk = -1;
-					}
-					if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
-								RSfloat -> isReady = 1;
+						if (RSfloat -> isReady == 0){
+							if(RSfloat -> Qj == robnumber){
+								RSfloat -> Vj = instruction -> fpResult;
+								RSfloat -> Qj = -1;						
+							}
+							if(RSfloat -> Qk == robnumber){
+								RSfloat -> Vk = instruction -> fpResult;
+								RSfloat -> Qk = -1;
+							}
+							if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
+										RSfloat -> isReady = 1;
+								}
 						}
 				}
 			
             for (current = cpu -> storeBuffer -> head; current != NULL; current = current -> next){
 					RSmem = current -> value -> value;
-					if(RSmem -> Qj == robnumber){
-						RSmem -> fpVk = instruction -> fpResult;	
-						RSmem -> Qj = -1;
-					}
-					if(RSmem -> Qk == robnumber){
-						RSmem -> fpVk = instruction -> fpResult;
-						RSmem -> Qk = -1;
-					}
-					if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
-								RSmem -> isReady = 1;
+					 if (RSmem -> isReady == 0){
+						if(RSmem -> Qj == robnumber){
+							RSmem -> fpVk = instruction -> fpResult;	
+							RSmem -> Qj = -1;
 						}
+						if(RSmem -> Qk == robnumber){
+							RSmem -> fpVk = instruction -> fpResult;
+							RSmem -> Qk = -1;
+						}
+						if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
+									RSmem -> isReady = 1;
+							}
+					 }
 				}
             break;
      
@@ -2501,7 +2514,7 @@ void writeBackUnit(int NB){
 						if(ROBentry -> isBranch == 1){
 							ROBentry -> isCorrectPredict = instruction -> isCorrectPredict;
 						}
-						printf("instruction %d  with ROB_number - %d updated in reorder buffer with %d \n", ROBentry -> instruction -> address, instruction -> ROB_number, instruction -> isCorrectPredict);
+						printf("instruction %d  with ROB_number - %d updated in reorder buffer \n", ROBentry -> instruction -> address, instruction -> ROB_number);
 					}
 					j++;
 					ROBentry = cpu->reorderBuffer -> items[(cpu->reorderBuffer -> head + j)%cpu->reorderBuffer->size];
@@ -2515,7 +2528,7 @@ void writeBackUnit(int NB){
 
 
 // manage commit and write back
-void CommitUnit(int NB)
+void CommitUnit(int NB, int NR)
 {
 	int wb_count, commit_count;
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
@@ -2528,13 +2541,13 @@ void CommitUnit(int NB)
 	}
 	else if(wb_count == 0 || commit_count >= NB)
 	{
-		Commit(NB);
+		Commit(NB, NR);
 	}
 	else if(commit_count == 0 || wb_count >= NB ){
 		writeBackUnit(NB);
 	}
 	else{
-			Commit(commit_count);
+			Commit(commit_count, NR);
 			writeBackUnit(NB - commit_count);
 		}
 		// divide NB
@@ -2543,7 +2556,7 @@ void CommitUnit(int NB)
  * Method that simulates the looping cycle-wise
  * @return: When the simulator stops
  */
-int runClockCycle (int NF, int NI, int NW, int NB) {
+int runClockCycle (int NF, int NI, int NW, int NB, int NR) {
     int isEnd;
 
 	cpu -> cycle++; //increment cycle counter
@@ -2565,7 +2578,7 @@ int runClockCycle (int NF, int NI, int NW, int NB) {
 	printf("Execution -----------\n");
 	insertintoWriteBackBuffer(NB);
 	//printf("Write Back Finish ---------------\n");
-	CommitUnit(NB);
+	CommitUnit(NB, NR);
 
 	updateFetchBuffer();
     updateInstructionQueue();
