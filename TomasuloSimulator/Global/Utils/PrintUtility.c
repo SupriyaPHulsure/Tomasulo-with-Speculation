@@ -323,6 +323,7 @@ void printROB()
 
 			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
 		ROBentry = getHeadCircularQueue(cpu -> reorderBuffer);
+
 		//while(ROBentry != NULL){
 		while (i < cpu->reorderBuffer->count) {
 			printf("%d\t\t%d\t%s\t%d\t\t%d\t%d\t%d\t\t%d\t\t%d\t%d\t\t%d\n", (cpu-> reorderBuffer -> head + i)%cpu->reorderBuffer->size, ROBentry->instruction->address , ROBentry->state, ROBentry -> DestReg, ROBentry ->DestAddr,  ROBentry -> isReady, ROBentry->isINT, ROBentry ->isStore,ROBentry ->  isBranch,ROBentry -> isAfterBranch, ROBentry ->  isCorrectPredict);
