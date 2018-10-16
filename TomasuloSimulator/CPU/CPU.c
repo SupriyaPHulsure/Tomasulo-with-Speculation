@@ -1900,8 +1900,10 @@ void Commit(int NC)
 						if(ROBEntry ->isBranch == 1 ){
 						if( ROBEntry -> isCorrectPredict == 0){
 							// move head to isafterbranch == 0
-							int i = 1;
+							int i = 0;
 							ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
+							int robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+							printf("testing ------------ ROB %d", robnum);
 							while(ROBentrySecond != NULL){
 								ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
 								if(ROBentrySecond != NULL){
@@ -1916,9 +1918,16 @@ void Commit(int NC)
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, &robnum); 
 										}
-										i++;
+										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &robnum)  != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt, &robnum); 
+										}
+										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, &robnum) != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegFP, &robnum); 
+										}
+										
 										//go to next
 									}
+									i++;
 								}
 								else{
 									cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
@@ -2138,6 +2147,8 @@ void insertintoWriteBackBuffer(int NB)
 	CompletedInstruction *instruction;
 	CompletedInstruction **unitOutputs;
 	unitOutputs = execute(NB);
+	printf("Execution Complete ---------------\n");
+	printf("Write Back Start ---------------\n");
 	if(cpu -> WriteBackBuffer == NULL)
 	{
 		cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
@@ -2146,7 +2157,6 @@ void insertintoWriteBackBuffer(int NB)
 		if(unitOutputs[INT] != NULL){	
 			instruction = unitOutputs[INT];
 			*ROB_number = instruction->ROB_number;
-
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 			removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
 			int* intresult = &(instruction -> intResult);
@@ -2315,6 +2325,8 @@ void CommitUnit(int NB)
 	int wb_count, commit_count;
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
 	commit_count = commitInstuctionCount();
+	
+	printf("Write Back and Commit---------------\n");
 	printf("commit count - %d, wb count - %d\n", commit_count, wb_count);
 	if(wb_count == 0 && commit_count == 0){
 		printf("No instruction in Writeback and in ROB for Commit.\n");
@@ -2355,7 +2367,9 @@ int runClockCycle (int NF, int NI, int NW, int NB) {
 
     printf("Finished issue.\n");
     
+	printf("Execution -----------\n");
 	insertintoWriteBackBuffer(NB);
+	//printf("Write Back Finish ---------------\n");
 	CommitUnit(NB);
 
 	updateFetchBuffer();
