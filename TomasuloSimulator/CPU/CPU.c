@@ -154,16 +154,14 @@ void initializeCPU (int NI, int NR, int NB) {
     cpu -> resStaFPmultResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPdivResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaBUResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    //Initialize Reorder buffer
-    cpu -> reorderBuffer = createCircularQueue(NR);
-
+ 
     //Initialize Stall counters
     cpu -> stallFullROB = 0;
     cpu -> stallFullRS = 0;
 
-	cpu -> reorderBufferResult = createCircularQueue(NR);
+	// Initialize WB and ROB
+	cpu -> reorderBuffer = createCircularQueue(NR);
 	cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-	cpu -> WriteBackBufferResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
 
     //Initialize Flag of instructions after branch
     cpu -> isAfterBranch = 0;
@@ -1826,6 +1824,7 @@ void Commit(int NC)
 	ROB * ROBEntry;
 	RegStatus *RegStatusEntry;
 	void *valuePtr = malloc(sizeof(double));
+	int robnum;
 		ROBEntry = cpu -> reorderBuffer -> items[cpu->reorderBuffer ->head];
 //		while(ROBEntry != NULL && NC != 0)
 		while (cpu->reorderBuffer->count != 0 && NC != 0)
@@ -1843,9 +1842,11 @@ void Commit(int NC)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
-							//if(RegStatusEntry -> reorderNum == cpu->reorderBuffer ->head){
+							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
+							//printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, cpu->reorderBuffer->head);
+							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
-							//}
+							}
 							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction %d in integer register number %d with value %d \n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
@@ -1858,7 +1859,10 @@ void Commit(int NC)
 							DestVal = *((double *)Current -> value -> value);
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
-							RegStatusEntry->busy = 0;
+							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
+							if(RegStatusEntry -> reorderNum == robnum){
+								RegStatusEntry->busy = 0;
+							}
 							removeDictionaryEntriesByKey(cpu -> renameRegFP, &DestRenameReg);
 							printf("Committed instruction %d in floating point register number %d with value %f\n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
@@ -1893,23 +1897,44 @@ void Commit(int NC)
 					}
 					else{
 						//Branch
-						printf("in branch\n");
 						if(ROBEntry ->isBranch == 1 ){
 						if( ROBEntry -> isCorrectPredict == 0){
 							// move head to isafterbranch == 0
-							/* int i = 0;
-							while (i < cpu->reorderBuffer->count) {
-									i++;
-									if(ROBEntry -> isAfterBranch != 0){
-										cpu -> reorderBuffer -> head = (cpu-> reorderBuffer -> head + i)%cpu->reorderBuffer->size;
-									//ROBentry = cpu->reorderBuffer -> items[(cpu-> reorderBuffer -> head + i)%cpu->reorderBuffer->size];
-									}
-									else{
+							int i = 0;
+							ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
+							int robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+							printf("testing ------------ ROB %d", robnum);
+							while(ROBentrySecond != NULL){
+								ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
+								if(ROBentrySecond != NULL){
+									if(ROBentrySecond -> isAfterBranch == 0)
+									{
+										cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+										printf("Branch mispredicted so flushed ROB.\n");
 										break;
 									}
-			
-							} */
-							
+									else{
+										int robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+										if(cpu -> WriteBackBuffer != NULL){
+											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, &robnum); 
+										}
+										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &robnum)  != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt, &robnum); 
+										}
+										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, &robnum) != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegFP, &robnum); 
+										}
+										
+										//go to next
+									}
+									i++;
+								}
+								else{
+									cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+									printf("Branch mispredicted so flushed ROB.\n");
+									break;
+								}
+							}
 						}
 						printf("Committed branch instruction %d\n", ROBEntry -> instruction -> address);
 						
@@ -2122,6 +2147,8 @@ void insertintoWriteBackBuffer(int NB)
 	CompletedInstruction *instruction;
 	CompletedInstruction **unitOutputs;
 	unitOutputs = execute(NB);
+	printf("Execution Complete ---------------\n");
+	printf("Write Back Start ---------------\n");
 	if(cpu -> WriteBackBuffer == NULL)
 	{
 		cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
@@ -2250,7 +2277,7 @@ int commitInstuctionCount(){
 				break;
 			}
 			i++;
-			ROBentry = cpu->reorderBuffer -> items[cpu->reorderBuffer -> head + i];
+			ROBentry = cpu->reorderBuffer -> items[(cpu->reorderBuffer -> head + i)%cpu->reorderBuffer->size];
 		}
 	}
 	return count;
@@ -2298,22 +2325,24 @@ void CommitUnit(int NB)
 	int wb_count, commit_count;
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
 	commit_count = commitInstuctionCount();
+	
+	printf("Write Back and Commit---------------\n");
 	printf("commit count - %d, wb count - %d\n", commit_count, wb_count);
 	if(wb_count == 0 && commit_count == 0){
 		printf("No instruction in Writeback and in ROB for Commit.\n");
 	}
-	else if(wb_count == 0)
+	else if(wb_count == 0 || commit_count >= NB)
 	{
 		Commit(NB);
 	}
-	else if(commit_count == 0){
+	else if(commit_count == 0 || wb_count >= NB ){
 		writeBackUnit(NB);
 	}
 	else{
-		Commit(commit_count);
-		writeBackUnit(NB - commit_count);
+			Commit(commit_count);
+			writeBackUnit(NB - commit_count);
+		}
 		// divide NB
-	}
 }
 /**
  * Method that simulates the looping cycle-wise
@@ -2338,7 +2367,9 @@ int runClockCycle (int NF, int NI, int NW, int NB) {
 
     printf("Finished issue.\n");
     
+	printf("Execution -----------\n");
 	insertintoWriteBackBuffer(NB);
+	//printf("Write Back Finish ---------------\n");
 	CommitUnit(NB);
 
 	updateFetchBuffer();

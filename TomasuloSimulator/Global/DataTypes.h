@@ -187,9 +187,7 @@ typedef struct _cpu {
 	
     //Reorder buffer
     CircularQueue *reorderBuffer;
-	CircularQueue *reorderBufferResult; 
 	Dictionary *WriteBackBuffer;
-	Dictionary *WriteBackBufferResult;
 	
     //Reservation station
     Dictionary *resStaInt;
