@@ -194,7 +194,7 @@ void printReservationStations () {
         RSint *RS;
 		for (current = cpu -> resStaInt -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t%d\t\t%s\t  %d\t%d\t%d\t%d\t%d\t\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t\t%d\t\t\t%s\t\t%d\t\t%d\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}
@@ -209,7 +209,7 @@ void printReservationStations () {
         RSint *RS;
 		for (current = cpu -> resStaMult -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t%d\t\t%s\t  %d\t%d\t%d\t%d\t%d\t\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t\t%d\t\t\t%s\t\t%d\t\t%d\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}
@@ -224,7 +224,7 @@ void printReservationStations () {
         RSfloat *RS;
 		for (current = cpu -> resStaFPadd -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t%d\t\t%s\t  %.1f\t%.1f\t%d\t%d\t%d\t\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t\t%d\t\t\t%s\t\t%.1f\t\t%.1f\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}
@@ -239,7 +239,7 @@ void printReservationStations () {
         RSfloat *RS;
 		for (current = cpu -> resStaFPmult -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t%d\t\t%s\t  %.1f\t%.1f\t%d\t%d\t%d\t\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t\t%d\t\t\t%s\t\t%.1f\t\t%.1f\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}
@@ -254,7 +254,7 @@ void printReservationStations () {
         RSfloat *RS;
 		for (current = cpu -> resStaFPdiv -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t%d\t\t%s\t  %.1f\t%.1f\t%d\t%d\t%d\t\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t\t%d\t\t\t%s\t\t%.1f\t\t%.1f\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}
@@ -270,7 +270,7 @@ void printReservationStations () {
         RSint *RS;
 		for (current = cpu -> resStaBU -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t%d\t\t%s\t  %d\t%d\t%d\t%d\t%d\t\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t\t%d\t\t\t%s\t\t%d\t\t%d\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}
@@ -286,7 +286,7 @@ void printReservationStations () {
         RSmem *RS;
 		for (current = cpu -> loadBuffer -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t%d\t\t%s\t  %d\t  %d\t%.1f\t%d\t%d\t%d\t\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t\t%d\t\t\t%s\t\t%d\t\t%d\t\t%.1f\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->iVk, RS->fpVk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}
@@ -302,7 +302,7 @@ void printReservationStations () {
         RSmem *RS;
 		for (current = cpu -> storeBuffer -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t%d\t\t%s\t  %d\t  %d\t%.1f\t%d\t%d\t%d\t\t%d\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("\t\t%d\t\t\t%s\t\t%d\t\t%d\t\t%.1f\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->iVk, RS->fpVk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}

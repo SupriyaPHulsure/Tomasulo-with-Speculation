@@ -2716,6 +2716,7 @@ void flushInstructionQueueFetchBuffer(int NI){
 	cpu -> instructionQueueResult = createCircularQueue(NI);
 	//Set flag to 0
 	cpu->isAfterBranch = 0;
+	cpu -> stallNextFetch = 0;
     }
 
 /*

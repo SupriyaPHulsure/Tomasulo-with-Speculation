@@ -73,11 +73,11 @@ int main(int argc, char** argv) {
 
     }
 
-	//printDataCache (); //print data cache
+	printDataCache (); //print data cache
 
 
-	//printIntegerRegisters (); //print integer registers
-	//printFPRegisters (); //print floating point registers
+	printIntegerRegisters (); //print integer registers
+	printFPRegisters (); //print floating point registers
 	
 
 	return 0;
