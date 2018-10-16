@@ -2724,7 +2724,7 @@ void flushInstructionQueueFetchBuffer(int NI){
 void branchHelper (CompletedInstruction *instructionAndResult) {
     int NI = cpu -> instructionQueue -> size;
     int *targetAddress = &(instructionAndResult -> instruction -> target);
-    DictionaryEntry *BTBEntry = getValueChainByDictionaryKey (cpu -> branchTargetBuffer, targetAddress);
+    DictionaryEntry *BTBEntry = getValueChainByDictionaryKey (cpu -> branchTargetBuffer, &(instructionAndResult->instruction->address));
     if (instructionAndResult -> intResult == 0) { //branch taken
         if (BTBEntry == NULL) { //predicted not taken
             addDictionaryEntry (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address),
@@ -2753,8 +2753,9 @@ void branchHelper (CompletedInstruction *instructionAndResult) {
             instructionAndResult -> isCorrectPredict = 0;
             flushInstructionQueueFetchBuffer (NI);
             cpu -> PC = instructionAndResult -> instruction -> address + 4;
-			printf("Branch taken but predicted as not taken\n");
+			printf("Branch not taken but predicted as taken\n");
         } else { //predicted not taken
+            printf("Branch not taken and predicted as not taken.\n");
             instructionAndResult -> isCorrectPredict = 1;
         }
     }
