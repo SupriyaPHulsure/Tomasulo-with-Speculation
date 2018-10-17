@@ -32,11 +32,28 @@ int main(int argc, char** argv) {
 	//Validate command line argument
 
 	//TODO: read these variables from config file
-	int NF = 4;
-	int NI = 8;
-	int NW = 4;
-	int NR = 16;
-	int NB = 4;
+//	int NF = 4;
+//	int NI = 8;
+//	int NW = 4;
+//	int NR = 16;
+//	int NB = 4;
+
+    FILE *file = fopen ( ENV_CONFIG_FILE, "r" );
+    char config[64];
+    int parameters[5];
+    int i,temp;
+    for (i = 0; i < 5; i++) {
+        fgets(config, 64, file);
+        strtok(config, "=");
+        temp = atoi(strtok(NULL, ";"));
+        parameters[i] = temp;
+    }
+    fclose(file);
+    int NF = parameters[0];
+    int NI = parameters[1];
+    int NW = parameters[2];
+    int NR = parameters[3];
+    int NB = parameters[4];
 
 	if (argc == 2) {
 		printf ("Simulator of Part 1.\n");

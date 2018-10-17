@@ -2592,7 +2592,9 @@ int runClockCycle (int NF, int NI, int NW, int NB, int NR) {
     isEnd = checkEnd();
 
 	if(isEnd==1){
-	    printf("Processor has finished working.\n");
+	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
+	    printf("Stalls due to full Reservation Stations: %d\n", cpu -> stallFullRS);
+	    printf("Stalls due to full Reorder Buffer: %d\n", cpu -> stallFullROB);
 	    return 0;
 	}else
 	    return 1;

@@ -25,7 +25,7 @@
 #define LABEL_TERMINATOR_CHAR ':'
 #define MEMORY_LABEL "Mem"
 #define MEMORY_SEPARATOR " )(=\n"
-
+#define ENV_CONFIG_FILE "./Config/TomasuloSimulator.conf"
 #define MAX_LINE  4096
 
 
