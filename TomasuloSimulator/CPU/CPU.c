@@ -173,23 +173,6 @@ void initializeCPU (int NI, int NR, int NB) {
     cpu -> resStaFPmultResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaFPdivResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
     cpu -> resStaBUResult = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-
-    cpu -> resStaInt2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaMult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> loadBuffer2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> storeBuffer2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaFPadd2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaFPmult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaFPdiv2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaBU2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaIntResult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaMultResult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> loadBufferResult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> storeBufferResult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaFPaddResult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaFPmultResult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaFPdivResult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
-    cpu -> resStaBUResult2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
  
     //Initialize Stall counters
     cpu -> stallFullROB = 0;
