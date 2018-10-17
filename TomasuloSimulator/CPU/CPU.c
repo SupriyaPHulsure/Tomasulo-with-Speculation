@@ -2167,7 +2167,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
 	RSfloat *RSfloat;
 	RSmem *RSmem;
 	DictionaryEntry *tempEntry;
-	 switch (instruction -> instruction -> op) {
+	switch (instruction -> instruction -> op) {
         case ANDI:
         case AND:
         case ORI:
@@ -2184,78 +2184,83 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
         case BEQZ:
 		case LD:
 		case SD :
-		    tempEntry = cpu -> resStaBUResult -> head;
-            if (tempEntry != NULL){
-                RSint = tempEntry -> value -> value;
-                if(RSint -> Qj == robnumber){
-                        RSint -> Vj = instruction -> intResult;
-                        RSint -> Qj = -1;
+		    for (tempEntry = cpu -> resStaBU -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL){
+                    RSint = tempEntry -> value -> value;
+                    if(RSint -> Qj == robnumber){
+                            RSint -> Vj = instruction -> intResult;
+                            RSint -> Qj = -1;
+                        }
+                    if(RSint -> Qk == robnumber){
+                        RSint -> Vk = instruction -> intResult;
+                        RSint -> Qk = -1;
                     }
-                if(RSint -> Qk == robnumber){
-                    RSint -> Vk = instruction -> intResult;
-                    RSint -> Qk = -1;
-                }
 
-                if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
-                    RSint -> isReady = 1;
-                }
-            }
-			tempEntry = cpu -> resStaIntResult -> head;
-            if (tempEntry != NULL){
-                RSint = tempEntry -> value -> value;
-                if(RSint -> Qj == robnumber){
-                        RSint -> Vj = instruction -> intResult;
-                        RSint -> Qj = -1;
+                    if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
+                        RSint -> isReady = 1;
                     }
-                if(RSint -> Qk == robnumber){
-                    RSint -> Vk = instruction -> intResult;
-                    RSint -> Qk = -1;
-                }
-
-                if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
-                    RSint -> isReady = 1;
                 }
             }
-			tempEntry = cpu -> resStaMultResult -> head;
-            if (tempEntry != NULL){
-                RSint = tempEntry -> value -> value;
-                if(RSint -> Qj == robnumber){
-                        RSint -> Vj = instruction -> intResult;
-                        RSint -> Qj = -1;
+            for (tempEntry = cpu -> resStaIntResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL){
+                    RSint = tempEntry -> value -> value;
+                    if(RSint -> Qj == robnumber){
+                            RSint -> Vj = instruction -> intResult;
+                            RSint -> Qj = -1;
+                        }
+                    if(RSint -> Qk == robnumber){
+                        RSint -> Vk = instruction -> intResult;
+                        RSint -> Qk = -1;
                     }
-                if(RSint -> Qk == robnumber){
-                    RSint -> Vk = instruction -> intResult;
-                    RSint -> Qk = -1;
-                }
 
-                if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
-                    RSint -> isReady = 1;
+                    if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
+                        RSint -> isReady = 1;
+                    }
                 }
             }
-			tempEntry = cpu -> storeBufferResult -> head;
-            if (tempEntry != NULL) {
-                RSmem = tempEntry -> value -> value;
-                if(RSmem -> Qj == robnumber){
-                    RSmem -> Vj = instruction -> intResult;
-                    RSmem -> Qj = -1;
-                }
-                if(RSmem -> Qk == robnumber){
-                    RSmem -> iVk = instruction -> intResult;
-                    RSmem -> Qk = -1;
-                }
-                if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
-                            RSmem -> isReady = 1;
+            for (tempEntry = cpu -> resStaMultResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL){
+                    RSint = tempEntry -> value -> value;
+                    if(RSint -> Qj == robnumber){
+                            RSint -> Vj = instruction -> intResult;
+                            RSint -> Qj = -1;
+                        }
+                    if(RSint -> Qk == robnumber){
+                        RSint -> Vk = instruction -> intResult;
+                        RSint -> Qk = -1;
+                    }
+
+                    if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
+                        RSint -> isReady = 1;
+                    }
                 }
             }
-            tempEntry = cpu -> loadBufferResult -> head;
-            if (tempEntry != NULL) {
-                RSmem = tempEntry -> value -> value;
-                if(RSmem -> Qj == robnumber){
-                    RSmem -> Vj = instruction -> intResult;
-                    RSmem -> Qj = -1;
+            for (tempEntry = cpu -> storeBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL) {
+                    RSmem = tempEntry -> value -> value;
+                    if(RSmem -> Qj == robnumber){
+                        RSmem -> Vj = instruction -> intResult;
+                        RSmem -> Qj = -1;
+                    }
+                    if(RSmem -> Qk == robnumber){
+                        RSmem -> iVk = instruction -> intResult;
+                        RSmem -> Qk = -1;
+                    }
+                    if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
+                                RSmem -> isReady = 1;
+                    }
                 }
-                if ((RSmem -> Qj == -1)){
-                    RSmem -> isReady = 1;
+            }
+            for (tempEntry = cpu -> loadBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL) {
+                    RSmem = tempEntry -> value -> value;
+                    if(RSmem -> Qj == robnumber){
+                        RSmem -> Vj = instruction -> intResult;
+                        RSmem -> Qj = -1;
+                    }
+                    if ((RSmem -> Qj == -1)){
+                        RSmem -> isReady = 1;
+                    }
                 }
             }
             break;
@@ -2265,85 +2270,87 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
 		case DIV_D:
 		case S_D:
 		case L_D:
-            tempEntry = cpu -> resStaFPaddResult -> head;
-            if (tempEntry != NULL) {
-                RSfloat = tempEntry -> value -> value;
-                if(RSfloat -> Qj == robnumber){
-                    RSfloat -> Vj = instruction -> fpResult;
-                    RSfloat -> Qj = -1;
-                }
-                if(RSfloat -> Qk == robnumber){
-                    RSfloat -> Vk = instruction -> fpResult;
-                    RSfloat -> Qk = -1;
-                }
-                if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
-                            RSfloat -> isReady = 1;
+		    for (tempEntry = cpu -> resStaFPaddResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL) {
+                    RSfloat = tempEntry -> value -> value;
+                    if(RSfloat -> Qj == robnumber){
+                        RSfloat -> Vj = instruction -> fpResult;
+                        RSfloat -> Qj = -1;
                     }
-            }
-            tempEntry = cpu -> loadBufferResult -> head;
-            if (tempEntry != NULL) {
-                RSmem = tempEntry -> value -> value;
-                if(RSmem -> Qj == robnumber){
-                    RSmem -> Vj = instruction -> intResult;
-                    RSmem -> Qj = -1;
-                }
-                if ((RSmem -> Qj == -1)){
-                            RSmem -> isReady = 1;
-                }
-            }
-            tempEntry = cpu -> resStaFPmultResult -> head;
-            if (tempEntry != NULL) {
-                RSfloat = tempEntry -> value -> value;
-                if(RSfloat -> Qj == robnumber){
-                    RSfloat -> Vj = instruction -> fpResult;
-                    RSfloat -> Qj = -1;
-                }
-                if(RSfloat -> Qk == robnumber){
-                    RSfloat -> Vk = instruction -> fpResult;
-                    RSfloat -> Qk = -1;
-                }
-                if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
-                            RSfloat -> isReady = 1;
+                    if(RSfloat -> Qk == robnumber){
+                        RSfloat -> Vk = instruction -> fpResult;
+                        RSfloat -> Qk = -1;
                     }
+                    if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
+                                RSfloat -> isReady = 1;
+                        }
+                }
             }
-            tempEntry = cpu -> resStaFPdivResult -> head;
-            if (tempEntry != NULL) {
-                RSfloat = tempEntry -> value -> value;
-                if(RSfloat -> Qj == robnumber){
-                    RSfloat -> Vj = instruction -> fpResult;
-                    RSfloat -> Qj = -1;
-                }
-                if(RSfloat -> Qk == robnumber){
-                    RSfloat -> Vk = instruction -> fpResult;
-                    RSfloat -> Qk = -1;
-                }
-                if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
-                            RSfloat -> isReady = 1;
+            for (tempEntry = cpu -> loadBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL) {
+                    RSmem = tempEntry -> value -> value;
+                    if(RSmem -> Qj == robnumber){
+                        RSmem -> Vj = instruction -> intResult;
+                        RSmem -> Qj = -1;
                     }
+                    if ((RSmem -> Qj == -1)){
+                                RSmem -> isReady = 1;
+                    }
+                }
             }
-            tempEntry = cpu -> storeBufferResult -> head;
-            if (tempEntry != NULL) {
-                RSmem = tempEntry -> value -> value;
-                if(RSmem -> Qj == robnumber){
-                    RSmem -> Vj = instruction -> intResult;
-                    RSmem -> Qj = -1;
+            for (tempEntry = cpu -> resStaFPmultResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                tempEntry = cpu -> resStaFPmultResult -> head;
+                if (tempEntry != NULL) {
+                    RSfloat = tempEntry -> value -> value;
+                    if(RSfloat -> Qj == robnumber){
+                        RSfloat -> Vj = instruction -> fpResult;
+                        RSfloat -> Qj = -1;
+                    }
+                    if(RSfloat -> Qk == robnumber){
+                        RSfloat -> Vk = instruction -> fpResult;
+                        RSfloat -> Qk = -1;
+                    }
+                    if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
+                                RSfloat -> isReady = 1;
+                        }
                 }
-                if(RSmem -> Qk == robnumber){
-                    RSmem -> fpVk = instruction -> fpResult;
-                    RSmem -> Qk = -1;
+            }
+            for (tempEntry = cpu -> resStaFPdivResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL) {
+                    RSfloat = tempEntry -> value -> value;
+                    if(RSfloat -> Qj == robnumber){
+                        RSfloat -> Vj = instruction -> fpResult;
+                        RSfloat -> Qj = -1;
+                    }
+                    if(RSfloat -> Qk == robnumber){
+                        RSfloat -> Vk = instruction -> fpResult;
+                        RSfloat -> Qk = -1;
+                    }
+                    if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
+                                RSfloat -> isReady = 1;
+                        }
                 }
-                if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
-                            RSmem -> isReady = 1;
+            }
+            for (tempEntry = cpu -> storeBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+                if (tempEntry != NULL) {
+                    RSmem = tempEntry -> value -> value;
+                    if(RSmem -> Qj == robnumber){
+                        RSmem -> Vj = instruction -> intResult;
+                        RSmem -> Qj = -1;
+                    }
+                    if(RSmem -> Qk == robnumber){
+                        RSmem -> fpVk = instruction -> fpResult;
+                        RSmem -> Qk = -1;
+                    }
+                    if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
+                                RSmem -> isReady = 1;
+                    }
                 }
             }
             break;
-
         default:
             break;
-
 	 }
-
-
 }
 
 
@@ -2361,7 +2368,7 @@ void insertintoWriteBackBuffer(int NB)
 		cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
 	}
 	if(unitOutputs != NULL){
-		if(unitOutputs[INT] != NULL){	
+		if(unitOutputs[INT] != NULL){
 			instruction = unitOutputs[INT];
 			*ROB_number = instruction->ROB_number;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
@@ -2371,7 +2378,7 @@ void insertintoWriteBackBuffer(int NB)
 			printf ("Added instruction %d to WriteBack Buffer with ROB no - %d  Output - %d\n",  instruction -> instruction -> address, instruction -> ROB_number, *intresult);	
 		}
 		if(unitOutputs[MULT] != NULL){
-				
+
 			instruction = unitOutputs[MULT];
 			*ROB_number = instruction->ROB_number;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
@@ -2475,7 +2482,8 @@ int commitInstuctionCount(){
 	}
 	else {
 		ROBentry = cpu-> reorderBuffer -> items[cpu->reorderBuffer -> head];
-		while(ROBentry != NULL){
+		//while(ROBentry != NULL){
+		while (i < cpu->reorderBuffer->count) {
 			if((strcmp(ROBentry -> state, "W") == 0) && ROBentry -> isReady == 1)
 			{
 				count ++;
