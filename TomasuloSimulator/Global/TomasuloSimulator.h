@@ -38,6 +38,8 @@ int instructionCacheBaseAddress; //ICBA
 int cacheLineSize; //CLS
 
 int numberOfInstruction;
+int numberOfInstruction2;
+//Doubled
 
 
 //Number of reservation stations of each unit
@@ -56,6 +58,10 @@ int numberRenameReg;
 Dictionary *instructionCache;
 Dictionary *dataCache;
 Dictionary *codeLabels;
+Dictionary *instructionCache2;
+Dictionary *dataCache2;
+Dictionary *codeLabels2;
+//Doubled
 
 CPU *cpu;
 

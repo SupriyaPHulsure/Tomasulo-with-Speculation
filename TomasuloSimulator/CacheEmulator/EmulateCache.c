@@ -109,6 +109,97 @@ void fillInstructionAndDataCache (char *fileName) {
 		fclose(fp);
 }
 
+
+void fillInstructionAndDataCache2 (char *fileName) {
+	char *line = (char *) malloc (sizeof(char) * MAX_LINE);
+	char *tempLine = (char *) malloc (sizeof(char) * MAX_LINE);
+	char label [MAX_LINE];
+	char *memoryAddress;
+	char *memoryValue;
+
+	size_t len = 0;
+	ssize_t read;
+
+	int dataSegmentFound = 0;
+	int codeLabelNotFound = 1;
+	int currentAddress;
+
+	FILE *fp;
+
+	if ((fp = fopen(fileName, "r")) == NULL) {
+		perror ("Error to open the configuration file...");
+		exit (EXIT_FAILURE);
+	}
+
+	//Instantiate caches as dictionary data structure keyed by HEX address
+	instructionCache2 = createDictionary (getHashCodeFromCacheAddress, compareInstructions);
+	dataCache2 = createDictionary (getHashCodeFromCacheAddress, compareMemoryValues);
+	codeLabels2 = createDictionary (getHashCodeFromCodeLabel, compareCodeLabelAddress);
+
+	numberOfInstruction2 = 0;
+
+	while ((read = getline(&line, &len, fp)) != -1) { //loop to read file line by line and tokenize
+		strcpy (tempLine, line);
+
+		if ((tempLine = strtok(tempLine, WHITE_SPACE)) == NULL || *tempLine == 0)
+			continue;
+
+		if (strcmp (DATA_LABEL, tempLine) == 0)
+			dataSegmentFound = 1;
+
+		if (!dataSegmentFound) { //Check whether the section in file comes before DATA tag
+			currentAddress = instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction2++);
+
+			void *addrPtr = malloc(sizeof(int));
+			*((int*)addrPtr) = currentAddress;
+
+			if (strchr(line, LABEL_TERMINATOR_CHAR) != NULL) {
+				if ((line = strtok(line, LABEL_TERMINATOR)) == NULL || *line == 0)
+					continue;
+				codeLabelNotFound = 0;
+				strcpy (label, line);
+			}
+
+			if (!codeLabelNotFound) { //If loops and other code labels found maintain address as value and the label name as key in dictionary
+				codeLabelNotFound = 1;
+
+				if ((line = strtok(NULL, LABEL_TERMINATOR)) == NULL || *line == 0)
+					continue;
+
+				//printf("InstructionAddress:%d->Label:%s\n", currentAddress, label);
+				addDictionaryEntry (codeLabels2, (void *) label, addrPtr);
+			}
+
+			if ((line = strtok(line, LINE_TERMINATOR)) == NULL || *line == 0)
+				continue;
+
+			//printf("InstructionAddress:%d->Instruction:%s\n", currentAddress, line);
+			addDictionaryEntry (instructionCache2, addrPtr, line);
+		} else { //parse lines after DATA tag as memory values
+			line = strtok(line, MEMORY_SEPARATOR);
+
+			if(strcmp(line, MEMORY_LABEL) == 0) {
+				memoryAddress = strtok(NULL, MEMORY_SEPARATOR);
+				memoryValue = strtok(NULL, MEMORY_SEPARATOR);
+
+				void *addrPtr = malloc(sizeof(int));
+				*((int*)addrPtr) = atoi (memoryAddress);
+
+				void *valuePtr = malloc(sizeof(double));
+				*((double*)valuePtr) = atof (memoryValue);
+
+				//printf("Mem(%d) = %0.2lf\n", atoi (memoryAddress), atof (memoryValue));
+				addDictionaryEntry (dataCache2, addrPtr, valuePtr);
+			}
+		}
+
+		line = (char *) malloc (sizeof(char) * MAX_LINE);
+		tempLine = (char *) malloc (sizeof(char) * MAX_LINE);
+	}
+
+	if (fp)
+		fclose(fp);
+}
 /**
  * This is a helper method for instruction and data cache to generate hash value for address keys
  * @param address

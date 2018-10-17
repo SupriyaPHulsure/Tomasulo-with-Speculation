@@ -42,6 +42,51 @@ void printCodeLabels () {
 /***
  * Utility method to print data cache
  */
+void printDataCache2 () {
+	DictionaryEntry *current;
+
+	if (dataCache != NULL) {
+		printf ("----------\n");
+		printf ("Data Cache\n");
+		printf ("----------\n");
+
+		for (current = dataCache2 -> head; current != NULL; current = current -> next)
+			printf ("Mem(%d) = %0.1lf\n", *((int*)current -> key), *((double*)current -> value -> value));
+	}
+}
+
+void printInstructionCache2 () {
+	DictionaryEntry *current;
+
+	if (instructionCache != NULL) {
+		printf ("-----------------\n");
+		printf ("Instruction Cache\n");
+		printf ("-----------------\n");
+
+		for (current = instructionCache2 -> head; current != NULL; current = current -> next)
+			printf ("%d: %s\n", *((int*)current -> key), ((char*)current -> value -> value));
+	}
+}
+
+/***
+ * Utility method to print code lables
+ */
+void printCodeLabels2 () {
+	DictionaryEntry *current;
+
+	if (codeLabels != NULL) {
+		printf ("-----------\n");
+		printf ("Code Lables\n");
+		printf ("-----------\n");
+
+		for (current = codeLabels2 -> head; current != NULL; current = current -> next)
+			printf ("%s: %d\n", ((char*)current -> key), *((int*)current -> value -> value));
+	}
+}
+
+/***
+ * Utility method to print data cache
+ */
 void printDataCache () {
 	DictionaryEntry *current;
 
