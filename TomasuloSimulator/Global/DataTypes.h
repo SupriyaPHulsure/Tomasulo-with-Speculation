@@ -170,14 +170,6 @@ typedef struct _cpu {
 	INTReg **integerRegisters; //integer register
     FPReg **floatingPointRegisters; //FP registers
 
-	int memoryAddress;	
-
-	int intDestReg;
-    int intResult;
-
-    int fpDestReg;
-    double fpResult;
-
     //Fetch and decode
     Dictionary *fetchBuffer;
     Dictionary *fetchBufferResult;
