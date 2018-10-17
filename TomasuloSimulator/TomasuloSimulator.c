@@ -31,11 +31,6 @@ int numberRenameReg = 8;
 int main(int argc, char** argv) {
 	//Validate command line argument
 
-	if (argc != 2) {
-		printf ("USAGE: TomasuloSimulator <benchmark_file>\n");
-		exit (EXIT_FAILURE);
-	}
-
 	//TODO: read these variables from config file
 	int NF = 4;
 	int NI = 8;
@@ -43,41 +38,49 @@ int main(int argc, char** argv) {
 	int NR = 16;
 	int NB = 4;
 
-	fillInstructionAndDataCache (argv[1]); //call loader to fill caches
+	if (argc == 2) {
+		printf ("Simulator of Part 1.\n");
 
-	printInstructionCache (); //print instruction cache
+        fillInstructionAndDataCache (argv[1]); //call loader to fill caches
 
-	printDataCache ();
+        printInstructionCache (); //print instruction cache
 
-	printCodeLabels (); //print data cache
+        printDataCache ();
 
-	initializeCPU (NI, NR, NB); //initialize CPU data structure
+        printCodeLabels (); //print data cache
 
-    int test_cycle;
+        initializeCPU (NI, NR, NB); //initialize CPU data structure
 
-
-
-    //for (test_cycle = 0; test_cycle < 35; test_cycle ++){
-
-    while(runClockCycle(NF, NI, NW, NB, NR)){//loop emulating simulator clock cycles
-        //runClockCycle(NF, NI, NW, NB, NR);
-
-        printInstructionQueue();
-        printReservationStations();
-        printRenamingRegisters();
-        printIntegerRegistersStatus();
-        printFPRegistersStatus();
-        printROB();
+        int test_cycle;
 
 
-    }
 
-	printDataCache (); //print data cache
+        //for (test_cycle = 0; test_cycle < 35; test_cycle ++){
+
+        while(runClockCycle(NF, NI, NW, NB, NR)){//loop emulating simulator clock cycles
+            //runClockCycle(NF, NI, NW, NB, NR);
+            printInstructionQueue();
+            printReservationStations();
+            printRenamingRegisters();
+            printIntegerRegistersStatus();
+            printFPRegistersStatus();
+            printROB();
 
 
-	printIntegerRegisters (); //print integer registers
-	printFPRegisters (); //print floating point registers
+        }
+
+        printDataCache (); //print data cache
+
+
+        printIntegerRegisters (); //print integer registers
+        printFPRegisters (); //print floating point registers
+	}
+
+	if (argc == 3) {
+	    printf ("Simulator of Part 2.\n");
+	}
 	
 
 	return 0;
+
 }
