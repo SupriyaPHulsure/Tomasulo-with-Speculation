@@ -166,22 +166,32 @@ typedef struct _cpu {
 	int numberOfInstructionExecuted; //counter for total number of instructions committed
 
 	int PC; //program counter
-	//TODO: double
+	int PC2;
+	//doubled
 
 	INTReg **integerRegisters; //integer register
     FPReg **floatingPointRegisters; //FP registers
-    //TODO: double
+    INTReg **integerRegisters2; //integer register
+    FPReg **floatingPointRegisters2; //FP registers
+    //doubled
     //Fetch and decode
     Dictionary *fetchBuffer;
     Dictionary *fetchBufferResult;
     CircularQueue *instructionQueue;
     CircularQueue *instructionQueueResult;
     Dictionary *branchTargetBuffer;
-    //TODO: double
+    Dictionary *fetchBuffer2;
+    Dictionary *fetchBufferResult2;
+    CircularQueue *instructionQueue2;
+    CircularQueue *instructionQueueResult2;
+    Dictionary *branchTargetBuffer2;
+    //doubled
     //Reorder buffer
     CircularQueue *reorderBuffer;
 	Dictionary *WriteBackBuffer;
-    //TODO: double
+	 CircularQueue *reorderBuffer2;
+	Dictionary *WriteBackBuffer2;
+    //doubled
     //Reservation station
     Dictionary *resStaInt;
     Dictionary *resStaMult;
@@ -204,11 +214,15 @@ typedef struct _cpu {
     //Renaming registers
     Dictionary *renameRegInt;
     Dictionary *renameRegFP;
-    //TODO: double
+    Dictionary *renameRegInt2;
+    Dictionary *renameRegFP2;
+    //doubled
 	//Register status table
     RegStatus **IntRegStatus;
     RegStatus **FPRegStatus;
-    //TODO: double
+    RegStatus **IntRegStatus2;
+    RegStatus **FPRegStatus2;
+    //doubled
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
@@ -221,14 +235,17 @@ typedef struct _cpu {
 
     //Install flag
     int stallNextFetch;
-    //TODO: double
+    int stallNextFetch2;
+    //doubled
     //Stall counter
     int stallFullROB;
-    //TODO: double
+    int stallFullROB2;
+    //doubled
     int stallFullRS;
     //Flag of instructions after a predicted branch.
     int isAfterBranch;
-    //TODO: double
+    int isAfterBranch2;
+    //doubled
 
 } CPU;
 
