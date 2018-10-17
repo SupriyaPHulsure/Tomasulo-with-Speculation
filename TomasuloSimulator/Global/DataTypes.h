@@ -166,29 +166,32 @@ typedef struct _cpu {
 	int numberOfInstructionExecuted; //counter for total number of instructions committed
 
 	int PC; //program counter
+	int PC2;
+	//doubled
 
 	INTReg **integerRegisters; //integer register
     FPReg **floatingPointRegisters; //FP registers
-
-	int memoryAddress;	
-
-	int intDestReg;
-    int intResult;
-
-    int fpDestReg;
-    double fpResult;
-
+    INTReg **integerRegisters2; //integer register
+    FPReg **floatingPointRegisters2; //FP registers
+    //doubled
     //Fetch and decode
     Dictionary *fetchBuffer;
     Dictionary *fetchBufferResult;
     CircularQueue *instructionQueue;
     CircularQueue *instructionQueueResult;
     Dictionary *branchTargetBuffer;
-	
+    Dictionary *fetchBuffer2;
+    Dictionary *fetchBufferResult2;
+    CircularQueue *instructionQueue2;
+    CircularQueue *instructionQueueResult2;
+    Dictionary *branchTargetBuffer2;
+    //doubled
     //Reorder buffer
     CircularQueue *reorderBuffer;
 	Dictionary *WriteBackBuffer;
-	
+	 CircularQueue *reorderBuffer2;
+	Dictionary *WriteBackBuffer2;
+    //doubled
     //Reservation station
     Dictionary *resStaInt;
     Dictionary *resStaMult;
@@ -211,11 +214,15 @@ typedef struct _cpu {
     //Renaming registers
     Dictionary *renameRegInt;
     Dictionary *renameRegFP;
-
+    Dictionary *renameRegInt2;
+    Dictionary *renameRegFP2;
+    //doubled
 	//Register status table
     RegStatus **IntRegStatus;
     RegStatus **FPRegStatus;
-	
+    RegStatus **IntRegStatus2;
+    RegStatus **FPRegStatus2;
+    //doubled
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
@@ -228,14 +235,17 @@ typedef struct _cpu {
 
     //Install flag
     int stallNextFetch;
+    int stallNextFetch2;
+    //doubled
     //Stall counter
     int stallFullROB;
+    int stallFullROB2;
+    //doubled
     int stallFullRS;
-    //ROB name Counter
-    int robCounter;
     //Flag of instructions after a predicted branch.
     int isAfterBranch;
-
+    int isAfterBranch2;
+    //doubled
 
 } CPU;
 

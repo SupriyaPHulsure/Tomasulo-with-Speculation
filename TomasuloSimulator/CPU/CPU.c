@@ -81,11 +81,6 @@ void initializeCPU (int NI, int NR, int NB) {
 		cpu -> floatingPointRegisters [i] -> fpResult = 0;
  	}
 
-	cpu -> intDestReg = 0;
-	cpu -> intResult = 0;
-
-	cpu -> fpDestReg = 0;
-	cpu -> fpResult = 0;
 
 	//initialize integer registers status
 	cpu -> IntRegStatus = (RegStatus **) malloc (sizeof(RegStatus *) * numberOfIntRegisters);
