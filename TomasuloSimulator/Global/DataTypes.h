@@ -76,6 +76,8 @@ typedef struct _instruction {
 
 	int target;
 
+	int isProg2;
+
 } Instruction;
 
 //data structure to bind instruction and its result in pipeline

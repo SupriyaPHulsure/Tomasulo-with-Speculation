@@ -23,6 +23,7 @@ void printPipeline(void *instruction, char *pipeline, int entering);
 void branchHelper(CompletedInstruction *instructionAndResult);
 
 int fetchMultiInstructionUnit(int NF);
+int fetchMultiInstructionUnit2(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
 int decodeInstructionsUnit(int NI);
 void updateFetchBuffer();
@@ -49,7 +50,6 @@ int commitInstuctionCount();
 void Commit(int NC, int NR);
 void CommitUnit(int NB, int NR);
 int checkEnd();
-
 
 
 /**
@@ -242,6 +242,58 @@ int fetchMultiInstructionUnit(int NF){
     return 1;
 }
 
+//Fetch Instructions Unit for part 2
+int fetchMultiInstructionUnit2(int NF){
+
+    int i;
+
+    if (cpu -> stallNextFetch2 == 0){
+        for(i=0; i<NF; i++){
+            if (cpu -> PC2 >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction2))) { //check whether PC exceeds last instruction in cache
+                printf ("All instructions are fetched for program 2...\n");
+                return 0;
+            }
+
+            //*((int*)addrPtr) = cpu -> PC;
+            int *addrPtr = (int*) malloc(sizeof(int));
+            *addrPtr = cpu -> PC2;
+
+            DictionaryEntry *currentInstruction = getValueChainByDictionaryKey (instructionCache2, addrPtr);
+
+            char *instruction_str = (char *) malloc (sizeof(char) * MAX_LINE);
+            strcpy (instruction_str, ((char*)currentInstruction -> value -> value));
+
+            printf ("Fetched program 2 instruction %d:%s\n", *addrPtr, instruction_str);
+
+            addDictionaryEntry (cpu -> fetchBufferResult2, addrPtr, instruction_str);
+
+            //check if in BTB
+            if (cpu -> branchTargetBuffer2 != NULL){
+                DictionaryEntry *BTBEntry = getValueChainByDictionaryKey(cpu -> branchTargetBuffer2, addrPtr);
+
+                if (BTBEntry != NULL){
+
+                    if (*((int*)BTBEntry -> key) == *addrPtr){
+                        printf("Instruction %d is a branch in the BranchTargetBuffer2 with ", *addrPtr);
+                        int targetAddress = *((int*)BTBEntry -> value -> value);
+
+                        printf("target address %d.\n", targetAddress);
+                        cpu -> PC2 = targetAddress;
+                        return 1;
+                    }
+                }
+            }
+            cpu -> PC2 = cpu -> PC2 + 4;
+        }
+    }
+    else{
+        cpu -> stallNextFetch2 = 0;
+        printf("Fetching stall for program 2 in this cycle...\n");
+    }
+    return 1;
+}
+
+
 //Decode instruction unit
 int decodeInstructionsUnit(int NI){
     while(cpu -> fetchBuffer -> head!= NULL){
@@ -254,7 +306,29 @@ int decodeInstructionsUnit(int NI){
             Instruction *instruction;
             instructionEntry = popDictionaryEntry(cpu -> fetchBuffer);
             instruction = decodeInstruction(instructionEntry -> value -> value, *((int*)instructionEntry -> key));
+            instruction->isProg2 = 0;
             enqueueCircular(cpu -> instructionQueueResult, instruction);	
+        }
+
+    }
+    return 1;
+}
+
+
+//Decode instruction unit for part 2
+int decodeInstructionsUnit2(int NI){
+    while(cpu -> fetchBuffer2 -> head!= NULL){
+        if ((cpu->instructionQueue2->count + cpu->instructionQueueResult2->count) >= cpu->instructionQueue2->size){
+            printf("Cannot decode all fetched instructions because the instruction queue is full.\n");
+            cpu -> stallNextFetch2 = 1;
+            return 1;
+        }else{
+            DictionaryEntry *instructionEntry;
+            Instruction *instruction;
+            instructionEntry = popDictionaryEntry(cpu -> fetchBuffer2);
+            instruction = decodeInstruction(instructionEntry -> value -> value, *((int*)instructionEntry -> key));
+            instruction->isProg2 = 1;
+            enqueueCircular(cpu -> instructionQueueResult2, instruction);
         }
 
     }
@@ -270,11 +344,29 @@ void updateFetchBuffer(){
     return;
 }
 
+//Update fetch buffer for part 2
+void updateFetchBuffer2(){
+    DictionaryEntry *instructionEntry;
+    while((instructionEntry = popDictionaryEntry(cpu -> fetchBufferResult2)) != NULL){
+        appendDictionaryEntry(cpu -> fetchBuffer2, instructionEntry);
+    }
+    return;
+}
+
 //Update instruction queue
 void updateInstructionQueue(){
     Instruction *instruction;
     while((instruction = dequeueCircular(cpu->instructionQueueResult))!= NULL){
         enqueueCircular(cpu->instructionQueue, instruction);
+    }
+    return;
+}
+
+//Update instruction queue
+void updateInstructionQueue2(){
+    Instruction *instruction;
+    while((instruction = dequeueCircular(cpu->instructionQueueResult2))!= NULL){
+        enqueueCircular(cpu->instructionQueue2, instruction);
     }
     return;
 }
