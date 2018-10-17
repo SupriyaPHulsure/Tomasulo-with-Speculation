@@ -38,6 +38,8 @@ int instructionCacheBaseAddress; //ICBA
 int cacheLineSize; //CLS
 
 int numberOfInstruction;
+int numberOfInstruction2;
+//Doubled
 
 
 //Number of reservation stations of each unit
@@ -56,12 +58,17 @@ int numberRenameReg;
 Dictionary *instructionCache;
 Dictionary *dataCache;
 Dictionary *codeLabels;
+Dictionary *instructionCache2;
+Dictionary *dataCache2;
+Dictionary *codeLabels2;
+//Doubled
 
 CPU *cpu;
 
 
 
 void fillInstructionAndDataCache (char *fileName);
+void fillInstructionAndDataCache2 (char *fileName);
 
 void initializeCPU (int NI, int NR, int NB);
 int runClockCycle (int NF, int NI, int NW, int NB, int NR);
@@ -69,6 +76,9 @@ int runClockCycle (int NF, int NI, int NW, int NB, int NR);
 void printInstructionCache ();
 void printCodeLabels ();
 void printDataCache ();
+void printInstructionCache2 ();
+void printCodeLabels2 ();
+void printDataCache2 ();
 void printIntegerRegisters ();
 void printFPRegisters ();
 void printInstructionQueue ();

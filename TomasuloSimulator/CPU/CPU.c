@@ -62,42 +62,57 @@ void initializeCPU (int NI, int NR, int NB) {
 
 	cpu -> cycle = 0;
 	cpu -> PC = instructionCacheBaseAddress;
+	cpu -> PC2 = instructionCacheBaseAddress;
 
 	 //initialize integer registers
 	cpu -> integerRegisters = (INTReg **) malloc (sizeof(INTReg *) * numberOfIntRegisters);
+	cpu -> integerRegisters2 = (INTReg **) malloc (sizeof(INTReg *) * numberOfIntRegisters);
 
 	for (i = 0; i < numberOfIntRegisters; i++) {
 		cpu -> integerRegisters [i] = (INTReg *) malloc (sizeof(INTReg));
 		cpu -> integerRegisters [i] -> data = 0;
 		cpu -> integerRegisters [i] -> intResult = 0;
+		cpu -> integerRegisters2 [i] = (INTReg *) malloc (sizeof(INTReg));
+		cpu -> integerRegisters2 [i] -> data = 0;
+		cpu -> integerRegisters2 [i] -> intResult = 0;
  	}
 
 	 //initialize floating point registers
 	cpu -> floatingPointRegisters = (FPReg **) malloc (sizeof(FPReg *) * numberOfFPRegisters);
+	cpu -> floatingPointRegisters2 = (FPReg **) malloc (sizeof(FPReg *) * numberOfFPRegisters);
 
 	for (i = 0; i < numberOfFPRegisters; i++) {
 		cpu -> floatingPointRegisters [i] = (FPReg *) malloc (sizeof(FPReg));
 		cpu -> floatingPointRegisters [i] -> data = 0.0;
 		cpu -> floatingPointRegisters [i] -> fpResult = 0;
+		cpu -> floatingPointRegisters2 [i] = (FPReg *) malloc (sizeof(FPReg));
+		cpu -> floatingPointRegisters2 [i] -> data = 0.0;
+		cpu -> floatingPointRegisters2 [i] -> fpResult = 0;
  	}
 
 
 	//initialize integer registers status
 	cpu -> IntRegStatus = (RegStatus **) malloc (sizeof(RegStatus *) * numberOfIntRegisters);
-
+    cpu -> IntRegStatus2 = (RegStatus **) malloc (sizeof(RegStatus *) * numberOfIntRegisters);
 	for (i = 0; i < numberOfIntRegisters; i++) {
 		cpu -> IntRegStatus [i] = (RegStatus *) malloc (sizeof(RegStatus));
 		cpu -> IntRegStatus [i] -> reorderNum = -1;
 		cpu -> IntRegStatus [i] -> busy = 0;
+		cpu -> IntRegStatus2 [i] = (RegStatus *) malloc (sizeof(RegStatus));
+		cpu -> IntRegStatus2 [i] -> reorderNum = -1;
+		cpu -> IntRegStatus2 [i] -> busy = 0;
  	}
 
  	//initialize floating point registers status
 	cpu -> FPRegStatus = (RegStatus **) malloc (sizeof(RegStatus *) * numberOfFPRegisters);
-
+    cpu -> FPRegStatus2 = (RegStatus **) malloc (sizeof(RegStatus *) * numberOfFPRegisters);
 	for (i = 0; i < numberOfFPRegisters; i++) {
 		cpu -> FPRegStatus [i] = (RegStatus *) malloc (sizeof(RegStatus));
 		cpu -> FPRegStatus [i] -> reorderNum = -1;
 		cpu -> FPRegStatus [i] -> busy = 0;
+		cpu -> FPRegStatus2 [i] = (RegStatus *) malloc (sizeof(RegStatus));
+		cpu -> FPRegStatus2 [i] -> reorderNum = -1;
+		cpu -> FPRegStatus2 [i] -> busy = 0;
  	}
 
     //initialize Pipelines with bubbles and appropriate size
@@ -124,13 +139,22 @@ void initializeCPU (int NI, int NR, int NB) {
 	cpu -> fetchBufferResult = createDictionary (getHashCodeFromPCHash, compareInstructions);
 	cpu -> instructionQueue = createCircularQueue(NI);
 	cpu -> instructionQueueResult = createCircularQueue(NI);
+	cpu -> fetchBuffer2 = createDictionary (getHashCodeFromPCHash, compareInstructions);
+	cpu -> fetchBufferResult2 = createDictionary (getHashCodeFromPCHash, compareInstructions);
+	cpu -> instructionQueue2 = createCircularQueue(NI);
+	cpu -> instructionQueueResult2 = createCircularQueue(NI);
 	//Initialize BTB
 	cpu -> branchTargetBuffer = createDictionary(getHashCodeFromBranchAddress, compareTargetAddress);
+	cpu -> branchTargetBuffer2 = createDictionary(getHashCodeFromBranchAddress, compareTargetAddress);
+
     //Flag for next fetch unit
 	cpu -> stallNextFetch = 0;
+	cpu -> stallNextFetch2 = 0;
     //Initialize renaming register
 	cpu -> renameRegInt = createDictionary(getHashCodeFromRegNumber, compareRegNumber);
 	cpu -> renameRegFP = createDictionary(getHashCodeFromRegNumber, compareRegNumber);
+	cpu -> renameRegInt2 = createDictionary(getHashCodeFromRegNumber, compareRegNumber);
+	cpu -> renameRegFP2 = createDictionary(getHashCodeFromRegNumber, compareRegNumber);
 
     //Initialize reservation stations and load/store buffers
     cpu -> resStaInt = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
@@ -152,14 +176,18 @@ void initializeCPU (int NI, int NR, int NB) {
  
     //Initialize Stall counters
     cpu -> stallFullROB = 0;
+    cpu -> stallFullROB2 = 0;
     cpu -> stallFullRS = 0;
 
 	// Initialize WB and ROB
 	cpu -> reorderBuffer = createCircularQueue(NR);
 	cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
+	cpu -> reorderBuffer2 = createCircularQueue(NR);
+	cpu -> WriteBackBuffer2 = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
 
     //Initialize Flag of instructions after branch
     cpu -> isAfterBranch = 0;
+    cpu -> isAfterBranch2 = 0;
 
 }
 
