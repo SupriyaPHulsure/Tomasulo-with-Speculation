@@ -166,21 +166,22 @@ typedef struct _cpu {
 	int numberOfInstructionExecuted; //counter for total number of instructions committed
 
 	int PC; //program counter
+	//TODO: double
 
 	INTReg **integerRegisters; //integer register
     FPReg **floatingPointRegisters; //FP registers
-
+    //TODO: double
     //Fetch and decode
     Dictionary *fetchBuffer;
     Dictionary *fetchBufferResult;
     CircularQueue *instructionQueue;
     CircularQueue *instructionQueueResult;
     Dictionary *branchTargetBuffer;
-	
+    //TODO: double
     //Reorder buffer
     CircularQueue *reorderBuffer;
 	Dictionary *WriteBackBuffer;
-	
+    //TODO: double
     //Reservation station
     Dictionary *resStaInt;
     Dictionary *resStaMult;
@@ -203,11 +204,11 @@ typedef struct _cpu {
     //Renaming registers
     Dictionary *renameRegInt;
     Dictionary *renameRegFP;
-
+    //TODO: double
 	//Register status table
     RegStatus **IntRegStatus;
     RegStatus **FPRegStatus;
-	
+    //TODO: double
     //Pipelines
     CircularQueue *INTPipeline;
     CircularQueue *MULTPipeline;
@@ -220,14 +221,14 @@ typedef struct _cpu {
 
     //Install flag
     int stallNextFetch;
+    //TODO: double
     //Stall counter
     int stallFullROB;
+    //TODO: double
     int stallFullRS;
-    //ROB name Counter
-    int robCounter;
     //Flag of instructions after a predicted branch.
     int isAfterBranch;
-
+    //TODO: double
 
 } CPU;
 
