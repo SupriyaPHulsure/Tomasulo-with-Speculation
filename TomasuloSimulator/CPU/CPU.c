@@ -1544,7 +1544,7 @@ int issueInstruction2(Instruction *instruction){
             renameRegFull = renameRegIsFull(cpu->renameRegInt2, instruction -> rd);
             if (renameRegFull!=1){
                 rsType = "INT";
-                issued = addInstruction2RSint(cpu->renameRegInt2, cpu->resStaInt, cpu->resStaIntResult, rsType, numberRSint,
+                issued = addInstruction2RSint2(cpu->renameRegInt2, cpu->resStaInt, cpu->resStaIntResult, rsType, numberRSint,
                                             instruction, cpu->IntRegStatus2);
             }
             break;
@@ -1552,7 +1552,7 @@ int issueInstruction2(Instruction *instruction){
             renameRegFull = renameRegIsFull(cpu->renameRegInt2, instruction -> rd);
             if (renameRegFull!=1){
                 rsType = "MULT";
-                issued = addInstruction2RSint(cpu->renameRegInt2, cpu->resStaMult, cpu->resStaMultResult,
+                issued = addInstruction2RSint2(cpu->renameRegInt2, cpu->resStaMult, cpu->resStaMultResult,
                                            rsType, numberRSmult, instruction, cpu->IntRegStatus2);
             }
             break;
@@ -1561,7 +1561,7 @@ int issueInstruction2(Instruction *instruction){
             renameRegFull = renameRegIsFull(cpu->renameRegFP2, instruction -> fd);
             if (renameRegFull!=1){
                 char* rsType = "FPadd";
-                issued = addInstruction2RSfloat(cpu->renameRegFP2, cpu->resStaFPadd, cpu->resStaFPaddResult,
+                issued = addInstruction2RSfloat2(cpu->renameRegFP2, cpu->resStaFPadd, cpu->resStaFPaddResult,
                                                rsType, numberRSfpAdd, instruction, cpu->FPRegStatus2);
             }
             break;
@@ -1569,7 +1569,7 @@ int issueInstruction2(Instruction *instruction){
             renameRegFull = renameRegIsFull(cpu->renameRegFP2, instruction -> fd);
             if (renameRegFull!=1){
                 rsType = "FPmult";
-                issued = addInstruction2RSfloat(cpu->renameRegFP2, cpu->resStaFPmult, cpu->resStaFPmultResult,
+                issued = addInstruction2RSfloat2(cpu->renameRegFP2, cpu->resStaFPmult, cpu->resStaFPmultResult,
                                                rsType, numberRSfpMult, instruction, cpu->FPRegStatus2);
             }
             break;
@@ -1577,7 +1577,7 @@ int issueInstruction2(Instruction *instruction){
             renameRegFull = renameRegIsFull(cpu->renameRegFP2, instruction -> fd);
             if (renameRegFull!=1){
                 rsType = "FPdiv";
-                issued = addInstruction2RSfloat(cpu->renameRegFP2, cpu->resStaFPdiv, cpu->resStaFPdivResult,
+                issued = addInstruction2RSfloat2(cpu->renameRegFP2, cpu->resStaFPdiv, cpu->resStaFPdivResult,
                                                rsType, numberRSfpDiv, instruction, cpu->FPRegStatus2);
             }
             break;
@@ -1585,7 +1585,7 @@ int issueInstruction2(Instruction *instruction){
         	renameRegFull = renameRegIsFull(cpu->renameRegFP2, instruction -> ft);
             if (renameRegFull!=1){
                 rsType = "Load";
-                issued = addLoadStore2Buffer(cpu->loadBuffer, cpu->loadBufferResult,
+                issued = addLoadStore2Buffer2(cpu->loadBuffer, cpu->loadBufferResult,
                          rsType, numberBufferLoad, instruction);
             }
             break;
@@ -1594,14 +1594,14 @@ int issueInstruction2(Instruction *instruction){
         	renameRegFull = renameRegIsFull(cpu->renameRegInt2, instruction -> rt);
             if (renameRegFull!=1){
                 rsType = "Load";
-                issued = addLoadStore2Buffer(cpu->loadBuffer, cpu->loadBufferResult,
+                issued = addLoadStore2Buffer2(cpu->loadBuffer, cpu->loadBufferResult,
                          rsType, numberBufferLoad, instruction);
             }
             break;
         case SD:
         case S_D:
             rsType = "Store";
-            issued = addLoadStore2Buffer(cpu->storeBuffer, cpu->storeBufferResult,
+            issued = addLoadStore2Buffer2(cpu->storeBuffer, cpu->storeBufferResult,
                      rsType, numberBufferStore, instruction);
             break;
         case BNE:
@@ -1609,7 +1609,7 @@ int issueInstruction2(Instruction *instruction){
         case BEQ:
         case BEQZ:
             rsType = "BU";
-            issued = addInstruction2RSbranch(cpu->renameRegInt2, cpu->resStaBU, cpu->resStaBUResult, rsType, numberRSbu,
+            issued = addInstruction2RSbranch2(cpu->renameRegInt2, cpu->resStaBU, cpu->resStaBUResult, rsType, numberRSbu,
                                              instruction, cpu->IntRegStatus2);
             break;
         default:

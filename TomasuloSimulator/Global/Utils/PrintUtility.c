@@ -332,14 +332,14 @@ void printReservationStations () {
 		printf ("-----------------\n");
 		printf ("Reservation Station INT\n");
 		printf ("-----------------\n");
-		printf("Instruction address|  Op code  |  Vj  |  Vk  |  Qj  |  Qk  |Destination ROB#|isReady|isExecuting\n");
+		printf("isProg2|Instruction address|  Op code  |  Vj  |  Vk  |  Qj  |  Qk  |Destination ROB#|isReady|isExecuting\n");
         printf ("------------------------------------------------------------------------------------------------\n");
 
         DictionaryEntry *current;
         RSint *RS;
 		for (current = cpu -> resStaInt -> head; current != NULL; current = current -> next){
 		    RS = current -> value -> value;
-		    printf("\t\t%d\t\t\t%s\t\t%d\t\t%d\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
+		    printf("%d\t\t%d\t\t\t%s\t\t%d\t\t%d\t\t%d\t\t%d\t\t\t%d\t\t\t%d\t\t%d\n", RS->instruction->isProg2, RS->instruction->address, getOpcodeString ((int)RS->instruction->op),
 		    RS->Vj, RS->Vk, RS->Qj, RS->Qk, RS->Dest, RS->isReady, RS->isExecuting);
 		}
 	}
