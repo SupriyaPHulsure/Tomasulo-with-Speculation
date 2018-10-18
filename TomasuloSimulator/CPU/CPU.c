@@ -62,6 +62,7 @@ int commitInstuctionCount();
 void Commit(int NC, int NR);
 void CommitUnit(int NB, int NR);
 int checkEnd();
+int checkEnd2();
 
 
 /**
@@ -3330,7 +3331,8 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
  * @return: When the simulator stops
  */
 int runClockCycle2 (int NF, int NW, int NB, int NR) {
-    int isEnd;
+    int isEnd1;
+    int isEnd2;
 
 	cpu -> cycle++; //increment cycle counter
 
@@ -3404,37 +3406,35 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
     }
     printf("Issue finished -----------\n");
 
-    updateFetchBuffer();
-    updateInstructionQueue();
-    updateFetchBuffer2();
-    updateInstructionQueue2();
-    cpu->lastCycleFetchProgram = cpu->nextCycleDecodeProgram;
-    cpu->nextCycleDecodeProgram = 0;
-
-/*
+    /*
 
 	printf("Execution -----------\n");
 	insertintoWriteBackBuffer(NB);
 	//printf("Write Back Finish ---------------\n");
 	CommitUnit(NB, NR);
 
+*/
 
+    updateFetchBuffer();
+    updateInstructionQueue();
+    updateFetchBuffer2();
+    updateInstructionQueue2();
     updateReservationStations();
-
-
-
     printf("Finished update.\n");
+    cpu->lastCycleFetchProgram = cpu->nextCycleDecodeProgram;
+    cpu->nextCycleDecodeProgram = 0;
 
-    isEnd = checkEnd();
+    isEnd1 = checkEnd();
+    isEnd2 = checkEnd2();
 
-	if(isEnd==1){
+	if((isEnd1==1) & (isEnd2 == 1)){
 	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
 	    printf("Stalls due to full Reservation Stations: %d\n", cpu -> stallFullRS);
 	    printf("Stalls due to full Reorder Buffer: %d\n", cpu -> stallFullROB);
 	    return 0;
 	}else
 	    return 1;
-*/
+
 }
 
 /**
@@ -3563,6 +3563,7 @@ void printPipeline(void *instruction, char *pipeline, int entering) {
     }
 }
 
+//Flush instructions queue and fetch buffer if mis-predicted branch
 void flushInstructionQueueFetchBuffer(int NI){
     cpu -> fetchBuffer = createDictionary (getHashCodeFromPCHash, compareInstructions);
 	cpu -> fetchBufferResult = createDictionary (getHashCodeFromPCHash, compareInstructions);
@@ -3571,6 +3572,17 @@ void flushInstructionQueueFetchBuffer(int NI){
 	//Set flag to 0
 	cpu->isAfterBranch = 0;
 	cpu -> stallNextFetch = 0;
+    }
+
+//Flush instructions queue and fetch buffer if mis-predicted branch for part 2
+void flushInstructionQueueFetchBuffer2(int NI){
+    cpu -> fetchBuffer2 = createDictionary (getHashCodeFromPCHash, compareInstructions);
+	cpu -> fetchBufferResult2 = createDictionary (getHashCodeFromPCHash, compareInstructions);
+	cpu -> instructionQueue2 = createCircularQueue(NI);
+	cpu -> instructionQueueResult2 = createCircularQueue(NI);
+	//Set flag to 0
+	cpu->isAfterBranch2 = 0;
+	cpu -> stallNextFetch2 = 0;
     }
 
 /*
@@ -3634,5 +3646,25 @@ int checkEnd(){
         return 0;
     }
 }
+
+//Determine if the run cycle should be ended for part 2
+int checkEnd2(){
+    //check whether PC exceeds last instruction in cache
+    int fetchEnd = 0;
+    int robCount, iQueueCount;
+    if (cpu -> PC2 >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction2))) {
+        fetchEnd = 1;
+    }
+    //Check whether all instructions in ROB have been committed
+    iQueueCount = getCountCircularQueue(cpu->instructionQueue2);
+    robCount = getCountCircularQueue(cpu->reorderBuffer2);
+
+    if((fetchEnd==1)&&(robCount==0)&&iQueueCount == 0){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
 
 
