@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
 
 	if (argc == 3) {
 	    printf ("Simulator of Part 2.\n");
+
 	    fillInstructionAndDataCache (argv[1]); //call loader to fill caches
 	    fillInstructionAndDataCache2 (argv[2]); //call loader to fill caches
 	    printInstructionCache (); //print instruction cache
@@ -103,6 +104,8 @@ int main(int argc, char** argv) {
         printDataCache2 ();//print data cache
         printCodeLabels ();
         printCodeLabels2 ();
+
+        initializeCPU (NI, NR, NB); //initialize CPU data structure
 
 	    //TODO
 	}

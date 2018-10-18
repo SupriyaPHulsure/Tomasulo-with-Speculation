@@ -15,7 +15,7 @@ void printInstructionCache () {
 
 	if (instructionCache != NULL) {
 		printf ("-----------------\n");
-		printf ("Instruction Cache\n");
+		printf ("Instruction Cache 1\n");
 		printf ("-----------------\n");
 
 		for (current = instructionCache -> head; current != NULL; current = current -> next)
@@ -31,7 +31,7 @@ void printCodeLabels () {
 
 	if (codeLabels != NULL) {
 		printf ("-----------\n");
-		printf ("Code Lables\n");
+		printf ("Code Lables 1\n");
 		printf ("-----------\n");
 
 		for (current = codeLabels -> head; current != NULL; current = current -> next)
@@ -42,25 +42,28 @@ void printCodeLabels () {
 /***
  * Utility method to print data cache
  */
-void printDataCache2 () {
+void printDataCache () {
 	DictionaryEntry *current;
 
 	if (dataCache != NULL) {
 		printf ("----------\n");
-		printf ("Data Cache\n");
+		printf ("Data Cache 1\n");
 		printf ("----------\n");
 
-		for (current = dataCache2 -> head; current != NULL; current = current -> next)
+		for (current = dataCache -> head; current != NULL; current = current -> next)
 			printf ("Mem(%d) = %0.1lf\n", *((int*)current -> key), *((double*)current -> value -> value));
 	}
 }
 
+/**
+ * Utility method to print instruction cache
+ */
 void printInstructionCache2 () {
 	DictionaryEntry *current;
 
 	if (instructionCache != NULL) {
 		printf ("-----------------\n");
-		printf ("Instruction Cache\n");
+		printf ("Instruction Cache 2\n");
 		printf ("-----------------\n");
 
 		for (current = instructionCache2 -> head; current != NULL; current = current -> next)
@@ -76,7 +79,7 @@ void printCodeLabels2 () {
 
 	if (codeLabels != NULL) {
 		printf ("-----------\n");
-		printf ("Code Lables\n");
+		printf ("Code Lables 2\n");
 		printf ("-----------\n");
 
 		for (current = codeLabels2 -> head; current != NULL; current = current -> next)
@@ -87,18 +90,19 @@ void printCodeLabels2 () {
 /***
  * Utility method to print data cache
  */
-void printDataCache () {
+void printDataCache2 () {
 	DictionaryEntry *current;
 
 	if (dataCache != NULL) {
 		printf ("----------\n");
-		printf ("Data Cache\n");
+		printf ("Data Cache 2\n");
 		printf ("----------\n");
 
-		for (current = dataCache -> head; current != NULL; current = current -> next)
+		for (current = dataCache2 -> head; current != NULL; current = current -> next)
 			printf ("Mem(%d) = %0.1lf\n", *((int*)current -> key), *((double*)current -> value -> value));
 	}
 }
+
 /**
  * Utility method to print integer registers
  */
