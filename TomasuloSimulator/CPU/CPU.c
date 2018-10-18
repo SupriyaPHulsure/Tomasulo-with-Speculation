@@ -2910,7 +2910,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
         case BEQZ:
 		case LD:
 		case SD :
-		    for (tempEntry = cpu -> resStaBU -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+		    for (tempEntry = cpu -> resStaBUResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
                 if (tempEntry != NULL){
                     RSint = tempEntry -> value -> value;
                     if(RSint -> Qj == robnumber){
