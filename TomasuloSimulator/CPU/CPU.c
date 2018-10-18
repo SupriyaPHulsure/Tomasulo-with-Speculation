@@ -2648,6 +2648,7 @@ void Commit(int NC, int NR)
 									if(ROBentrySecond -> isAfterBranch == 0)
 									{
 										cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+										cpu -> reorderBuffer -> count = cpu -> reorderBuffer -> count - i;
 										printf("Branch mispredicted so flushed ROB.\n");
 										break;
 									}
@@ -2668,6 +2669,7 @@ void Commit(int NC, int NR)
 								}
 								else{
 									cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+									cpu -> reorderBuffer -> count = cpu -> reorderBuffer -> count - i;
 									printf("Branch mispredicted so flushed ROB.\n");
 									break;
 								}
