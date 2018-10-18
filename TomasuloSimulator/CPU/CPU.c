@@ -1729,13 +1729,16 @@ CompletedInstruction **execute(int NB){
     CompletedInstruction *FPmultPipelineTemp = NULL;
     CompletedInstruction *FPdivPipelineTemp = NULL;
     CompletedInstruction *BUPipelineTemp = NULL;
+    KeyRS *key = malloc(sizeof(KeyRS));
 
 
     dictEntry = (DictionaryEntry *)cpu -> resStaInt -> head;
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)dictVal -> value;
-        instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, &(rsint -> Dest));
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, key);
     } else {
         instructionsToExec[0] = NULL;
     }
@@ -1743,7 +1746,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
-        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, key);
     } else {
         instructionsToExec[1] = NULL;
     }
@@ -1751,7 +1756,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 3);
     if (dictVal != NULL) {
         rsmem = (RSmem *)(dictVal -> value);
-        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> loadBuffer, &(rsmem -> Dest));
+        key -> reorderNum = rsmem -> Dest;
+        key -> progNum = rsmem -> instruction -> isProg2 + 1;
+        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> loadBuffer, key);
     } else {
         instructionsToExec[2] = NULL;
     }
@@ -1759,7 +1766,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 2);
     if (dictVal != NULL) {
         rsmem = (RSmem *)(dictVal -> value);
-        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> storeBuffer, &(rsmem -> Dest));
+        key -> reorderNum = rsmem -> Dest;
+        key -> progNum = rsmem -> instruction -> isProg2 + 1;
+        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> storeBuffer, key);
     } else {
         instructionsToExec[3] = NULL;
     }
@@ -1767,7 +1776,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 1);
     if (dictVal != NULL) {
         rsfloat = (RSfloat *)(dictVal -> value);
-        instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
+        key -> reorderNum = rsfloat -> Dest;
+        key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+        instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, key);
     } else {
         instructionsToExec[4] = NULL;
     }
@@ -1775,7 +1786,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 1);
     if (dictVal != NULL) {
         rsfloat = (RSfloat *)(dictVal -> value);
-        instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
+        key -> reorderNum = rsfloat -> Dest;
+        key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+        instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, key);
     } else {
         instructionsToExec[5] = NULL;
     }
@@ -1784,7 +1797,9 @@ CompletedInstruction **execute(int NB){
         dictVal = checkReservationStation (dictEntry, 1);
         if (dictVal != NULL) {
             rsfloat = (RSfloat *)(dictVal -> value);
-            instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
+            key -> reorderNum = rsfloat -> Dest;
+            key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+            instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, key);
         } else {
             instructionsToExec[6] = NULL;
         }
@@ -1793,7 +1808,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
-        instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, &(rsint -> Dest));
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, key);
     } else {
         instructionsToExec[7] = NULL;
     }
@@ -1817,6 +1834,7 @@ CompletedInstruction **execute(int NB){
         }
 		//printf("instruction exceuting has address %d and ROB %d\n", instruction ->address, rsint -> Dest);
         instructionAndResult -> instruction = instruction;
+
         switch (instruction->op) {
             case ANDI:
                 rsint -> isExecuting = 1;
@@ -2130,9 +2148,11 @@ CompletedInstruction **execute(int NB){
         unitOutputs[INT] = executePipelinedUnit (cpu -> INTPipeline);
         if (unitOutputs[INT] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[INT] -> ROB_number;
+            key -> progNum = unitOutputs[INT] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number), &(unitOutputs[INT] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaInt, &(unitOutputs[INT] -> ROB_number));
+            removeDictionaryEntriesByKey (cpu -> resStaInt, key);
             pipelineString = "INT";
             printPipeline(unitOutputs[INT], pipelineString, 0);
         }
@@ -2141,7 +2161,9 @@ CompletedInstruction **execute(int NB){
         }
     } else {
         if (INTPipelineTemp != NULL) {
-            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaInt, &(INTPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = INTPipelineTemp -> ROB_number;
+            key -> progNum = INTPipelineTemp -> instruction -> isProg2 + 1;
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaInt, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2149,9 +2171,11 @@ CompletedInstruction **execute(int NB){
         unitOutputs[MULT] = executePipelinedUnit (cpu -> MULTPipeline);
         if (unitOutputs[MULT] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[MULT] -> ROB_number;
+            key -> progNum = unitOutputs[MULT] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number), &(unitOutputs[MULT] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaMult, &(unitOutputs[MULT] -> ROB_number));
+            removeDictionaryEntriesByKey (cpu -> resStaMult, key);
             pipelineString = "MULT";
             printPipeline(unitOutputs[MULT], pipelineString, 0);
         }
@@ -2160,7 +2184,9 @@ CompletedInstruction **execute(int NB){
         }
     } else {
         if (MULTPipelineTemp != NULL) {
-            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaMult, &(MULTPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = MULTPipelineTemp -> ROB_number;
+            key -> progNum = MULTPipelineTemp -> instruction -> isProg2 + 1;
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaMult, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2168,16 +2194,18 @@ CompletedInstruction **execute(int NB){
         unitOutputs[LS] = executePipelinedUnit (cpu -> LoadStorePipeline);
         if (unitOutputs[LS] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[LS] -> ROB_number;
+            key -> progNum = unitOutputs[LS] -> instruction -> isProg2 + 1;
             if (unitOutputs[LS] -> instruction -> op == L_D) {
                 removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
                 addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
-                removeDictionaryEntriesByKey (cpu -> loadBuffer, &(unitOutputs[LS] -> ROB_number));
+                removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
             } else if (unitOutputs[LS] -> instruction -> op == LD) {
                 removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
                 addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
-                removeDictionaryEntriesByKey (cpu -> loadBuffer, &(unitOutputs[LS] -> ROB_number));
+                removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
             } else {
-                removeDictionaryEntriesByKey (cpu -> storeBuffer, &(unitOutputs[LS] -> ROB_number));
+                removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
             }
             pipelineString = "Load/Store";
             printPipeline(unitOutputs[LS], pipelineString, 0);
@@ -2189,14 +2217,21 @@ CompletedInstruction **execute(int NB){
         }
     } else {
         if (loadStallROBNumber != -1) {
-            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(loadStallROBNumber)) -> value -> value);
+
+            key -> reorderNum = loadStallROBNumber;
+            key -> progNum = ((RSmem *)(((DictionaryEntry *)instructionsToExec[2]) -> value -> value)) -> instruction -> isProg2 + 1;
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
         if (LoadPipelineTemp != NULL) {
+            key -> reorderNum = LoadPipelineTemp -> ROB_number;
+            key -> progNum = LoadPipelineTemp -> instruction -> isProg2 + 1;
             RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(LoadPipelineTemp -> ROB_number)) -> value -> value);
             stalled -> isExecuting = 1;
         }
         if (StorePipelineTemp != NULL) {
+            key -> reorderNum = StorePipelineTemp -> ROB_number;
+            key -> progNum = StorePipelineTemp -> instruction -> isProg2 + 1;
             RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> storeBuffer, &(StorePipelineTemp -> ROB_number)) -> value -> value);
             stalled -> isExecuting = 0;
         }
@@ -2205,9 +2240,11 @@ CompletedInstruction **execute(int NB){
         unitOutputs[FPadd] = executePipelinedUnit (cpu -> FPaddPipeline);
         if (unitOutputs[FPadd] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[FPadd] -> ROB_number;
+            key -> progNum = unitOutputs[FPadd] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaFPadd, &(unitOutputs[FPadd] -> ROB_number));
+            removeDictionaryEntriesByKey (cpu -> resStaFPadd, key);
             pipelineString = "FPadd";
             printPipeline(unitOutputs[FPadd], pipelineString, 0);
         }
@@ -2216,7 +2253,9 @@ CompletedInstruction **execute(int NB){
         }
     } else {
         if (FPaddPipelineTemp != NULL) {
-            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPadd, &(FPaddPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = FPaddPipelineTemp -> ROB_number;
+            key -> progNum = FPaddPipelineTemp -> instruction -> isProg2 + 1;
+            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPadd, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2224,9 +2263,11 @@ CompletedInstruction **execute(int NB){
         unitOutputs[FPmult] = executePipelinedUnit (cpu -> FPmultPipeline);
         if (unitOutputs[FPmult] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[FPmult] -> ROB_number;
+            key -> progNum = unitOutputs[FPmult] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaFPmult, &(unitOutputs[FPmult] -> ROB_number));
+            removeDictionaryEntriesByKey (cpu -> resStaFPmult, key);
             pipelineString = "FPmult";
             printPipeline(unitOutputs[FPmult], pipelineString, 0);
         }
@@ -2235,7 +2276,9 @@ CompletedInstruction **execute(int NB){
         }
     } else {
         if (FPmultPipelineTemp != NULL) {
-            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPmult, &(FPmultPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = FPmultPipelineTemp -> ROB_number;
+            key -> progNum = FPmultPipelineTemp -> instruction -> isProg2 + 1;
+            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPmult, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2243,9 +2286,11 @@ CompletedInstruction **execute(int NB){
         unitOutputs[FPdiv] = executeFPDivUnit (cpu -> FPdivPipeline);
         if (unitOutputs[FPdiv] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[FPdiv] -> ROB_number;
+            key -> progNum = unitOutputs[FPdiv] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaFPdiv, &(unitOutputs[FPdiv] -> ROB_number));
+            removeDictionaryEntriesByKey (cpu -> resStaFPdiv, key);
             pipelineString = "FPdiv";
             printPipeline(unitOutputs[FPdiv], pipelineString, 0);
         }
@@ -2254,7 +2299,9 @@ CompletedInstruction **execute(int NB){
         }
     } else {
         if (FPdivPipelineTemp != NULL) {
-            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPdiv, &(FPdivPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = FPdivPipelineTemp -> ROB_number;
+            key -> progNum = FPdivPipelineTemp -> instruction -> isProg2 + 1;
+            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPdiv, key) -> value -> value);
             stalled -> isExecuting = 0;
             cpu -> FPdivPipelineBusy = 0;
         }
@@ -2263,9 +2310,11 @@ CompletedInstruction **execute(int NB){
         unitOutputs[BU] = executePipelinedUnit (cpu -> BUPipeline);
         if (unitOutputs[BU] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[BU] -> ROB_number;
+            key -> progNum = unitOutputs[BU] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaBU, &(unitOutputs[BU] -> ROB_number));
+            removeDictionaryEntriesByKey (cpu -> resStaBU, key);
             branchHelper (unitOutputs[BU]);
             pipelineString = "BU";
             printPipeline(unitOutputs[BU], pipelineString, 0);
@@ -2275,7 +2324,9 @@ CompletedInstruction **execute(int NB){
         }
     } else {
         if (BUPipelineTemp != NULL) {
-            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaBU, &(BUPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = BUPipelineTemp -> ROB_number;
+            key -> progNum = BUPipelineTemp -> instruction -> isProg2 + 1;
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaBU, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2317,13 +2368,15 @@ CompletedInstruction **execute2(int NB) {
     CompletedInstruction *FPmultPipelineTemp = NULL;
     CompletedInstruction *FPdivPipelineTemp = NULL;
     CompletedInstruction *BUPipelineTemp = NULL;
+    KeyRS *key = malloc(sizeof(KeyRS));
 
-    //TODO: index into ResSta using proper key (ROB number and Program1/2)
     dictEntry = (DictionaryEntry *)cpu -> resStaInt -> head;
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)dictVal -> value;
-        instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, &(rsint -> Dest));
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, key);
     } else {
         instructionsToExec[0] = NULL;
     }
@@ -2331,6 +2384,8 @@ CompletedInstruction **execute2(int NB) {
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
         instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
     } else {
         instructionsToExec[1] = NULL;
@@ -2339,7 +2394,9 @@ CompletedInstruction **execute2(int NB) {
     dictVal = checkReservationStation (dictEntry, 3);
     if (dictVal != NULL) {
         rsmem = (RSmem *)(dictVal -> value);
-        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> loadBuffer, &(rsmem -> Dest));
+        key -> reorderNum = rsmem -> Dest;
+        key -> progNum = rsmem -> instruction -> isProg2 + 1;
+        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> loadBuffer, key);
     } else {
         instructionsToExec[2] = NULL;
     }
@@ -2347,7 +2404,9 @@ CompletedInstruction **execute2(int NB) {
     dictVal = checkReservationStation (dictEntry, 2);
     if (dictVal != NULL) {
         rsmem = (RSmem *)(dictVal -> value);
-        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> storeBuffer, &(rsmem -> Dest));
+        key -> reorderNum = rsmem -> Dest;
+        key -> progNum = rsmem -> instruction -> isProg2 + 1;
+        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> storeBuffer, key);
     } else {
         instructionsToExec[3] = NULL;
     }
@@ -2355,7 +2414,9 @@ CompletedInstruction **execute2(int NB) {
     dictVal = checkReservationStation (dictEntry, 1);
     if (dictVal != NULL) {
         rsfloat = (RSfloat *)(dictVal -> value);
-        instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
+        key -> reorderNum = rsfloat -> Dest;
+        key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+        instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, key);
     } else {
         instructionsToExec[4] = NULL;
     }
@@ -2363,7 +2424,9 @@ CompletedInstruction **execute2(int NB) {
     dictVal = checkReservationStation (dictEntry, 1);
     if (dictVal != NULL) {
         rsfloat = (RSfloat *)(dictVal -> value);
-        instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
+        key -> reorderNum = rsfloat -> Dest;
+        key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+        instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, key);
     } else {
         instructionsToExec[5] = NULL;
     }
@@ -2372,7 +2435,9 @@ CompletedInstruction **execute2(int NB) {
         dictVal = checkReservationStation (dictEntry, 1);
         if (dictVal != NULL) {
             rsfloat = (RSfloat *)(dictVal -> value);
-            instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
+            key -> reorderNum = rsfloat -> Dest;
+            key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+            instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, key);
         } else {
             instructionsToExec[6] = NULL;
         }
@@ -2381,7 +2446,9 @@ CompletedInstruction **execute2(int NB) {
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
-        instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, &(rsint -> Dest));
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, key);
     } else {
         instructionsToExec[7] = NULL;
     }
@@ -2390,7 +2457,6 @@ CompletedInstruction **execute2(int NB) {
         if (instructionsToExec[i] == NULL) { //if reservation station did not provide instruction
             continue;
         }
-        //TODO: printout which program instruction is for
         if (i < 2 || i > 6) {
             rsint = (RSint *)((DictionaryEntry *)instructionsToExec[i] -> value -> value);
             instruction = rsint -> instruction;
@@ -2736,7 +2802,7 @@ CompletedInstruction **execute2(int NB) {
                 break;
         }
     }
-
+    //TODO: Check which reservation station/rename registers/WB buffers (Code labels and ROB?)
     //Take outputs from Units, but only as many as can be accepted by WriteBack Buffer
     int maxOutput = NB - (countDictionaryLen (cpu -> WriteBackBuffer));
     i = 0;
