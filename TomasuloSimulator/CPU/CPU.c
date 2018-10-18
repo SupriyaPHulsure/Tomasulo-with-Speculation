@@ -3833,6 +3833,8 @@ void insertintoWriteBackBuffer(int NB)
 	{
 		cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
 	}
+//	//TODO: don't return here, this is for testing execute(2)
+//	return;
 	if(unitOutputs != NULL){
 		if(unitOutputs[INT] != NULL){
 			instruction = unitOutputs[INT];
@@ -4356,7 +4358,7 @@ void printPipeline(void *instruction, char *pipeline, int entering) {
         sprintf (instructionString, "%d: %s, rd=%d, rs=%d, rt=%d, fd=%d, fs=%d, ft=%d, immediate=%d, target=%d",
          i -> address, getOpcodeString ((int) i -> op), i-> rd, i-> rs, i-> rt, i-> fd, i-> fs, i-> ft, i-> immediate,
           i-> target);
-        printf("%s unit output PC %s with ROB number %d\n", pipeline, instructionString, inst -> ROB_number);
+        printf("%s unit output Program %d PC %s with ROB number %d\n", pipeline, i -> isProg2 + 1, instructionString, inst -> ROB_number);
         free (instructionString);
     }
 }
