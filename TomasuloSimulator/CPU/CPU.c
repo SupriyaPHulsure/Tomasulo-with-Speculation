@@ -2969,7 +2969,6 @@ ROB * InitializeROBEntry(Instruction * instructionP)
 {
 
 	ROB * ROBEntry ;
-	RegStatus *RegStatusEntry;
 	OpCode op;
 	
 	ROBEntry = (ROB*) malloc (sizeof(ROB));	
@@ -3094,7 +3093,6 @@ ROB * InitializeROBEntry2(Instruction * instructionP)
 {
 
 	ROB * ROBEntry ;
-	RegStatus *RegStatusEntry;
 	OpCode op;
 
 	ROBEntry = (ROB*) malloc (sizeof(ROB));
@@ -4196,7 +4194,7 @@ int getHashCodeFromROBNumber (void *ROBNumber) {
     if (keyRS->progNum == 1){
         return keyRS->reorderNum;
     }
-    if (keyRS->progNum == 2){
+    else{
         return -(keyRS->reorderNum + 1); //+1 is to avoid the case both of them are zero
     }
 }
