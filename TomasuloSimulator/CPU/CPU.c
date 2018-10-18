@@ -803,10 +803,13 @@ int addInstruction2RSint(Dictionary *renameRegInt, Dictionary *resSta, Dictionar
             RS -> Qk = -1;
         }
         //Append to reservation stations
+        KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
+        keyRS->reorderNum = DestROBnum;
+        keyRS->progNum = instruction->isProg2 + 1;
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         RS->isExecuting = 0;
-        addDictionaryEntry(resStaResult, &(RS->Dest), RS);
+        addDictionaryEntry(resStaResult, keyRS, RS);
         //Update register status
         RegStatusEntry = IntRegStatus[instruction->rd];
         RegStatusEntry->busy = 1;
@@ -879,10 +882,13 @@ int addInstruction2RSfloat(Dictionary *renameRegFP, Dictionary *resSta, Dictiona
             RS -> Qk = -1;
         }
          //Append to reservation stations
+        KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
+        keyRS->reorderNum = DestROBnum;
+        keyRS->progNum = instruction->isProg2 + 1;
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         RS->isExecuting = 0;
-        addDictionaryEntry(resStaResult, &(RS->Dest), RS);
+        addDictionaryEntry(resStaResult, keyRS, RS);
         //Update register status
         RegStatusEntry = FPRegStatus[instruction->fd];
         RegStatusEntry->busy = 1;
@@ -954,10 +960,13 @@ int addInstruction2RSbranch(Dictionary *renameRegInt, Dictionary *resSta, Dictio
             RS -> Qk = -1;
         }
         //Append to reservation stations
+        KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
+        keyRS->reorderNum = DestROBnum;
+        keyRS->progNum = instruction->isProg2 + 1;
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         RS->isExecuting = 0;
-        addDictionaryEntry(resStaResult, &(RS->Dest), RS);
+        addDictionaryEntry(resStaResult, keyRS, RS);
         printf("Issued instruction %d: %s\n", instruction->address, getOpcodeString ((int) instruction->op));
         return 1;
 
@@ -1127,10 +1136,13 @@ int addInstruction2RSint2(Dictionary *renameRegInt, Dictionary *resSta, Dictiona
             RS -> Qk = -1;
         }
         //Append to reservation stations
+        KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
+        keyRS->reorderNum = DestROBnum;
+        keyRS->progNum = instruction->isProg2 + 1;
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         RS->isExecuting = 0;
-        addDictionaryEntry(resStaResult, &(RS->Dest), RS);
+        addDictionaryEntry(resStaResult, keyRS, RS);
         //Update register status
         RegStatusEntry = IntRegStatus[instruction->rd];
         RegStatusEntry->busy = 1;
@@ -1203,10 +1215,13 @@ int addInstruction2RSfloat2(Dictionary *renameRegFP, Dictionary *resSta, Diction
             RS -> Qk = -1;
         }
          //Append to reservation stations
+        KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
+        keyRS->reorderNum = DestROBnum;
+        keyRS->progNum = instruction->isProg2 + 1;
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         RS->isExecuting = 0;
-        addDictionaryEntry(resStaResult, &(RS->Dest), RS);
+        addDictionaryEntry(resStaResult, &keyRS, RS);
         //Update register status
         RegStatusEntry = FPRegStatus[instruction->fd];
         RegStatusEntry->busy = 1;
@@ -1278,10 +1293,13 @@ int addInstruction2RSbranch2(Dictionary *renameRegInt, Dictionary *resSta, Dicti
             RS -> Qk = -1;
         }
         //Append to reservation stations
+        KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
+        keyRS->reorderNum = DestROBnum;
+        keyRS->progNum = instruction->isProg2 + 1;
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         RS->isExecuting = 0;
-        addDictionaryEntry(resStaResult, &(RS->Dest), RS);
+        addDictionaryEntry(resStaResult, keyRS, RS);
         printf("Issued instruction %d: %s\n", instruction->address, getOpcodeString ((int) instruction->op));
         return 1;
 
@@ -1367,7 +1385,10 @@ int addLoadStore2Buffer2(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
         }
         RS -> address = -1;
         RS->isExecuting = 0;
-        addDictionaryEntry(LOrSBufferResult, &(RS->Dest), RS);
+        KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
+        keyRS->reorderNum = RS->Dest;
+        keyRS->progNum = instruction->isProg2 + 1;
+        addDictionaryEntry(LOrSBufferResult, keyRS, RS);
         //Add to renaming registers and update Register Status if load
         if (strcmp(buffType, "Load") == 0) {
             if (instruction -> op == L_D) {
@@ -3482,13 +3503,25 @@ int getHashCodeFromBranchAddress(void *branchAddress){
 int compareTargetAddress(void *targetAddress1, void *targetAddress2){
     return *((int*)targetAddress1)  - *((int*)targetAddress2);
 }
-
+//This function is used for reservation stations and load/write buffers
 int getHashCodeFromROBNumber (void *ROBNumber) {
-    return *((int*)ROBNumber);
+    KeyRS* keyRS = (KeyRS*)ROBNumber;
+    if (keyRS->progNum == 1){
+        return keyRS->reorderNum;
+    }
+    if (keyRS->progNum == 2){
+        return -(keyRS->reorderNum + 1); //+1 is to avoid the case both of them are zero
+    }
 }
 
 int compareROBNumber (void *ROBNumber1, void *ROBNumber2) {
-    return *((int *)ROBNumber1) - *((int *)ROBNumber2);
+    KeyRS* keyRS1 = (KeyRS*)ROBNumber1;
+    KeyRS* keyRS2 = (KeyRS*)ROBNumber2;
+    if(keyRS1->progNum == keyRS2->progNum){
+        return keyRS1->reorderNum - keyRS2->reorderNum;
+    }else{
+        return keyRS1->reorderNum + keyRS2->reorderNum + 1;
+    }
 }
 
 int getHashCodeFromRegNumber (void *RegNumber) {
