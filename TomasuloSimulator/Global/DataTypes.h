@@ -249,6 +249,10 @@ typedef struct _cpu {
     int isAfterBranch2;
     //doubled
 
+    //Flag of program that last cycle fetch and next cycle decode
+    int lastCycleFetchProgram;
+    int nextCycleDecodeProgram;
+
 } CPU;
 
 #endif /* GLOBAL_DATATYPES_H_ */
