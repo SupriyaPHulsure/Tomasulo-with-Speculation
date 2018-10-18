@@ -2170,7 +2170,12 @@ CompletedInstruction **execute(int NB){
         if (loadStallROBNumber != -1) {
             RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(loadStallROBNumber)) -> value -> value);
             stalled -> isExecuting = 0;
-        } else if (StorePipelineTemp != NULL) {
+        }
+        if (LoadPipelineTemp != NULL) {
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(LoadPipelineTemp -> ROB_number)) -> value -> value);
+            stalled -> isExecuting = 1;
+        }
+        if (StorePipelineTemp != NULL) {
             RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> storeBuffer, &(StorePipelineTemp -> ROB_number)) -> value -> value);
             stalled -> isExecuting = 0;
         }
@@ -2644,6 +2649,7 @@ void Commit(int NC, int NR)
 									if(ROBentrySecond -> isAfterBranch == 0)
 									{
 										cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+										cpu -> reorderBuffer -> count = cpu -> reorderBuffer -> count - i;
 										printf("Branch mispredicted so flushed ROB.\n");
 										break;
 									}
@@ -2664,6 +2670,7 @@ void Commit(int NC, int NR)
 								}
 								else{
 									cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+									cpu -> reorderBuffer -> count = cpu -> reorderBuffer -> count - i;
 									printf("Branch mispredicted so flushed ROB.\n");
 									break;
 								}
@@ -2904,7 +2911,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
         case BEQZ:
 		case LD:
 		case SD :
-		    for (tempEntry = cpu -> resStaBU -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
+		    for (tempEntry = cpu -> resStaBUResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
                 if (tempEntry != NULL){
                     RSint = tempEntry -> value -> value;
                     if(RSint -> Qj == robnumber){
