@@ -111,6 +111,19 @@ int main(int argc, char** argv) {
         for (test_cycle = 0; test_cycle < 8; test_cycle ++){
             runClockCycle2 (NF, NW, NB, NR);
         }
+        /*
+        printInstructionQueue();
+        printInstructionQueue2();
+        printReservationStations();
+        printRenamingRegisters();
+        printRenamingRegisters2();
+        printIntegerRegistersStatus();
+        printFPRegistersStatus();
+        printIntegerRegistersStatus2();
+        printFPRegistersStatus2();
+        printROB();
+        */
+
 	    //TODO
 	}
 	
