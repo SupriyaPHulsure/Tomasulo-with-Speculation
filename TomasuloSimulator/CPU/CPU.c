@@ -1052,7 +1052,10 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
         }
         RS -> address = -1;
         RS->isExecuting = 0;
-        addDictionaryEntry(LOrSBufferResult, &(RS->Dest), RS);
+        KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
+        keyRS->reorderNum = DestROBnum;
+        keyRS->progNum = instruction->isProg2 + 1;
+        addDictionaryEntry(LOrSBufferResult, keyRS, RS);
         //Add to renaming registers and update Register Status if load
         if (strcmp(buffType, "Load") == 0) {
             if (instruction -> op == L_D) {
