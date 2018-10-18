@@ -1729,13 +1729,16 @@ CompletedInstruction **execute(int NB){
     CompletedInstruction *FPmultPipelineTemp = NULL;
     CompletedInstruction *FPdivPipelineTemp = NULL;
     CompletedInstruction *BUPipelineTemp = NULL;
+    KeyRS *key = malloc(sizeof(KeyRS));
 
 
     dictEntry = (DictionaryEntry *)cpu -> resStaInt -> head;
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)dictVal -> value;
-        instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, &(rsint -> Dest));
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, key);
     } else {
         instructionsToExec[0] = NULL;
     }
@@ -1743,7 +1746,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
-        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, key);
     } else {
         instructionsToExec[1] = NULL;
     }
@@ -1751,7 +1756,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 3);
     if (dictVal != NULL) {
         rsmem = (RSmem *)(dictVal -> value);
-        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> loadBuffer, &(rsmem -> Dest));
+        key -> reorderNum = rsmem -> Dest;
+        key -> progNum = rsmem -> instruction -> isProg2 + 1;
+        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> loadBuffer, key);
     } else {
         instructionsToExec[2] = NULL;
     }
@@ -1759,7 +1766,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 2);
     if (dictVal != NULL) {
         rsmem = (RSmem *)(dictVal -> value);
-        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> storeBuffer, &(rsmem -> Dest));
+        key -> reorderNum = rsmem -> Dest;
+        key -> progNum = rsmem -> instruction -> isProg2 + 1;
+        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> storeBuffer, key);
     } else {
         instructionsToExec[3] = NULL;
     }
@@ -1767,7 +1776,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 1);
     if (dictVal != NULL) {
         rsfloat = (RSfloat *)(dictVal -> value);
-        instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, &(rsfloat -> Dest));
+        key -> reorderNum = rsfloat -> Dest;
+        key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+        instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, key);
     } else {
         instructionsToExec[4] = NULL;
     }
@@ -1775,7 +1786,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 1);
     if (dictVal != NULL) {
         rsfloat = (RSfloat *)(dictVal -> value);
-        instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, &(rsfloat -> Dest));
+        key -> reorderNum = rsfloat -> Dest;
+        key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+        instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, key);
     } else {
         instructionsToExec[5] = NULL;
     }
@@ -1784,7 +1797,9 @@ CompletedInstruction **execute(int NB){
         dictVal = checkReservationStation (dictEntry, 1);
         if (dictVal != NULL) {
             rsfloat = (RSfloat *)(dictVal -> value);
-            instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, &(rsfloat -> Dest));
+            key -> reorderNum = rsfloat -> Dest;
+            key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+            instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, key);
         } else {
             instructionsToExec[6] = NULL;
         }
@@ -1793,7 +1808,9 @@ CompletedInstruction **execute(int NB){
     dictVal = checkReservationStation (dictEntry, 0);
     if (dictVal != NULL) {
         rsint = (RSint *)(dictVal -> value);
-        instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, &(rsint -> Dest));
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, key);
     } else {
         instructionsToExec[7] = NULL;
     }
@@ -1817,6 +1834,7 @@ CompletedInstruction **execute(int NB){
         }
 		//printf("instruction exceuting has address %d and ROB %d\n", instruction ->address, rsint -> Dest);
         instructionAndResult -> instruction = instruction;
+
         switch (instruction->op) {
             case ANDI:
                 rsint -> isExecuting = 1;
@@ -2130,6 +2148,668 @@ CompletedInstruction **execute(int NB){
         unitOutputs[INT] = executePipelinedUnit (cpu -> INTPipeline);
         if (unitOutputs[INT] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[INT] -> ROB_number;
+            key -> progNum = unitOutputs[INT] -> instruction -> isProg2 + 1;
+            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number));
+            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number), &(unitOutputs[INT] -> intResult));
+            removeDictionaryEntriesByKey (cpu -> resStaInt, key);
+            pipelineString = "INT";
+            printPipeline(unitOutputs[INT], pipelineString, 0);
+        }
+        if (INTPipelineTemp != NULL) {
+            enqueueCircular (cpu -> INTPipeline, INTPipelineTemp);
+        }
+    } else {
+        if (INTPipelineTemp != NULL) {
+            key -> reorderNum = INTPipelineTemp -> ROB_number;
+            key -> progNum = INTPipelineTemp -> instruction -> isProg2 + 1;
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaInt, key) -> value -> value);
+            stalled -> isExecuting = 0;
+        }
+    }
+    if (i < maxOutput) {
+        unitOutputs[MULT] = executePipelinedUnit (cpu -> MULTPipeline);
+        if (unitOutputs[MULT] != NULL) {
+            i++;
+            key -> reorderNum = unitOutputs[MULT] -> ROB_number;
+            key -> progNum = unitOutputs[MULT] -> instruction -> isProg2 + 1;
+            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number));
+            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number), &(unitOutputs[MULT] -> intResult));
+            removeDictionaryEntriesByKey (cpu -> resStaMult, key);
+            pipelineString = "MULT";
+            printPipeline(unitOutputs[MULT], pipelineString, 0);
+        }
+        if (MULTPipelineTemp != NULL) {
+            enqueueCircular (cpu -> MULTPipeline, MULTPipelineTemp);
+        }
+    } else {
+        if (MULTPipelineTemp != NULL) {
+            key -> reorderNum = MULTPipelineTemp -> ROB_number;
+            key -> progNum = MULTPipelineTemp -> instruction -> isProg2 + 1;
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaMult, key) -> value -> value);
+            stalled -> isExecuting = 0;
+        }
+    }
+    if (i < maxOutput) {
+        unitOutputs[LS] = executePipelinedUnit (cpu -> LoadStorePipeline);
+        if (unitOutputs[LS] != NULL) {
+            i++;
+            key -> reorderNum = unitOutputs[LS] -> ROB_number;
+            key -> progNum = unitOutputs[LS] -> instruction -> isProg2 + 1;
+            if (unitOutputs[LS] -> instruction -> op == L_D) {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
+            } else if (unitOutputs[LS] -> instruction -> op == LD) {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
+            } else {
+                removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
+            }
+            pipelineString = "Load/Store";
+            printPipeline(unitOutputs[LS], pipelineString, 0);
+        }
+        if (!storeFirst && LoadPipelineTemp != NULL) {
+            enqueueCircular (cpu -> LoadStorePipeline, LoadPipelineTemp);
+        } else if (StorePipelineTemp != NULL) {
+            enqueueCircular (cpu -> LoadStorePipeline, StorePipelineTemp);
+        }
+    } else {
+        if (loadStallROBNumber != -1) {
+
+            key -> reorderNum = loadStallROBNumber;
+            key -> progNum = ((RSmem *)(((DictionaryEntry *)instructionsToExec[2]) -> value -> value)) -> instruction -> isProg2 + 1;
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, key) -> value -> value);
+            stalled -> isExecuting = 0;
+        }
+        if (LoadPipelineTemp != NULL) {
+            key -> reorderNum = LoadPipelineTemp -> ROB_number;
+            key -> progNum = LoadPipelineTemp -> instruction -> isProg2 + 1;
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(LoadPipelineTemp -> ROB_number)) -> value -> value);
+            stalled -> isExecuting = 1;
+        }
+        if (StorePipelineTemp != NULL) {
+            key -> reorderNum = StorePipelineTemp -> ROB_number;
+            key -> progNum = StorePipelineTemp -> instruction -> isProg2 + 1;
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> storeBuffer, &(StorePipelineTemp -> ROB_number)) -> value -> value);
+            stalled -> isExecuting = 0;
+        }
+    }
+    if (i < maxOutput) {
+        unitOutputs[FPadd] = executePipelinedUnit (cpu -> FPaddPipeline);
+        if (unitOutputs[FPadd] != NULL) {
+            i++;
+            key -> reorderNum = unitOutputs[FPadd] -> ROB_number;
+            key -> progNum = unitOutputs[FPadd] -> instruction -> isProg2 + 1;
+            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number));
+            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> intResult));
+            removeDictionaryEntriesByKey (cpu -> resStaFPadd, key);
+            pipelineString = "FPadd";
+            printPipeline(unitOutputs[FPadd], pipelineString, 0);
+        }
+        if (FPaddPipelineTemp != NULL) {
+            enqueueCircular (cpu -> FPaddPipeline, FPaddPipelineTemp);
+        }
+    } else {
+        if (FPaddPipelineTemp != NULL) {
+            key -> reorderNum = FPaddPipelineTemp -> ROB_number;
+            key -> progNum = FPaddPipelineTemp -> instruction -> isProg2 + 1;
+            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPadd, key) -> value -> value);
+            stalled -> isExecuting = 0;
+        }
+    }
+    if (i < maxOutput) {
+        unitOutputs[FPmult] = executePipelinedUnit (cpu -> FPmultPipeline);
+        if (unitOutputs[FPmult] != NULL) {
+            i++;
+            key -> reorderNum = unitOutputs[FPmult] -> ROB_number;
+            key -> progNum = unitOutputs[FPmult] -> instruction -> isProg2 + 1;
+            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number));
+            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> intResult));
+            removeDictionaryEntriesByKey (cpu -> resStaFPmult, key);
+            pipelineString = "FPmult";
+            printPipeline(unitOutputs[FPmult], pipelineString, 0);
+        }
+        if (FPmultPipelineTemp != NULL) {
+            enqueueCircular (cpu -> FPmultPipeline, FPmultPipelineTemp);
+        }
+    } else {
+        if (FPmultPipelineTemp != NULL) {
+            key -> reorderNum = FPmultPipelineTemp -> ROB_number;
+            key -> progNum = FPmultPipelineTemp -> instruction -> isProg2 + 1;
+            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPmult, key) -> value -> value);
+            stalled -> isExecuting = 0;
+        }
+    }
+    if (i < maxOutput) {
+        unitOutputs[FPdiv] = executeFPDivUnit (cpu -> FPdivPipeline);
+        if (unitOutputs[FPdiv] != NULL) {
+            i++;
+            key -> reorderNum = unitOutputs[FPdiv] -> ROB_number;
+            key -> progNum = unitOutputs[FPdiv] -> instruction -> isProg2 + 1;
+            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number));
+            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> intResult));
+            removeDictionaryEntriesByKey (cpu -> resStaFPdiv, key);
+            pipelineString = "FPdiv";
+            printPipeline(unitOutputs[FPdiv], pipelineString, 0);
+        }
+        if (FPdivPipelineTemp != NULL) {
+            enqueueCircular (cpu -> FPdivPipeline, FPdivPipelineTemp);
+        }
+    } else {
+        if (FPdivPipelineTemp != NULL) {
+            key -> reorderNum = FPdivPipelineTemp -> ROB_number;
+            key -> progNum = FPdivPipelineTemp -> instruction -> isProg2 + 1;
+            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPdiv, key) -> value -> value);
+            stalled -> isExecuting = 0;
+            cpu -> FPdivPipelineBusy = 0;
+        }
+    }
+    if (i < maxOutput) {
+        unitOutputs[BU] = executePipelinedUnit (cpu -> BUPipeline);
+        if (unitOutputs[BU] != NULL) {
+            i++;
+            key -> reorderNum = unitOutputs[BU] -> ROB_number;
+            key -> progNum = unitOutputs[BU] -> instruction -> isProg2 + 1;
+            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number));
+            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
+            removeDictionaryEntriesByKey (cpu -> resStaBU, key);
+            branchHelper (unitOutputs[BU]);
+            pipelineString = "BU";
+            printPipeline(unitOutputs[BU], pipelineString, 0);
+        }
+        if (BUPipelineTemp != NULL) {
+            enqueueCircular (cpu -> BUPipeline, BUPipelineTemp);
+        }
+    } else {
+        if (BUPipelineTemp != NULL) {
+            key -> reorderNum = BUPipelineTemp -> ROB_number;
+            key -> progNum = BUPipelineTemp -> instruction -> isProg2 + 1;
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaBU, key) -> value -> value);
+            stalled -> isExecuting = 0;
+        }
+    }
+
+    return unitOutputs;
+
+}
+
+//Execution for SMT
+CompletedInstruction **execute2(int NB) {
+    Instruction *instruction = malloc(sizeof(Instruction));
+    void *valuePtr = malloc(sizeof(double));
+    void *addrPtr = malloc(sizeof(int));
+  	DictionaryEntry *dataCacheElement;
+  	CompletedInstruction *instructionAndResult = malloc(sizeof(CompletedInstruction));
+    RSint *rsint;
+    RSfloat *rsfloat;
+    RSmem *rsmem;
+    DictionaryValue *dictVal;
+    //Array for instructions moving from Reservation Stations to execution units. Contains DictionaryValues.
+    DictionaryEntry **instructionsToExec = malloc(sizeof(DictionaryEntry *)*8);
+    //Array for outputs of Units. See Unit enum in DataTypes.h
+    static CompletedInstruction *unitOutputs[7];
+    int i, j;
+    char *pipelineString;
+    //variables for loads
+    RSmem *RS;
+    int instructionFoundOrBubble;
+    DictionaryEntry *dictEntry;
+    CircularQueue *buff;
+    int loadStallROBNumber = -1; //needed to stall step 1 of load pipeline
+    //Temp pipelines to hold changes during execution
+    CompletedInstruction *INTPipelineTemp = NULL;
+    CompletedInstruction *MULTPipelineTemp = NULL;
+    CompletedInstruction *LoadPipelineTemp = NULL;
+    CompletedInstruction *StorePipelineTemp = NULL;
+    int storeFirst = 0; //1 if store first
+    CompletedInstruction *FPaddPipelineTemp = NULL;
+    CompletedInstruction *FPmultPipelineTemp = NULL;
+    CompletedInstruction *FPdivPipelineTemp = NULL;
+    CompletedInstruction *BUPipelineTemp = NULL;
+    KeyRS *key = malloc(sizeof(KeyRS));
+
+    dictEntry = (DictionaryEntry *)cpu -> resStaInt -> head;
+    dictVal = checkReservationStation (dictEntry, 0);
+    if (dictVal != NULL) {
+        rsint = (RSint *)dictVal -> value;
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[0] = getValueChainByDictionaryKey (cpu -> resStaInt, key);
+    } else {
+        instructionsToExec[0] = NULL;
+    }
+    dictEntry = (DictionaryEntry *)cpu -> resStaMult -> head;
+    dictVal = checkReservationStation (dictEntry, 0);
+    if (dictVal != NULL) {
+        rsint = (RSint *)(dictVal -> value);
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
+    } else {
+        instructionsToExec[1] = NULL;
+    }
+    dictEntry = (DictionaryEntry *)cpu -> loadBuffer -> head;
+    dictVal = checkReservationStation (dictEntry, 3);
+    if (dictVal != NULL) {
+        rsmem = (RSmem *)(dictVal -> value);
+        key -> reorderNum = rsmem -> Dest;
+        key -> progNum = rsmem -> instruction -> isProg2 + 1;
+        instructionsToExec[2] = getValueChainByDictionaryKey (cpu -> loadBuffer, key);
+    } else {
+        instructionsToExec[2] = NULL;
+    }
+    dictEntry = (DictionaryEntry *)cpu -> storeBuffer -> head;
+    dictVal = checkReservationStation (dictEntry, 2);
+    if (dictVal != NULL) {
+        rsmem = (RSmem *)(dictVal -> value);
+        key -> reorderNum = rsmem -> Dest;
+        key -> progNum = rsmem -> instruction -> isProg2 + 1;
+        instructionsToExec[3] = getValueChainByDictionaryKey (cpu -> storeBuffer, key);
+    } else {
+        instructionsToExec[3] = NULL;
+    }
+    dictEntry = (DictionaryEntry *)cpu -> resStaFPadd -> head;
+    dictVal = checkReservationStation (dictEntry, 1);
+    if (dictVal != NULL) {
+        rsfloat = (RSfloat *)(dictVal -> value);
+        key -> reorderNum = rsfloat -> Dest;
+        key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+        instructionsToExec[4] = getValueChainByDictionaryKey (cpu -> resStaFPadd, key);
+    } else {
+        instructionsToExec[4] = NULL;
+    }
+    dictEntry = (DictionaryEntry *)cpu -> resStaFPmult -> head;
+    dictVal = checkReservationStation (dictEntry, 1);
+    if (dictVal != NULL) {
+        rsfloat = (RSfloat *)(dictVal -> value);
+        key -> reorderNum = rsfloat -> Dest;
+        key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+        instructionsToExec[5] = getValueChainByDictionaryKey (cpu -> resStaFPmult, key);
+    } else {
+        instructionsToExec[5] = NULL;
+    }
+    if (!(cpu -> FPdivPipelineBusy)) {
+        dictEntry = (DictionaryEntry *)cpu -> resStaFPdiv -> head;
+        dictVal = checkReservationStation (dictEntry, 1);
+        if (dictVal != NULL) {
+            rsfloat = (RSfloat *)(dictVal -> value);
+            key -> reorderNum = rsfloat -> Dest;
+            key -> progNum = rsfloat -> instruction -> isProg2 + 1;
+            instructionsToExec[6] = getValueChainByDictionaryKey (cpu -> resStaFPdiv, key);
+        } else {
+            instructionsToExec[6] = NULL;
+        }
+    }
+    dictEntry = (DictionaryEntry *)cpu -> resStaBU -> head;
+    dictVal = checkReservationStation (dictEntry, 0);
+    if (dictVal != NULL) {
+        rsint = (RSint *)(dictVal -> value);
+        key -> reorderNum = rsint -> Dest;
+        key -> progNum = rsint -> instruction -> isProg2 + 1;
+        instructionsToExec[7] = getValueChainByDictionaryKey (cpu -> resStaBU, key);
+    } else {
+        instructionsToExec[7] = NULL;
+    }
+
+    for (i = 0; i < 8; i++) {
+        if (instructionsToExec[i] == NULL) { //if reservation station did not provide instruction
+            continue;
+        }
+        if (i < 2 || i > 6) {
+            rsint = (RSint *)((DictionaryEntry *)instructionsToExec[i] -> value -> value);
+            instruction = rsint -> instruction;
+			printf("instruction exceuting has address %d in program %d and ROB %d\n", instruction ->address, instruction->isProg2+1, rsint -> Dest);
+        } else if (i == 2 || i == 3) {
+            rsmem = (RSmem *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
+            instruction = rsmem -> instruction;
+			printf("instruction exceuting has address %d in program %d and ROB %d\n", instruction ->address, instruction->isProg2+1, rsmem -> Dest);
+        } else {
+            rsfloat = (RSfloat *)(((DictionaryEntry *)instructionsToExec[i]) -> value -> value);
+            instruction = rsfloat -> instruction;
+			printf("instruction exceuting has address %d in program %d and ROB %d\n", instruction ->address, instruction->isProg2+1, rsfloat -> Dest);
+        }
+		//printf("instruction exceuting has address %d and ROB %d\n", instruction ->address, rsint -> Dest);
+        instructionAndResult -> instruction = instruction;
+        switch (instruction->op) {
+            case ANDI:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj & instruction->immediate;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case AND:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj & rsint -> Vk;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case ORI:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj | instruction->immediate;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case OR:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj | rsint -> Vk;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case SLTI:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj < instruction->immediate ? 1 : 0;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case SLT:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj < rsint -> Vk ? 1 : 0;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DADDI:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj + instruction->immediate;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DADD:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj + rsint -> Vk;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DSUB:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj - rsint -> Vk;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                INTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(INTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "INT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DMUL:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj * rsint -> Vk;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                MULTPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(MULTPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "MULT";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case ADD_D:
+                rsfloat -> isExecuting = 1;
+                instructionAndResult -> fpResult = rsfloat -> Vj + rsfloat -> Vk;
+                instructionAndResult -> ROB_number = rsfloat -> Dest;
+                FPaddPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(FPaddPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "FPadd";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case SUB_D:
+                rsfloat -> isExecuting = 1;
+                instructionAndResult -> fpResult = rsfloat -> Vj - rsfloat -> Vk;
+                instructionAndResult -> ROB_number = rsfloat -> Dest;
+                FPaddPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(FPaddPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "FPadd";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case MUL_D:
+                rsfloat -> isExecuting = 1;
+                instructionAndResult -> fpResult = rsfloat -> Vj * rsfloat -> Vk;
+                instructionAndResult -> ROB_number = rsfloat -> Dest;
+                FPmultPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(FPmultPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "FPmult";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case DIV_D:
+                rsfloat -> isExecuting = 1;
+                instructionAndResult -> fpResult = rsfloat -> Vj / rsfloat -> Vk;
+                instructionAndResult -> ROB_number = rsfloat -> Dest;
+                FPdivPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(FPdivPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                cpu -> FPdivPipelineBusy = 1;
+                pipelineString = "FPdiv";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case L_D:
+                //Two-step
+                //First calculate address for earliest load that needs it
+                if (rsmem -> isExecuting == 0){
+                    rsmem -> isExecuting = 1;
+                    rsmem -> address = rsmem -> Vj + instruction->immediate;
+                    loadStallROBNumber = rsmem -> Dest;
+                    pipelineString = "Load/Store";
+                    printPipeline(instruction, pipelineString, 1);
+                } else {
+                    rsmem = NULL;
+                }
+                //Then check if load can execute (i.e. no stores ahead of it in ROB with same address)
+                //Buff is reorder buffer but just for readability
+                if (instruction -> isProg2) {
+                    buff = cpu -> reorderBuffer2;
+                } else {
+                    buff = cpu -> reorderBuffer;
+                }
+                dictEntry = cpu -> loadBuffer -> head;
+                instructionFoundOrBubble = 0;
+                while (!instructionFoundOrBubble) { //1 for instruction, 2 for bubble
+                    if (dictEntry == NULL) {
+                        instructionFoundOrBubble = 2;
+                    } else {
+                        RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+                        if (RS -> isReady && RS -> address != -1) {
+                            for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
+                                if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)]))-> DestAddr == RS -> address) {
+                                    j = -2; //break out of for loop
+                                }
+                            }
+                            if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                                instructionFoundOrBubble = 1;
+                                rsmem = RS;
+                            } else {
+                                dictEntry = dictEntry -> next;
+                            }
+                        } else {
+                            dictEntry = dictEntry -> next;
+                        }
+                    }
+                }
+                if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    rsmem -> isExecuting = 2;
+                    * ((int*)addrPtr) = rsmem -> address;
+                    if (instruction -> isProg2) {
+                        dataCacheElement = getValueChainByDictionaryKey(dataCache2, addrPtr);
+                        if (dataCacheElement != NULL) {
+                            valuePtr = dataCacheElement->value->value;
+                        } else {
+                            *((double *)valuePtr) = 0.0;
+                        }
+                    } else {
+                        dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+                        if (dataCacheElement != NULL) {
+                            valuePtr = dataCacheElement->value->value;
+                        } else {
+                            *((double *)valuePtr) = 0.0;
+                        }
+                    }
+                    instructionAndResult -> fpResult = *((double*)valuePtr);
+                    instructionAndResult -> ROB_number = rsmem -> Dest;
+                    LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                    memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                    pipelineString = "MEM";
+                    printPipeline(instruction, pipelineString, 1);
+                }
+                break;
+            case LD:
+                //Two-step
+                //First calculate address for earliest load that needs it
+                if (rsmem -> isExecuting == 0){
+                    rsmem -> isExecuting = 1;
+                    rsmem -> address = rsmem -> Vj + instruction->immediate;
+                    loadStallROBNumber = rsmem -> Dest;
+                    pipelineString = "Load/Store";
+                    printPipeline(instruction, pipelineString, 1);
+                } else {
+                    rsmem = NULL;
+                }
+                //Then check if load can execute (i.e. no stores ahead of it in ROB with same address)
+                //Buff is reorder buffer but just for readability
+                if (instruction -> isProg2) {
+                    buff = cpu -> reorderBuffer2;
+                } else {
+                    buff = cpu -> reorderBuffer;
+                }
+                dictEntry = cpu -> loadBuffer -> head;
+                instructionFoundOrBubble = 0;
+                while (!instructionFoundOrBubble) { //1 for instruction, 2 for bubble
+                    RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+                    if (RS == NULL) {
+                        instructionFoundOrBubble = 2;
+                        continue;
+                    }
+                    if (RS -> isReady && RS -> address != -1) {
+                        for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
+                            if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)])) -> DestAddr == RS -> address) {
+                                j = -1; //break out of for loop
+                            }
+                        }
+                        if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                            instructionFoundOrBubble = 1;
+                            rsmem = RS;
+                        } else {
+                            dictEntry = dictEntry -> next;
+                        }
+                    } else {
+                        dictEntry = dictEntry -> next;
+                    }
+                }
+                if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    rsmem -> isExecuting = 2;
+                    * ((int*)addrPtr) = rsmem -> address;
+                    if (instruction -> isProg2) {
+                        dataCacheElement = getValueChainByDictionaryKey(dataCache2, addrPtr);
+                        if (dataCacheElement != NULL) {
+                            valuePtr = dataCacheElement->value->value;
+                        } else {
+                            *((int *)valuePtr) = 0;
+                        }
+                    } else {
+                        dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
+                        if (dataCacheElement != NULL) {
+                            valuePtr = dataCacheElement->value->value;
+                        } else {
+                            *((int *)valuePtr) = 0;
+                        }
+                    }
+                    instructionAndResult -> intResult = (int)*((double*)valuePtr);
+                    instructionAndResult -> ROB_number = rsmem -> Dest;
+                    LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                    memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                    pipelineString = "MEM";
+                    printPipeline(instruction, pipelineString, 1);
+                }
+                break;
+            case SD:
+                rsmem -> isExecuting = 1;
+                rsmem -> address = rsmem -> Vj + instruction->immediate;
+                instructionAndResult -> address = rsmem -> address;
+                instructionAndResult -> intResult = rsmem -> iVk;
+                instructionAndResult -> ROB_number = rsmem -> Dest;
+                StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                storeFirst = 1;
+                pipelineString = "Load/Store";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case S_D:
+                rsmem -> isExecuting = 1;
+                rsmem -> address = rsmem -> Vj + instruction->immediate;
+                instructionAndResult -> address = rsmem -> address;
+                instructionAndResult -> fpResult = rsmem -> fpVk;
+                instructionAndResult -> ROB_number = rsmem -> Dest;
+                StorePipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(StorePipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                storeFirst = 1;
+                pipelineString = "Load/Store";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case BNE:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj != rsint -> Vk ? 0 : -1;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "BU";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case BNEZ:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj != 0 ? 0 : -1;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "BU";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case BEQ:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj == rsint -> Vk ? 0 : -1;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "BU";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            case BEQZ:
+                rsint -> isExecuting = 1;
+                instructionAndResult -> intResult = rsint -> Vj == 0 ? 0 : -1;
+                instructionAndResult -> ROB_number = rsint -> Dest;
+                BUPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
+                memcpy(BUPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
+                pipelineString = "BU";
+                printPipeline(instruction, pipelineString, 1);
+                break;
+            default:
+                break;
+        }
+    }
+    //TODO: Check which reservation station/rename registers/WB buffers (Code labels and ROB?)
+    //Take outputs from Units, but only as many as can be accepted by WriteBack Buffer
+    int maxOutput = NB - (countDictionaryLen (cpu -> WriteBackBuffer));
+    i = 0;
+    if (i < maxOutput) {
+        unitOutputs[INT] = executePipelinedUnit (cpu -> INTPipeline);
+        if (unitOutputs[INT] != NULL) {
+            i++;
             removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number));
             addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number), &(unitOutputs[INT] -> intResult));
             removeDictionaryEntriesByKey (cpu -> resStaInt, &(unitOutputs[INT] -> ROB_number));
@@ -2281,7 +2961,6 @@ CompletedInstruction **execute(int NB){
     }
 
     return unitOutputs;
-
 }
 
 
@@ -3589,8 +4268,8 @@ DictionaryValue *checkReservationStation(DictionaryEntry *dictEntry, int selectR
 void printPipeline(void *instruction, char *pipeline, int entering) {
     if (entering) {
         Instruction *inst = (Instruction *)instruction;
-        printf("Instruction %s at address %d entered %s unit.\n",
-         getOpcodeString ((int) (inst -> op)), inst -> address, pipeline);
+        printf("Instruction %s at address %d in program %d entered %s unit.\n",
+         getOpcodeString ((int) (inst -> op)), inst -> address, inst -> isProg2 + 1 ,pipeline);
     } else {
         CompletedInstruction *inst = (CompletedInstruction *)instruction;
         Instruction *i = inst -> instruction;
