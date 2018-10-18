@@ -1707,7 +1707,12 @@ CompletedInstruction **execute(int NB){
         if (loadStallROBNumber != -1) {
             RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(loadStallROBNumber)) -> value -> value);
             stalled -> isExecuting = 0;
-        } else if (StorePipelineTemp != NULL) {
+        }
+        if (LoadPipelineTemp != NULL) {
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(LoadPipelineTemp -> ROB_number)) -> value -> value);
+            stalled -> isExecuting = 1;
+        }
+        if (StorePipelineTemp != NULL) {
             RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> storeBuffer, &(StorePipelineTemp -> ROB_number)) -> value -> value);
             stalled -> isExecuting = 0;
         }
