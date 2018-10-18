@@ -31,13 +31,6 @@ int numberRenameReg = 8;
 int main(int argc, char** argv) {
 	//Validate command line argument
 
-	//TODO: read these variables from config file
-//	int NF = 4;
-//	int NI = 8;
-//	int NW = 4;
-//	int NR = 16;
-//	int NB = 4;
-
     FILE *file = fopen ( ENV_CONFIG_FILE, "r" );
     char config[64];
     int parameters[5];
@@ -111,7 +104,7 @@ int main(int argc, char** argv) {
         for (test_cycle = 0; test_cycle < 8; test_cycle ++){
             runClockCycle2 (NF, NW, NB, NR);
         }
-        /*
+
         printInstructionQueue();
         printInstructionQueue2();
         printReservationStations();
@@ -122,7 +115,8 @@ int main(int argc, char** argv) {
         printIntegerRegistersStatus2();
         printFPRegistersStatus2();
         printROB();
-        */
+        printROB2();
+
 
 	    //TODO
 	}

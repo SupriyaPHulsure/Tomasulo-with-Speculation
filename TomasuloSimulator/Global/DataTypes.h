@@ -160,6 +160,12 @@ typedef struct _RegStatus{
     int busy;
 }RegStatus;
 
+//Data structure for reservation station key
+typedef struct _keyRS{
+    int reorderNum;
+    int progNum; // 1 or 2 on our case
+}KeyRS;
+
 
 //main data structure representing CPU
 typedef struct _cpu {

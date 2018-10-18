@@ -81,13 +81,20 @@ void printInstructionCache2 ();
 void printCodeLabels2 ();
 void printDataCache2 ();
 void printIntegerRegisters ();
+void printIntegerRegisters2 ();
 void printFPRegisters ();
+void printFPRegisters2 ();
 void printInstructionQueue ();
+void printInstructionQueue2 ();
 void printReservationStations();
 void printROB();
+void printROB2();
 void printRenamingRegisters ();
+void printRenamingRegisters2 ();
 void printInstructionQueueResult ();
 void printIntegerRegistersStatus ();
+void printIntegerRegistersStatus2 ();
 void printFPRegistersStatus () ;
+void printFPRegistersStatus2 () ;
 
 #endif /* GLOBAL_TOMASULOSIMULATOR_H_ */
