@@ -468,7 +468,6 @@ void printROB()
 
 			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
 
-		printf("Head: %d; tail: %d; count: %d\n", cpu->reorderBuffer->head, cpu->reorderBuffer->tail, cpu->reorderBuffer->count);
         ROBentry = getHeadCircularQueue(cpu -> reorderBuffer);
 
         //while(ROBentry != NULL){
@@ -494,7 +493,6 @@ void printROB2()
 
 			printf ("--------------------------------------------------------------------------------------------------------------------------------------\n");
 
-		printf("Head: %d; tail: %d; count: %d\n", cpu->reorderBuffer2->head, cpu->reorderBuffer2->tail, cpu->reorderBuffer2->count);
         ROBentry = getHeadCircularQueue(cpu -> reorderBuffer2);
 
         //while(ROBentry != NULL){
