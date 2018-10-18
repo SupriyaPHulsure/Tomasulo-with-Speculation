@@ -25,9 +25,12 @@ void branchHelper(CompletedInstruction *instructionAndResult);
 int fetchMultiInstructionUnit(int NF);
 int fetchMultiInstructionUnit2(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
-int decodeInstructionsUnit(int NI);
+int decodeInstructionsUnit();
+int decodeInstructionsUnit2();
 void updateFetchBuffer();
+void updateFetchBuffer2();
 void updateInstructionQueue();
+void updateInstructionQueue2();
 void updateReservationStations();
 int renameRegIsFull(Dictionary *renameReg, int d);
 int addInstruction2RSint(Dictionary *renameRegInt, Dictionary *resSta, Dictionary *resStaResult,
@@ -55,7 +58,7 @@ int checkEnd();
 /**
  * This method initializes CPU data structures and all its data members
  */
-void initializeCPU (int NI, int NR, int NB) {
+void initializeCPU (int NI, int NR) {
 	int i;
 
 	cpu = (CPU *) malloc (sizeof(CPU));
@@ -188,6 +191,9 @@ void initializeCPU (int NI, int NR, int NB) {
     //Initialize Flag of instructions after branch
     cpu -> isAfterBranch = 0;
     cpu -> isAfterBranch2 = 0;
+    //Initialize flag of program that last next cycle fetched and next cycle decodes
+    cpu->lastCycleFetchProgram = 0;
+    cpu->nextCycleDecodeProgram = 0;
 
 }
 
@@ -250,7 +256,7 @@ int fetchMultiInstructionUnit2(int NF){
     if (cpu -> stallNextFetch2 == 0){
         for(i=0; i<NF; i++){
             if (cpu -> PC2 >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction2))) { //check whether PC exceeds last instruction in cache
-                printf ("All instructions are fetched for program 2...\n");
+                printf ("All instructions are fetched...\n");
                 return 0;
             }
 
@@ -263,7 +269,7 @@ int fetchMultiInstructionUnit2(int NF){
             char *instruction_str = (char *) malloc (sizeof(char) * MAX_LINE);
             strcpy (instruction_str, ((char*)currentInstruction -> value -> value));
 
-            printf ("Fetched program 2 instruction %d:%s\n", *addrPtr, instruction_str);
+            printf ("Fetched %d:%s\n", *addrPtr, instruction_str);
 
             addDictionaryEntry (cpu -> fetchBufferResult2, addrPtr, instruction_str);
 
@@ -274,7 +280,7 @@ int fetchMultiInstructionUnit2(int NF){
                 if (BTBEntry != NULL){
 
                     if (*((int*)BTBEntry -> key) == *addrPtr){
-                        printf("Instruction %d is a branch in the BranchTargetBuffer2 with ", *addrPtr);
+                        printf("Instruction %d is a branch in the BranchTargetBuffer with ", *addrPtr);
                         int targetAddress = *((int*)BTBEntry -> value -> value);
 
                         printf("target address %d.\n", targetAddress);
@@ -288,14 +294,14 @@ int fetchMultiInstructionUnit2(int NF){
     }
     else{
         cpu -> stallNextFetch2 = 0;
-        printf("Fetching stall for program 2 in this cycle...\n");
+        printf("Fetching stall in this cycle...\n");
     }
     return 1;
 }
 
 
 //Decode instruction unit
-int decodeInstructionsUnit(int NI){
+int decodeInstructionsUnit(){
     while(cpu -> fetchBuffer -> head!= NULL){
         if ((cpu->instructionQueue->count + cpu->instructionQueueResult->count) >= cpu->instructionQueue->size){
             printf("Cannot decode all fetched instructions because the instruction queue is full.\n");
@@ -316,7 +322,7 @@ int decodeInstructionsUnit(int NI){
 
 
 //Decode instruction unit for part 2
-int decodeInstructionsUnit2(int NI){
+int decodeInstructionsUnit2(){
     while(cpu -> fetchBuffer2 -> head!= NULL){
         if ((cpu->instructionQueue2->count + cpu->instructionQueueResult2->count) >= cpu->instructionQueue2->size){
             printf("Cannot decode all fetched instructions because the instruction queue is full.\n");
@@ -2679,7 +2685,7 @@ void CommitUnit(int NB, int NR)
  * Method that simulates the looping cycle-wise
  * @return: When the simulator stops
  */
-int runClockCycle (int NF, int NI, int NW, int NB, int NR) {
+int runClockCycle (int NF, int NW, int NB, int NR) {
     int isEnd;
 
 	cpu -> cycle++; //increment cycle counter
@@ -2690,7 +2696,7 @@ int runClockCycle (int NF, int NI, int NW, int NB, int NR) {
 
     printf("Finished fetching.\n");
 
-    decodeInstructionsUnit(NI); 
+    decodeInstructionsUnit();
 
     printf("Finished decoding.\n");
 
@@ -2719,6 +2725,104 @@ int runClockCycle (int NF, int NI, int NW, int NB, int NR) {
 	}else
 	    return 1;
 
+}
+
+/**
+ * Method that simulates the looping cycle-wise for part 2
+ * @return: When the simulator stops
+ */
+int runClockCycle2 (int NF, int NW, int NB, int NR) {
+    int isEnd;
+
+	cpu -> cycle++; //increment cycle counter
+
+	printf ("\nCycle %d\n", cpu -> cycle);
+
+    printf("Fetch begins ------------\n");
+	int countInstQueue1;
+	int countInstQueue2;
+	int countFetchBuffer1;
+	int countFetchBuffer2;
+
+	countInstQueue1 = getCountCircularQueue(cpu->instructionQueue);
+	countInstQueue2 = getCountCircularQueue(cpu->instructionQueue2);
+	countFetchBuffer1 = countDictionaryLen(cpu->fetchBuffer);
+	countFetchBuffer2 = countDictionaryLen(cpu->fetchBuffer2);
+
+	if((countInstQueue1 + countFetchBuffer1) > (countInstQueue2 + countFetchBuffer2)){//fetch the one with fewer entries in instruction queue
+	    printf("Fetch instructions in program 2.\n");
+	    fetchMultiInstructionUnit2(NF);
+	    cpu->nextCycleDecodeProgram = 2;
+
+	}else{
+	    if(countInstQueue1 < countInstQueue2){
+            printf("Fetch instructions in program 1.\n");
+            fetchMultiInstructionUnit(NF);
+            cpu->nextCycleDecodeProgram = 1;
+
+	    }else{
+	        if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
+	            printf("Fetch instructions in program 2.\n");
+                fetchMultiInstructionUnit2(NF);
+                cpu->nextCycleDecodeProgram = 2;
+	        }else{
+                printf("Fetch instructions in program 1.\n");
+                fetchMultiInstructionUnit(NF);
+                cpu->nextCycleDecodeProgram = 1;
+	        }
+	    }
+    }
+    printf("Fetch finished -----------\n");
+
+    printf("Decode begins -----------\n");
+    if (cpu->lastCycleFetchProgram == 1){
+        printf("Decode instructions in program 1.\n");
+        decodeInstructionsUnit();
+    }else{
+        if (cpu->lastCycleFetchProgram == 2){
+            printf("Decode instructions in program 2.\n");
+            decodeInstructionsUnit2();
+        }
+    }
+
+    printf("Decode finished -----------\n");
+
+    updateFetchBuffer();
+    updateInstructionQueue();
+    updateFetchBuffer2();
+    updateInstructionQueue2();
+    cpu->lastCycleFetchProgram = cpu->nextCycleDecodeProgram;
+    cpu->nextCycleDecodeProgram = 0;
+
+/*
+
+
+    issueUnit(NW);
+
+    printf("Finished issue.\n");
+
+	printf("Execution -----------\n");
+	insertintoWriteBackBuffer(NB);
+	//printf("Write Back Finish ---------------\n");
+	CommitUnit(NB, NR);
+
+
+    updateReservationStations();
+
+
+
+    printf("Finished update.\n");
+
+    isEnd = checkEnd();
+
+	if(isEnd==1){
+	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
+	    printf("Stalls due to full Reservation Stations: %d\n", cpu -> stallFullRS);
+	    printf("Stalls due to full Reorder Buffer: %d\n", cpu -> stallFullROB);
+	    return 0;
+	}else
+	    return 1;
+*/
 }
 
 /**

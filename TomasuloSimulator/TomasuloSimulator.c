@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
         printCodeLabels ();
 
-        initializeCPU (NI, NR, NB); //initialize CPU data structure
+        initializeCPU (NI, NR); //initialize CPU data structure
 
         int test_cycle;
 
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
 
         //for (test_cycle = 0; test_cycle < 35; test_cycle ++){
 
-        while(runClockCycle(NF, NI, NW, NB, NR)){//loop emulating simulator clock cycles
+        while(runClockCycle(NF, NW, NB, NR)){//loop emulating simulator clock cycles
             //runClockCycle(NF, NI, NW, NB, NR);
             printInstructionQueue();
             printReservationStations();
@@ -105,8 +105,12 @@ int main(int argc, char** argv) {
         printCodeLabels ();
         printCodeLabels2 ();
 
-        initializeCPU (NI, NR, NB); //initialize CPU data structure
+        initializeCPU (NI, NR); //initialize CPU data structure
 
+        int test_cycle;
+        for (test_cycle = 0; test_cycle < 8; test_cycle ++){
+            runClockCycle2 (NF, NW, NB, NR);
+        }
 	    //TODO
 	}
 	
