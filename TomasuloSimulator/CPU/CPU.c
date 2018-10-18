@@ -2217,7 +2217,6 @@ CompletedInstruction **execute(int NB){
         }
     } else {
         if (loadStallROBNumber != -1) {
-
             key -> reorderNum = loadStallROBNumber;
             key -> progNum = ((RSmem *)(((DictionaryEntry *)instructionsToExec[2]) -> value -> value)) -> instruction -> isProg2 + 1;
             RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, key) -> value -> value);
@@ -2802,7 +2801,7 @@ CompletedInstruction **execute2(int NB) {
                 break;
         }
     }
-    //TODO: Check which reservation station/rename registers/WB buffers (Code labels and ROB?)
+    //TODO: check right WB buffers?
     //Take outputs from Units, but only as many as can be accepted by WriteBack Buffer
     int maxOutput = NB - (countDictionaryLen (cpu -> WriteBackBuffer));
     i = 0;
@@ -2810,9 +2809,16 @@ CompletedInstruction **execute2(int NB) {
         unitOutputs[INT] = executePipelinedUnit (cpu -> INTPipeline);
         if (unitOutputs[INT] != NULL) {
             i++;
-            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number), &(unitOutputs[INT] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaInt, &(unitOutputs[INT] -> ROB_number));
+            key -> reorderNum = unitOutputs[INT] -> ROB_number;
+            key -> progNum = unitOutputs[INT] -> instruction -> isProg2 + 1;
+            if (unitOutputs[INT] -> instruction -> isProg2) {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt2, &(unitOutputs[INT] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt2, &(unitOutputs[INT] -> ROB_number), &(unitOutputs[INT] -> intResult));
+            } else {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number), &(unitOutputs[INT] -> intResult));
+            }
+            removeDictionaryEntriesByKey (cpu -> resStaInt, key);
             pipelineString = "INT";
             printPipeline(unitOutputs[INT], pipelineString, 0);
         }
@@ -2821,7 +2827,9 @@ CompletedInstruction **execute2(int NB) {
         }
     } else {
         if (INTPipelineTemp != NULL) {
-            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaInt, &(INTPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = INTPipelineTemp -> ROB_number;
+            key -> progNum = INTPipelineTemp -> instruction -> isProg2 + 1;
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaInt, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2829,9 +2837,16 @@ CompletedInstruction **execute2(int NB) {
         unitOutputs[MULT] = executePipelinedUnit (cpu -> MULTPipeline);
         if (unitOutputs[MULT] != NULL) {
             i++;
-            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number), &(unitOutputs[MULT] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaMult, &(unitOutputs[MULT] -> ROB_number));
+            key -> reorderNum = unitOutputs[MULT] -> ROB_number;
+            key -> progNum = unitOutputs[MULT] -> instruction -> isProg2 + 1;
+            if (unitOutputs[MULT] -> instruction -> isProg2) {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt2, &(unitOutputs[MULT] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt2, &(unitOutputs[MULT] -> ROB_number), &(unitOutputs[MULT] -> intResult));
+            } else {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number), &(unitOutputs[MULT] -> intResult));
+            }
+            removeDictionaryEntriesByKey (cpu -> resStaMult, key);
             pipelineString = "MULT";
             printPipeline(unitOutputs[MULT], pipelineString, 0);
         }
@@ -2840,7 +2855,9 @@ CompletedInstruction **execute2(int NB) {
         }
     } else {
         if (MULTPipelineTemp != NULL) {
-            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaMult, &(MULTPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = MULTPipelineTemp -> ROB_number;
+            key -> progNum = MULTPipelineTemp -> instruction -> isProg2 + 1;
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaMult, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2848,16 +2865,28 @@ CompletedInstruction **execute2(int NB) {
         unitOutputs[LS] = executePipelinedUnit (cpu -> LoadStorePipeline);
         if (unitOutputs[LS] != NULL) {
             i++;
+            key -> reorderNum = unitOutputs[LS] -> ROB_number;
+            key -> progNum = unitOutputs[LS] -> instruction -> isProg2 + 1;
             if (unitOutputs[LS] -> instruction -> op == L_D) {
-                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
-                removeDictionaryEntriesByKey (cpu -> loadBuffer, &(unitOutputs[LS] -> ROB_number));
+                if (unitOutputs[LS] -> instruction -> isProg2) {
+                    removeDictionaryEntriesByKey (cpu -> renameRegFP2, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                } else {
+                    removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                }
+                removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
             } else if (unitOutputs[LS] -> instruction -> op == LD) {
-                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
-                removeDictionaryEntriesByKey (cpu -> loadBuffer, &(unitOutputs[LS] -> ROB_number));
+                if (unitOutputs[LS] -> instruction -> isProg2) {
+                    removeDictionaryEntriesByKey (cpu -> renameRegInt2, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegInt2, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                } else {
+                    removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                }
+                removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
             } else {
-                removeDictionaryEntriesByKey (cpu -> storeBuffer, &(unitOutputs[LS] -> ROB_number));
+                removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
             }
             pipelineString = "Load/Store";
             printPipeline(unitOutputs[LS], pipelineString, 0);
@@ -2869,15 +2898,21 @@ CompletedInstruction **execute2(int NB) {
         }
     } else {
         if (loadStallROBNumber != -1) {
-            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(loadStallROBNumber)) -> value -> value);
+            key -> reorderNum = loadStallROBNumber;
+            key -> progNum = ((RSmem *)(((DictionaryEntry *)instructionsToExec[2]) -> value -> value)) -> instruction -> isProg2 + 1;
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
         if (LoadPipelineTemp != NULL) {
-            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(LoadPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = LoadPipelineTemp -> ROB_number;
+            key -> progNum = LoadPipelineTemp -> instruction -> isProg2 + 1;
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, key) -> value -> value);
             stalled -> isExecuting = 1;
         }
         if (StorePipelineTemp != NULL) {
-            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> storeBuffer, &(StorePipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = StorePipelineTemp -> ROB_number;
+            key -> progNum = StorePipelineTemp -> instruction -> isProg2 + 1;
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> storeBuffer, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2885,9 +2920,16 @@ CompletedInstruction **execute2(int NB) {
         unitOutputs[FPadd] = executePipelinedUnit (cpu -> FPaddPipeline);
         if (unitOutputs[FPadd] != NULL) {
             i++;
-            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaFPadd, &(unitOutputs[FPadd] -> ROB_number));
+            key -> reorderNum = unitOutputs[FPadd] -> ROB_number;
+            key -> progNum = unitOutputs[FPadd] -> instruction -> isProg2 + 1;
+            if (unitOutputs[FPadd] -> instruction -> isProg2) {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP2, &(unitOutputs[FPadd] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> intResult));
+            } else {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> intResult));
+            }
+            removeDictionaryEntriesByKey (cpu -> resStaFPadd, key);
             pipelineString = "FPadd";
             printPipeline(unitOutputs[FPadd], pipelineString, 0);
         }
@@ -2896,7 +2938,9 @@ CompletedInstruction **execute2(int NB) {
         }
     } else {
         if (FPaddPipelineTemp != NULL) {
-            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPadd, &(FPaddPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = FPaddPipelineTemp -> ROB_number;
+            key -> progNum = FPaddPipelineTemp -> instruction -> isProg2 + 1;
+            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPadd, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2904,9 +2948,16 @@ CompletedInstruction **execute2(int NB) {
         unitOutputs[FPmult] = executePipelinedUnit (cpu -> FPmultPipeline);
         if (unitOutputs[FPmult] != NULL) {
             i++;
-            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaFPmult, &(unitOutputs[FPmult] -> ROB_number));
+            key -> reorderNum = unitOutputs[FPmult] -> ROB_number;
+            key -> progNum = unitOutputs[FPmult] -> instruction -> isProg2 + 1;
+            if (unitOutputs[FPmult] -> instruction -> isProg2) {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP2, &(unitOutputs[FPmult] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> intResult));
+            } else {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> intResult));
+            }
+            removeDictionaryEntriesByKey (cpu -> resStaFPmult, key);
             pipelineString = "FPmult";
             printPipeline(unitOutputs[FPmult], pipelineString, 0);
         }
@@ -2915,7 +2966,9 @@ CompletedInstruction **execute2(int NB) {
         }
     } else {
         if (FPmultPipelineTemp != NULL) {
-            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPmult, &(FPmultPipelineTemp -> ROB_number)) -> value -> value);
+            key -> reorderNum = FPmultPipelineTemp -> ROB_number;
+            key -> progNum = FPmultPipelineTemp -> instruction -> isProg2 + 1;
+            RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPmult, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -2923,9 +2976,16 @@ CompletedInstruction **execute2(int NB) {
         unitOutputs[FPdiv] = executeFPDivUnit (cpu -> FPdivPipeline);
         if (unitOutputs[FPdiv] != NULL) {
             i++;
-            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaFPdiv, &(unitOutputs[FPdiv] -> ROB_number));
+            key -> reorderNum = unitOutputs[FPdiv] -> ROB_number;
+            key -> progNum = unitOutputs[FPdiv] -> instruction -> isProg2 + 1;
+            if (unitOutputs[FPdiv] -> instruction -> isProg2) {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP2, &(unitOutputs[FPdiv] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> intResult));
+            } else {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> intResult));
+            }
+            removeDictionaryEntriesByKey (cpu -> resStaFPdiv, key);
             pipelineString = "FPdiv";
             printPipeline(unitOutputs[FPdiv], pipelineString, 0);
         }
@@ -2934,6 +2994,8 @@ CompletedInstruction **execute2(int NB) {
         }
     } else {
         if (FPdivPipelineTemp != NULL) {
+            key -> reorderNum = FPdivPipelineTemp -> ROB_number;
+            key -> progNum = FPdivPipelineTemp -> instruction -> isProg2 + 1;
             RSfloat *stalled = (RSfloat *)(getValueChainByDictionaryKey(cpu -> resStaFPdiv, &(FPdivPipelineTemp -> ROB_number)) -> value -> value);
             stalled -> isExecuting = 0;
             cpu -> FPdivPipelineBusy = 0;
@@ -2943,9 +3005,16 @@ CompletedInstruction **execute2(int NB) {
         unitOutputs[BU] = executePipelinedUnit (cpu -> BUPipeline);
         if (unitOutputs[BU] != NULL) {
             i++;
-            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
-            removeDictionaryEntriesByKey (cpu -> resStaBU, &(unitOutputs[BU] -> ROB_number));
+            key -> reorderNum = unitOutputs[BU] -> ROB_number;
+            key -> progNum = unitOutputs[BU] -> instruction -> isProg2 + 1;
+            if (unitOutputs[BU] -> instruction -> isProg2) {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt2, &(unitOutputs[BU] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt2, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
+            } else {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
+            }
+            removeDictionaryEntriesByKey (cpu -> resStaBU, key);
             branchHelper (unitOutputs[BU]);
             pipelineString = "BU";
             printPipeline(unitOutputs[BU], pipelineString, 0);
@@ -2955,6 +3024,8 @@ CompletedInstruction **execute2(int NB) {
         }
     } else {
         if (BUPipelineTemp != NULL) {
+            key -> reorderNum = BUPipelineTemp -> ROB_number;
+            key -> progNum = BUPipelineTemp -> instruction -> isProg2 + 1;
             RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaBU, &(BUPipelineTemp -> ROB_number)) -> value -> value);
             stalled -> isExecuting = 0;
         }
@@ -4310,39 +4381,77 @@ void flushInstructionQueueFetchBuffer2(int NI){
 void branchHelper (CompletedInstruction *instructionAndResult) {
     int NI = cpu -> instructionQueue -> size;
     int *targetAddress = &(instructionAndResult -> instruction -> target);
-    DictionaryEntry *BTBEntry = getValueChainByDictionaryKey (cpu -> branchTargetBuffer, &(instructionAndResult->instruction->address));
-    if (instructionAndResult -> intResult == 0) { //branch taken
-        if (BTBEntry == NULL) { //predicted not taken
-            addDictionaryEntry (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address),
-             targetAddress);
-            instructionAndResult -> isCorrectPredict = 0;
-            flushInstructionQueueFetchBuffer (NI);
-            cpu -> PC = *targetAddress;
-			printf("Branch taken but predicted as not taken\n");
-        } else { //predicted taken
-            if (*(int *)(BTBEntry -> value -> value) == *targetAddress) {
+    if (instructionAndResult -> instruction -> isProg2) {
+        DictionaryEntry *BTBEntry = getValueChainByDictionaryKey (cpu -> branchTargetBuffer2, &(instructionAndResult->instruction->address));
+        if (instructionAndResult -> intResult == 0) { //branch taken
+            if (BTBEntry == NULL) { //predicted not taken
+                addDictionaryEntry (cpu -> branchTargetBuffer2, &(instructionAndResult -> instruction -> address),
+                 targetAddress);
+                instructionAndResult -> isCorrectPredict = 0;
+                flushInstructionQueueFetchBuffer2 (NI);
+                cpu -> PC2 = *targetAddress;
+                printf("Branch taken but predicted as not taken in program 2.\n");
+            } else { //predicted taken
+                if (*(int *)(BTBEntry -> value -> value) == *targetAddress) {
+                    instructionAndResult -> isCorrectPredict = 1;
+                    printf("Branch taken and predicted as taken in program 2.\n");
+                } else {
+                    removeDictionaryEntriesByKey (cpu -> branchTargetBuffer2, &(instructionAndResult -> instruction -> address));
+                    addDictionaryEntry (cpu -> branchTargetBuffer2, &(instructionAndResult -> instruction -> address),
+                     targetAddress);
+                    instructionAndResult -> isCorrectPredict = 0;
+                    flushInstructionQueueFetchBuffer2 (NI);
+                    cpu -> PC2 = *targetAddress;
+                    printf("Branch taken and predicted as not taken in program 2.\n");
+                }
+            }
+        } else { //branch not taken
+            if (BTBEntry != NULL) { //predicted taken
+                removeDictionaryEntriesByKey (cpu -> branchTargetBuffer2, &(instructionAndResult -> instruction -> address));
+                instructionAndResult -> isCorrectPredict = 0;
+                flushInstructionQueueFetchBuffer2 (NI);
+                cpu -> PC2 = instructionAndResult -> instruction -> address + 4;
+                printf("Branch not taken but predicted as taken in program 2.\n");
+            } else { //predicted not taken
+                printf("Branch not taken and predicted as not taken in program 2.\n");
                 instructionAndResult -> isCorrectPredict = 1;
-				 printf("Branch taken and predicted as taken\n");
-            } else {
-                removeDictionaryEntriesByKey (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address));
+            }
+        }
+    } else {
+        DictionaryEntry *BTBEntry = getValueChainByDictionaryKey (cpu -> branchTargetBuffer, &(instructionAndResult->instruction->address));
+        if (instructionAndResult -> intResult == 0) { //branch taken
+            if (BTBEntry == NULL) { //predicted not taken
                 addDictionaryEntry (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address),
                  targetAddress);
                 instructionAndResult -> isCorrectPredict = 0;
                 flushInstructionQueueFetchBuffer (NI);
                 cpu -> PC = *targetAddress;
-                printf("Branch taken and predicted as not taken\n");
+                printf("Branch taken but predicted as not taken\n");
+            } else { //predicted taken
+                if (*(int *)(BTBEntry -> value -> value) == *targetAddress) {
+                    instructionAndResult -> isCorrectPredict = 1;
+                     printf("Branch taken and predicted as taken\n");
+                } else {
+                    removeDictionaryEntriesByKey (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address));
+                    addDictionaryEntry (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address),
+                     targetAddress);
+                    instructionAndResult -> isCorrectPredict = 0;
+                    flushInstructionQueueFetchBuffer (NI);
+                    cpu -> PC = *targetAddress;
+                    printf("Branch taken and predicted as not taken\n");
+                }
             }
-        }
-    } else { //branch not taken
-        if (BTBEntry != NULL) { //predicted taken
-            removeDictionaryEntriesByKey (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address));
-            instructionAndResult -> isCorrectPredict = 0;
-            flushInstructionQueueFetchBuffer (NI);
-            cpu -> PC = instructionAndResult -> instruction -> address + 4;
-			printf("Branch not taken but predicted as taken\n");
-        } else { //predicted not taken
-            printf("Branch not taken and predicted as not taken.\n");
-            instructionAndResult -> isCorrectPredict = 1;
+        } else { //branch not taken
+            if (BTBEntry != NULL) { //predicted taken
+                removeDictionaryEntriesByKey (cpu -> branchTargetBuffer, &(instructionAndResult -> instruction -> address));
+                instructionAndResult -> isCorrectPredict = 0;
+                flushInstructionQueueFetchBuffer (NI);
+                cpu -> PC = instructionAndResult -> instruction -> address + 4;
+                printf("Branch not taken but predicted as taken\n");
+            } else { //predicted not taken
+                printf("Branch not taken and predicted as not taken.\n");
+                instructionAndResult -> isCorrectPredict = 1;
+            }
         }
     }
 }
