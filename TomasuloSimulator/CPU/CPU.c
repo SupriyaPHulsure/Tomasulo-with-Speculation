@@ -3049,34 +3049,16 @@ ROB * InitializeROBEntry(Instruction * instructionP)
             ROBEntry->DestReg = -1;
 			ROBEntry -> isINT = 1;
 			ROBEntry -> isStore = 1;
-			RegStatusEntry = cpu -> IntRegStatus[instructionP->rs];
-			if (RegStatusEntry -> busy == 1) {
-				int robNum = RegStatusEntry -> reorderNum;
-				if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
-					DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey(cpu -> renameRegInt, &(RegStatusEntry -> reorderNum));
-					ROBEntry -> DestAddr  = *((int *)renameRegIntEntry -> value -> value) + instructionP->immediate;
-				}
-				
-			}else{
-					ROBEntry -> DestAddr = cpu->integerRegisters[instructionP->rs]->data + instructionP->immediate;
-			}
+			ROBEntry -> DestAddr = 0;
+
 		
             break;
         case S_D:
 			ROBEntry->DestReg = instructionP->rs;
 			ROBEntry -> isINT = 0;
 			ROBEntry -> isStore = 1;
-			RegStatusEntry = cpu -> IntRegStatus[instructionP->rs];
-			if (RegStatusEntry -> busy == 1) {
-				int robNum = RegStatusEntry -> reorderNum;
-				if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
-					DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey(cpu -> renameRegInt, &(RegStatusEntry -> reorderNum));
-					ROBEntry -> DestAddr  = *((int *)renameRegIntEntry -> value -> value) + instructionP->immediate;
-				}
-				
-			}else{
-					ROBEntry -> DestAddr = cpu->integerRegisters[instructionP->rs]->data + instructionP->immediate;
-			}
+			ROBEntry -> DestAddr = 0;
+
 		
             break;
         case BNE:
@@ -3192,34 +3174,16 @@ ROB * InitializeROBEntry2(Instruction * instructionP)
             ROBEntry->DestReg = -1;
 			ROBEntry -> isINT = 1;
 			ROBEntry -> isStore = 1;
-			RegStatusEntry = cpu -> IntRegStatus2[instructionP->rs];
-			if (RegStatusEntry -> busy == 1) {
-				int robNum = RegStatusEntry -> reorderNum;
-				if (((ROB *)cpu -> reorderBuffer2 -> items[robNum]) -> isReady == 1){
-					DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey(cpu -> renameRegInt2, &(RegStatusEntry -> reorderNum));
-					ROBEntry -> DestAddr  = *((int *)renameRegIntEntry -> value -> value) + instructionP->immediate;
-				}
+			ROBEntry -> DestAddr = 0;
 
-			}else{
-					ROBEntry -> DestAddr = cpu->integerRegisters2[instructionP->rs]->data + instructionP->immediate;
-			}
 
             break;
         case S_D:
 			ROBEntry->DestReg = instructionP->rs;
 			ROBEntry -> isINT = 0;
 			ROBEntry -> isStore = 1;
-			RegStatusEntry = cpu -> IntRegStatus2[instructionP->rs];
-			if (RegStatusEntry -> busy == 1) {
-				int robNum = RegStatusEntry -> reorderNum;
-				if (((ROB *)cpu -> reorderBuffer2 -> items[robNum]) -> isReady == 1){
-					DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey(cpu -> renameRegInt2, &(RegStatusEntry -> reorderNum));
-					ROBEntry -> DestAddr  = *((int *)renameRegIntEntry -> value -> value) + instructionP->immediate;
-				}
+			ROBEntry -> DestAddr = 0;
 
-			}else{
-					ROBEntry -> DestAddr = cpu->integerRegisters2[instructionP->rs]->data + instructionP->immediate;
-			}
 
             break;
         case BNE:
@@ -3354,14 +3318,17 @@ void Commit(int NC, int NR)
 										break;
 									}
 									else{
+										KeyRS *robnumkey = (KeyRS *)malloc(sizeof(KeyRS));
+										robnumkey -> reorderNum = robnum;
+										robnumkey -> progNum = 1;
 										if(cpu -> WriteBackBuffer != NULL){
-											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, &robnum); 
+											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, robnumkey); 
 										}
-										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &robnum)  != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegInt, &robnum); 
+										if(getValueChainByDictionaryKey(cpu -> renameRegInt, robnumkey)  != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt, robnumkey); 
 										}
-										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, &robnum) != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegFP, &robnum); 
+										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, robnumkey) != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegFP, robnumkey); 
 										}
 										
 										//go to next
@@ -3784,7 +3751,8 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
 // insert ouput results into write back buffer and update rename register
 void insertintoWriteBackBuffer(int NB)
 {
-	int	*ROB_number = (int*) malloc(sizeof(int));
+	//int	*ROB_number = (int*) malloc(sizeof(int));
+	KeyRS *ROB_number = (KeyRS *) malloc(sizeof(KeyRS));
 	CompletedInstruction *instruction;
 	CompletedInstruction **unitOutputs;
 	unitOutputs = execute(NB);
@@ -3797,7 +3765,9 @@ void insertintoWriteBackBuffer(int NB)
 	if(unitOutputs != NULL){
 		if(unitOutputs[INT] != NULL){
 			instruction = unitOutputs[INT];
-			*ROB_number = instruction->ROB_number;
+			//*ROB_number = instruction->ROB_number;
+			ROB_number->reorderNum = instruction->ROB_number;
+			ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 			removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
 			int* intresult = &(instruction -> intResult);
@@ -3807,7 +3777,8 @@ void insertintoWriteBackBuffer(int NB)
 		if(unitOutputs[MULT] != NULL){
 
 			instruction = unitOutputs[MULT];
-			*ROB_number = instruction->ROB_number;
+			ROB_number->reorderNum = instruction->ROB_number;
+			ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 			removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
 			int* intresult = &(instruction -> intResult);
@@ -3816,7 +3787,8 @@ void insertintoWriteBackBuffer(int NB)
 		}
 		if(unitOutputs[FPadd] != NULL){
 			instruction = unitOutputs[FPadd];
-			*ROB_number = instruction->ROB_number;
+			ROB_number->reorderNum = instruction->ROB_number;
+			ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 			removeDictionaryEntriesByKey (cpu -> renameRegFP , ROB_number);
 			double *fpresult = &(instruction -> fpResult);
@@ -3825,7 +3797,8 @@ void insertintoWriteBackBuffer(int NB)
 		}
 		if(unitOutputs[FPmult]!= NULL){
 			instruction = unitOutputs[FPmult];
-			*ROB_number = instruction->ROB_number;
+			ROB_number->reorderNum = instruction->ROB_number;
+			ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 			removeDictionaryEntriesByKey (cpu -> renameRegFP, ROB_number);
 			double *fpresult = &(instruction -> fpResult);
 			addDictionaryEntry (cpu -> renameRegFP, ROB_number, fpresult);
@@ -3834,7 +3807,8 @@ void insertintoWriteBackBuffer(int NB)
 		}
 		if(unitOutputs[FPdiv] != NULL){
 			instruction = unitOutputs[FPdiv];
-			*ROB_number = instruction->ROB_number;
+			ROB_number->reorderNum = instruction->ROB_number;
+			ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 			removeDictionaryEntriesByKey (cpu -> renameRegFP, ROB_number);
 			double *fpresult = &(instruction -> fpResult);
@@ -3844,7 +3818,8 @@ void insertintoWriteBackBuffer(int NB)
 		if(unitOutputs[BU] != NULL){
 				
 			instruction = unitOutputs[BU];
-			*ROB_number = instruction->ROB_number;
+			ROB_number->reorderNum = instruction->ROB_number;
+			ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 			addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 			removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
 			int* intresult = &(instruction -> intResult);
@@ -3856,7 +3831,8 @@ void insertintoWriteBackBuffer(int NB)
 			OpCode op = instruction -> instruction -> op;
 			if((strcmp(getOpcodeString (op) ,"SD") == 0))
 			{
-				*ROB_number = instruction->ROB_number;
+				ROB_number->reorderNum = instruction->ROB_number;
+				ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 				addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 				removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
 				int* intresult = &(instruction -> intResult);
@@ -3866,7 +3842,8 @@ void insertintoWriteBackBuffer(int NB)
 			}
 			else if((strcmp(getOpcodeString (op), "S_D") == 0))
 			{
-				*ROB_number = instruction->ROB_number;
+				ROB_number->reorderNum = instruction->ROB_number;
+				ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 				addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 				removeDictionaryEntriesByKey (cpu -> renameRegFP, ROB_number);
 				double *fpresult = &(instruction -> fpResult);
@@ -3876,7 +3853,8 @@ void insertintoWriteBackBuffer(int NB)
 			}
 			if((strcmp(getOpcodeString (op) ,"LD") == 0))
 			{
-				*ROB_number = instruction->ROB_number;
+				ROB_number->reorderNum = instruction->ROB_number;
+				ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 				addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 				removeDictionaryEntriesByKey (cpu -> renameRegInt, ROB_number);
 				int* intresult = &(instruction -> intResult);
@@ -3886,7 +3864,8 @@ void insertintoWriteBackBuffer(int NB)
 			}
 			else if((strcmp(getOpcodeString (op), "L_D") == 0))
 			{
-				*ROB_number = instruction->ROB_number;
+				ROB_number->reorderNum = instruction->ROB_number;
+				ROB_number->progNum = instruction ->instruction -> isProg2 + 1;
 				addDictionaryEntry (cpu -> WriteBackBuffer, ROB_number, instruction);
 				removeDictionaryEntriesByKey (cpu -> renameRegFP, ROB_number);
 				//*((double*)valuePtr) = (double) instruction -> fpResult;
@@ -3925,6 +3904,30 @@ int commitInstuctionCount(){
 	return count;
 }
 
+// returns count of instructions which can be committed
+int commitInstuctionCount2(){
+	ROB *ROBentry;
+	int count = 0 , i = 0;
+	if (cpu -> reorderBuffer2 == NULL){
+		return 0;
+	}
+	else {
+		ROBentry = cpu-> reorderBuffer2 -> items[cpu->reorderBuffer2 -> head];
+		//while(ROBentry != NULL){
+		while (i < cpu->reorderBuffer->count) {
+			if((strcmp(ROBentry -> state, "W") == 0) && ROBentry -> isReady == 1)
+			{
+				count ++;
+			}
+			else{
+				break;
+			}
+			i++;
+			ROBentry = cpu->reorderBuffer2 -> items[(cpu->reorderBuffer2 -> head + i)%cpu->reorderBuffer2->size];
+		}
+	}
+	return count;
+}
 
 // write back to RES
 void writeBackUnit(int NB){
@@ -3949,8 +3952,13 @@ void writeBackUnit(int NB){
 						if(ROBentry -> isBranch == 1){
 							ROBentry -> isCorrectPredict = instruction -> isCorrectPredict;
 						}
+						if(ROBentry -> isStore == 1){
+							ROBentry -> DestAddr = instruction -> address;
+							printf("store address is updated in ROB.\n");
+						}
 						printf("instruction %d  with ROB_number - %d updated in reorder buffer \n", ROBentry -> instruction -> address, instruction -> ROB_number);
 					}
+					
 					j++;
 					ROBentry = cpu->reorderBuffer -> items[(cpu->reorderBuffer -> head + j)%cpu->reorderBuffer->size];
 				}
