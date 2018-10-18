@@ -65,17 +65,17 @@ int main(int argc, char** argv) {
 
 
 
-        for (test_cycle = 0; test_cycle < 33; test_cycle ++){
 
-       // while(runClockCycle(NF, NW, NB, NR)){//loop emulating simulator clock cycles
-            runClockCycle(NF, NI, NW, NB);
+        for (test_cycle = 0; test_cycle < 12; test_cycle ++){
+
+       //while(runClockCycle(NF, NW, NB, NR)){//loop emulating simulator clock cycles
+            runClockCycle(NF, NW, NB, NR);
             printInstructionQueue();
             printReservationStations();
             printRenamingRegisters();
             printIntegerRegistersStatus();
             printFPRegistersStatus();
             printROB();
-
 
         }
 
