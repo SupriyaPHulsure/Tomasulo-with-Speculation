@@ -2208,7 +2208,13 @@ CompletedInstruction **execute(int NB){
                 removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
                 addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
                 removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
+            } else if (unitOutputs[LS] -> instruction -> op == S_D) {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
             } else {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
                 removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
             }
             pipelineString = "Load/Store";
@@ -2889,7 +2895,23 @@ CompletedInstruction **execute2(int NB) {
                     addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
                 }
                 removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
+            } else if (unitOutputs[LS] -> instruction -> op == S_D) {
+                if (unitOutputs[LS] -> instruction -> isProg2) {
+                    removeDictionaryEntriesByKey (cpu -> renameRegFP2, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                } else {
+                    removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                }
+                removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
             } else {
+                 if (unitOutputs[LS] -> instruction -> isProg2) {
+                    removeDictionaryEntriesByKey (cpu -> renameRegInt2, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegInt2, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                } else {
+                    removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                }
                 removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
             }
             pipelineString = "Load/Store";
