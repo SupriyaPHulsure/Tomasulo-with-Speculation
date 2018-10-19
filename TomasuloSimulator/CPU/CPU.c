@@ -2037,6 +2037,7 @@ CompletedInstruction **execute(int NB){
     DictionaryEntry *dictEntry;
     CircularQueue *buff;
     int loadStallROBNumber = -1; //needed to stall step 1 of load pipeline
+    int moveOn;
     //Temp pipelines to hold changes during execution
     CompletedInstruction *INTPipelineTemp = NULL;
     CompletedInstruction *MULTPipelineTemp = NULL;
@@ -2309,7 +2310,11 @@ CompletedInstruction **execute(int NB){
                                     j = -2; //break out of for loop
                                 }
                             }
-                            if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                            moveOn = 0;
+                            if (rsmem != NULL && RS->Dest == rsmem -> Dest) {
+                                moveOn = 1;
+                            }
+                            if (j != -1 && !moveOn && RS -> isExecuting != 2) {
                                 instructionFoundOrBubble = 1;
                                 rsmem = RS;
                             } else {
@@ -2367,7 +2372,11 @@ CompletedInstruction **execute(int NB){
                                 j = -1; //break out of for loop
                             }
                         }
-                        if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                        moveOn = 0;
+                        if (rsmem != NULL && RS->Dest == rsmem -> Dest) {
+                            moveOn = 1;
+                        }
+                        if (j != -1 && !moveOn && RS -> isExecuting != 2) {
                             instructionFoundOrBubble = 1;
                             rsmem = RS;
                         } else {
@@ -2682,6 +2691,7 @@ CompletedInstruction **execute2(int NB) {
     DictionaryEntry *dictEntry;
     CircularQueue *buff;
     int loadStallROBNumber = -1; //needed to stall step 1 of load pipeline
+    int moveOn;
     //Temp pipelines to hold changes during execution
     CompletedInstruction *INTPipelineTemp = NULL;
     CompletedInstruction *MULTPipelineTemp = NULL;
@@ -2956,7 +2966,11 @@ CompletedInstruction **execute2(int NB) {
                                     j = -2; //break out of for loop
                                 }
                             }
-                            if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                            moveOn = 0;
+                            if (rsmem != NULL && RS->Dest == rsmem -> Dest) {
+                                moveOn = 1;
+                            }
+                            if (j != -1 && !moveOn && RS -> isExecuting != 2) {
                                 instructionFoundOrBubble = 1;
                                 rsmem = RS;
                             } else {
@@ -3000,6 +3014,7 @@ CompletedInstruction **execute2(int NB) {
                     rsmem -> isExecuting = 1;
                     rsmem -> address = rsmem -> Vj + instruction->immediate;
                     loadStallROBNumber = rsmem -> Dest;
+                    printf("rsmem Dest %d\n", rsmem -> Dest);
                     pipelineString = "Load/Store";
                     printPipeline(instruction, pipelineString, 1);
                 } else {
@@ -3026,7 +3041,11 @@ CompletedInstruction **execute2(int NB) {
                                 j = -1; //break out of for loop
                             }
                         }
-                        if (j != -1 && RS != rsmem && RS -> isExecuting != 2) {
+                        moveOn = 0;
+                        if (rsmem != NULL && RS->Dest == rsmem -> Dest) {
+                            moveOn = 1;
+                        }
+                        if (j != -1 && !moveOn && RS -> isExecuting != 2) {
                             instructionFoundOrBubble = 1;
                             rsmem = RS;
                         } else {
