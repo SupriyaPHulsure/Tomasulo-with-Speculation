@@ -2235,13 +2235,13 @@ CompletedInstruction **execute(int NB){
         if (LoadPipelineTemp != NULL) {
             key -> reorderNum = LoadPipelineTemp -> ROB_number;
             key -> progNum = LoadPipelineTemp -> instruction -> isProg2 + 1;
-            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, &(LoadPipelineTemp -> ROB_number)) -> value -> value);
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> loadBuffer, key) -> value -> value);
             stalled -> isExecuting = 1;
         }
         if (StorePipelineTemp != NULL) {
             key -> reorderNum = StorePipelineTemp -> ROB_number;
             key -> progNum = StorePipelineTemp -> instruction -> isProg2 + 1;
-            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> storeBuffer, &(StorePipelineTemp -> ROB_number)) -> value -> value);
+            RSmem *stalled = (RSmem *)(getValueChainByDictionaryKey(cpu -> storeBuffer, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
