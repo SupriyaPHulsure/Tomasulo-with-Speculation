@@ -3252,7 +3252,7 @@ ROB * InitializeROBEntry2(Instruction * instructionP)
 
             break;
         case S_D:
-			ROBEntry->DestReg = instructionP->rs;
+			ROBEntry->DestReg = -1;
 			ROBEntry -> isINT = 0;
 			ROBEntry -> isStore = 1;
 			ROBEntry -> DestAddr = 0;
