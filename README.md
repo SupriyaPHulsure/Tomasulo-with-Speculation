@@ -16,7 +16,7 @@ For part 2:
 
 >./TomasuloSimulator Benchmarks/Test1.dat Benchmarks/Test1.dat
 
-In order to change configuration files
+In order to change configuration files:
 
 >vim Config/TomasuloSimulator.conf
 
