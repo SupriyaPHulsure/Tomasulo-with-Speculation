@@ -25,6 +25,7 @@ void branchHelper(CompletedInstruction *instructionAndResult);
 int fetchMultiInstructionUnit(int NF);
 int fetchMultiInstructionUnit2(int NF);
 Instruction * decodeInstruction(char *instruction_str, int instructionAddress);
+Instruction * decodeInstruction2(char *instruction_str, int instructionAddress);
 int decodeInstructionsUnit();
 int decodeInstructionsUnit2();
 void updateFetchBuffer();
@@ -342,7 +343,7 @@ int decodeInstructionsUnit2(){
             DictionaryEntry *instructionEntry;
             Instruction *instruction;
             instructionEntry = popDictionaryEntry(cpu -> fetchBuffer2);
-            instruction = decodeInstruction(instructionEntry -> value -> value, *((int*)instructionEntry -> key));
+            instruction = decodeInstruction2(instructionEntry -> value -> value, *((int*)instructionEntry -> key));
             instruction->isProg2 = 1;
             enqueueCircular(cpu -> instructionQueueResult2, instruction);
         }
@@ -697,6 +698,320 @@ Instruction * decodeInstruction(char *instruction_str, int instructionAddress){
 
 	if (op == BEQZ || op == BNEZ || op == BEQ || op == BNE) {
 		DictionaryEntry *codeLabel = getValueChainByDictionaryKey (codeLabels, (void *) token);
+
+		if (codeLabel == NULL) {
+			printf("Invalid code label cannot be resolved...\n");
+			exit (EXIT_FAILURE);
+		} else {
+			target = *((int*)codeLabel -> value -> value);
+		}
+	}
+
+	instruction = (Instruction *) malloc (sizeof(Instruction));
+
+	instruction -> op = op;
+
+	instruction -> rd = rd;
+	instruction -> rs = rs;
+	instruction -> rt = rt;
+
+	instruction -> rsValue = rsValue;
+	instruction -> rtValue = rtValue;
+
+	instruction -> fd = fd;
+	instruction -> fs = fs;
+	instruction -> ft = ft;
+
+	instruction -> fsValue = fsValue;
+	instruction -> ftValue = ftValue;
+
+	instruction -> immediate = immediate;
+
+	instruction -> target = target;
+
+	instruction -> address = instructionAddress;
+
+	printf("Decoded %d:%s -> %s, rd=%d, rs=%d, rt=%d, fd=%d, fs=%d, ft=%d, immediate=%d, target=%d\n", instruction -> address, instruction_str,
+		 getOpcodeString ((int) op), rd, rs, rt, fd, fs, ft, immediate, target);
+
+    return instruction;
+}
+
+
+//Decode an instruction for part 2
+Instruction * decodeInstruction2(char *instruction_str, int instructionAddress){
+    Instruction *instruction;
+
+    char *token = (char *) malloc (sizeof(char) * MAX_LINE);
+
+    OpCode op;
+
+    int rd;
+    int rs;
+    int rt;
+
+    int rsValue;
+    int rtValue;
+
+    int fd;
+    int fs;
+    int ft;
+
+    double fsValue;
+    double ftValue;
+
+    int immediate;
+
+    int target;
+
+
+	op = NOOP, rd = -1, rs = -1, rt = -1, rsValue = -1, rtValue = -1, fd = -1, fs = -1, ft = -1, fsValue = -1, ftValue = -1, immediate = 0, target = 0;
+
+	token = (char *) malloc (sizeof(char) * MAX_LINE);
+
+	strcpy (token, instruction_str);
+
+	token = strtok(token, " ,()\t\n");
+
+	if(strcmp(token, "AND") == 0) {
+		op = AND;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+	} else if(strcmp(token, "ANDI") == 0) {
+		op = ANDI;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		immediate = atoi(token);
+	} else if(strcmp(token, "OR") == 0) {
+		op = OR;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+	} else if(strcmp(token, "ORI") == 0) {
+		op = ORI;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		immediate = atoi(token);
+	} else if(strcmp(token, "SLT") == 0) {
+		op = SLT;
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+	} else if(strcmp(token, "SLTI") == 0) {
+		op = SLTI;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		immediate = atoi(token);
+	} else if(strcmp(token, "DADD") == 0) {
+		op = DADD;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+	} else if(strcmp(token, "DADDI") == 0) {
+		op = DADDI;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+
+		immediate = atoi(token);
+	} else if(strcmp(token, "DSUB") == 0) {
+		op = DSUB;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+	} else if(strcmp(token, "DMUL") == 0) {
+		op = DMUL;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+	} else if(strcmp(token, "LD") == 0) {
+		op = LD;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		immediate = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+	} else if(strcmp(token, "SD") == 0) {
+		op = SD;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		immediate = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+	} else if(strcmp(token, "L.D") == 0) {
+		op = L_D;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		ft = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		immediate = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+	} else if(strcmp(token, "S.D") == 0) {
+		op = S_D;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		ft = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		immediate = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+	} else if(strcmp(token, "ADD.D") == 0) {
+		op = ADD_D;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		fd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		fs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		ft = atoi(token);
+	} else if(strcmp(token, "SUB.D") == 0) {
+		op = SUB_D;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		fd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		fs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		ft = atoi(token);
+	} else if(strcmp(token, "MUL.D") == 0) {
+		op = MUL_D;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		fd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		fs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		ft = atoi(token);
+	} else if(strcmp(token, "DIV.D") == 0) {
+		op = DIV_D;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		fd = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		fs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		ft = atoi(token);
+	} else if(strcmp(token, "BEQZ") == 0) {
+		op = BEQZ;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()\t\n");
+	} else if(strcmp(token, "BNEZ") == 0) {
+		op = BNEZ;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()\t\n");
+	} else if(strcmp(token, "BEQ") == 0) {
+		op = BEQ;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+
+		token = strtok(NULL, " ,()\t\n");
+	} else if(strcmp(token, "BNE") == 0) {
+		op = BNE;
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rs = atoi(token);
+
+		token = strtok(NULL, " ,()RF\t\n");
+		rt = atoi(token);
+
+		token = strtok(NULL, " ,()\t\n");
+	} else {
+		printf("Invalid instruction %s...\n", instruction_str);
+		exit (EXIT_FAILURE);
+	}
+
+	if (op == BEQZ || op == BNEZ || op == BEQ || op == BNE) {
+		DictionaryEntry *codeLabel = getValueChainByDictionaryKey (codeLabels2, (void *) token);
 
 		if (codeLabel == NULL) {
 			printf("Invalid code label cannot be resolved...\n");
@@ -3333,7 +3648,6 @@ int Commit(int NC, int NR, int returncount)
 							DestReg = ROBEntry -> DestReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
 							DestVal = *((int *)Current -> value -> value);
-							printf("%d\n", DestVal );
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
@@ -3352,7 +3666,6 @@ int Commit(int NC, int NR, int returncount)
 							DestReg = ROBEntry -> DestReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP , &DestRenameReg);
 							DestVal = *((double *)Current -> value -> value);
-							printf("%f\n", DestVal );
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
@@ -3396,7 +3709,7 @@ int Commit(int NC, int NR, int returncount)
 					else{
 						//Branch
 						if(ROBEntry ->isBranch == 1 ){
-						if( ROBEntry -> isCorrectPredict == 0){
+						if(ROBEntry -> isCorrectPredict == 0){
 							// move head to isafterbranch == 0
 							int i = 0;
 							ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
@@ -3472,6 +3785,7 @@ int Commit2(int NC, int NR, int returncount)
 	RegStatus *RegStatusEntry;
 	void *valuePtr = malloc(sizeof(double));
 	int robnum;
+	int rcount = returncount;
 		ROBEntry = cpu -> reorderBuffer2 -> items[cpu->reorderBuffer2 ->head];
 //		while(ROBEntry != NULL && NC != 0)
 		while (cpu->reorderBuffer2->count != 0 && NC != 0 )
@@ -3497,7 +3811,7 @@ int Commit2(int NC, int NR, int returncount)
 							removeDictionaryEntriesByKey(cpu -> renameRegInt2, &DestRenameReg);
 							printf("Committed instruction %d in integer register number %d with value %d \n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
-							returncount++;
+							rcount++;
 					}
 					else if(ROBEntry -> isINT == 0 && ROBEntry -> isStore == 0 && ROBEntry -> isBranch == 0){
 						int DestRenameReg, DestReg; float DestVal;
@@ -3514,7 +3828,7 @@ int Commit2(int NC, int NR, int returncount)
 							removeDictionaryEntriesByKey(cpu -> renameRegFP2, &DestRenameReg);
 							printf("Committed instruction %d in floating point register number %d with value %f\n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
-							returncount++;
+							rcount++;
 					}
 					else if(ROBEntry -> isStore == 1)
 					{
@@ -3529,7 +3843,7 @@ int Commit2(int NC, int NR, int returncount)
 							//removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction SD %d in memory address %d with value %d \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr, DestVal);
 							NC --;
-							returncount++;
+							rcount++;
 						}
 						else if(ROBEntry -> isINT == 0){
 							float DestVal; int DestRenameReg;
@@ -3543,7 +3857,7 @@ int Commit2(int NC, int NR, int returncount)
 							printf("Committed instruction S_D %d in memory address %d with value %f \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr, DestVal);							
 							//DestVal = 0;
 							NC --;
-							returncount++;
+							rcount++;
 						}
 					}
 					else{
@@ -3601,7 +3915,7 @@ int Commit2(int NC, int NR, int returncount)
 						
 						}
 						NC--;
-						returncount++;
+						rcount++;
 					}
 				}
 		else{
@@ -3611,7 +3925,7 @@ int Commit2(int NC, int NR, int returncount)
 		
 		ROBEntry = cpu -> reorderBuffer2-> items[cpu->reorderBuffer2->head];
 		}
-return returncount;
+return rcount;
 }
 
 
@@ -4803,14 +5117,13 @@ int writeBackUnit(int NB, int returncount){
 	ROB *ROBentry;
 	int isprog;
 	KeyRS *key = (KeyRS *)malloc(sizeof(KeyRS));
-
+	int rcount = returncount;
 	for (current = cpu -> WriteBackBuffer -> head; current != NULL && NB >= 0; current = current -> next){
       
 			instruction = (CompletedInstruction *)current -> value -> value;
 			isprog = instruction -> instruction -> isProg2;
-			printf("current instruction is from program - %d\n", isprog);
+		
 			if(isprog == 0){
-				printf("instruction in Writeback has ROB2_number  - %d\n", instruction ->ROB_number);
 				int j = 0;
 				key -> reorderNum = instruction ->ROB_number;
 				key -> progNum =  instruction-> instruction -> isProg2 + 1;
@@ -4826,7 +5139,7 @@ int writeBackUnit(int NB, int returncount){
 							}
 							if(ROBentry -> isStore == 1){
 								ROBentry -> DestAddr = instruction -> address;
-								printf("store address is updated in ROB.\n");
+								//printf("store address is updated in ROB.\n");
 							}
 							printf("instruction %d  with ROB_number - %d updated in reorder buffer \n", ROBentry -> instruction -> address, instruction -> ROB_number);
 						}
@@ -4838,10 +5151,10 @@ int writeBackUnit(int NB, int returncount){
 			updateOutputRES(instruction);
 			updateOutputRESresult(instruction);
 			removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, key);
-			returncount++;
+			rcount++;
 			}
 		}
-	return returncount;
+	return rcount;
 }
 
 // for prog 2
@@ -4853,16 +5166,15 @@ int writeBackUnit2(int NB, int returncount){
 	CompletedInstruction *instruction;
 	ROB *ROBentry;
 	int isprog;
+	int rcount = returncount;
 	//KeyRS *key = (KeyRS *) malloc(sizeof(KeyRS));
 	
 	for (current = cpu -> WriteBackBuffer -> head; current != NULL && NB >= 0; current = current -> next){
       
 			instruction = (CompletedInstruction *)current -> value -> value;
 			isprog = instruction -> instruction -> isProg2;
-			printf("current instruction is from program - %d\n", isprog);
 			if(isprog == 1){
 				
-				printf("instruction in Writeback has ROB2_number  - %d\n", instruction ->ROB_number);
 				int j = 0;
 				if (cpu -> reorderBuffer2 != NULL){
 					ROBentry = cpu-> reorderBuffer2 -> items[cpu->reorderBuffer2 -> head];
@@ -4876,7 +5188,7 @@ int writeBackUnit2(int NB, int returncount){
 							}
 							if(ROBentry -> isStore == 1){
 								ROBentry -> DestAddr = instruction -> address;
-								printf("store address is updated in ROB.\n");
+								//printf("store address is updated in ROB.\n");
 							}
 							printf("instruction %d  with ROB_number - %d updated in reorder buffer \n", ROBentry -> instruction -> address, instruction -> ROB_number);
 						}
@@ -4887,10 +5199,10 @@ int writeBackUnit2(int NB, int returncount){
 				}
 			updateOutputRES2(instruction);
 			updateOutputRESresult2(instruction);
-				returncount++;
+				rcount++;
 			}
 		}
-	return returncount;
+	return rcount;
 }
 	
 	
@@ -4903,10 +5215,10 @@ int CommitUnit(int NB, int NR)
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
 	commit_count = commitInstuctionCount();
 	
-	printf("Write Back and Commit---------------\n");
-	printf("commit count - %d, wb count - %d and NB - %d \t NR - %d\n", commit_count, wb_count, NB, NR);
+	//printf("Write Back and Commit---------------\n");
+	printf("commit count - %d, wb count - %d\n", commit_count, wb_count);
 	if(wb_count == 0 && commit_count == 0){
-		printf("No instruction in Writeback and in ROB for Commit.\n");
+		printf("No instruction in Writeback and in ROB for Commit(Program 1).\n");
 	}
 	else if(wb_count == 0 || commit_count >= NB)
 	{
@@ -4920,7 +5232,7 @@ int CommitUnit(int NB, int NR)
 			returncount = writeBackUnit(NB - commit_count, returncount);
 		}
 		
-		printf("returncount from prog 1 commit unit is %d\n", returncount);
+		printf("Count on CDB for program 1 is %d\n", returncount);
 		return returncount;
 		// divide NB
 }
@@ -4932,10 +5244,10 @@ int CommitUnit2(int NB, int NR)
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
 	commit_count = commitInstuctionCount2();
 	
-	printf("Write Back and Commit---------------\n");
+	//printf("Write Back and Commit---------------\n");
 	printf("commit count - %d, wb count - %d\n", commit_count, wb_count);
 	if(wb_count == 0 && commit_count == 0){
-		printf("No instruction in Writeback and in ROB for Commit.\n");
+		printf("No instruction in Writeback and in ROB for Commit(Program 2).\n");
 	}
 	else if(wb_count == 0 || commit_count >= NB)
 	{
@@ -4948,6 +5260,7 @@ int CommitUnit2(int NB, int NR)
 			returncount = Commit(commit_count, NR, returncount);
 			returncount = writeBackUnit2(NB - commit_count, returncount);
 		}
+		printf("Count on CDB for program 2 is %d\n", returncount);
 		return returncount;
 		// divide NB
 }
@@ -4979,7 +5292,6 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
 	insertintoWriteBackBuffer(NB);
 	//printf("Write Back Finish ---------------\n");
 	CommitUnit(NB, NR);
-	printDataCache ();
 	updateFetchBuffer();
     updateInstructionQueue();
     updateReservationStations();
@@ -5086,17 +5398,17 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	printf("Commit begins-----------\n");
 	int numCDB;
     if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
-        printf("Commit instructions in program 2.\n");
+        printf("Commit instructions from program 2.\n");
         numCDB = CommitUnit2(NB, NR);
         if (NB > numCDB){
-            printf("Commit instructions in program 1.\n");
+            printf("Commit instructions from program 1.\n");
             CommitUnit(NB - numCDB, NR);
         }
     }else{
-        printf("Commit instructions in program 1.\n");
+        printf("Commit instructions from program 1.\n");
         numCDB = CommitUnit(NB, NR);
         if (NB > numCDB){
-            printf("Commit instructions in program 2.\n");
+            printf("Commit instructions from program 2.\n");
             CommitUnit2(NB - numCDB, NR);
         }
     }
