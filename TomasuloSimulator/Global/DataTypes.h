@@ -255,6 +255,10 @@ typedef struct _cpu {
     int isAfterBranch2;
     //doubled
 
+	//CDB utilization
+	int percentutilizationpercycle;
+	float avgutilization;
+	
     //Flag of program that last cycle fetch and next cycle decode
     int lastCycleFetchProgram;
     int nextCycleDecodeProgram;

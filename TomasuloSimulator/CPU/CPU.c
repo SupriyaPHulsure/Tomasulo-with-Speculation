@@ -198,7 +198,10 @@ void initializeCPU (int NI, int NR) {
 	cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
 	cpu -> reorderBuffer2 = createCircularQueue(NR);
 	
-
+	// CDB utilization
+	cpu -> percentutilizationpercycle = 0;
+	cpu -> avgutilization = 0.0;
+	
     //Initialize Flag of instructions after branch
     cpu -> isAfterBranch = 0;
     cpu -> isAfterBranch2 = 0;
@@ -5240,6 +5243,7 @@ int CommitUnit(int NB, int NR)
 // manage commit and write back
 int CommitUnit2(int NB, int NR)
 {
+	printf("NB for second prog - %d", NB);
 	int wb_count, commit_count, returncount = 0;
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
 	commit_count = commitInstuctionCount2();
@@ -5251,13 +5255,13 @@ int CommitUnit2(int NB, int NR)
 	}
 	else if(wb_count == 0 || commit_count >= NB)
 	{
-		returncount = Commit(NB, NR, returncount);
+		returncount = Commit2(NB, NR, returncount);
 	}
 	else if(commit_count == 0 || wb_count >= NB ){
 		returncount = writeBackUnit2(NB, returncount);
 	}
 	else{
-			returncount = Commit(commit_count, NR, returncount);
+			returncount = Commit2(commit_count, NR, returncount);
 			returncount = writeBackUnit2(NB - commit_count, returncount);
 		}
 		printf("Count on CDB for program 2 is %d\n", returncount);
@@ -5290,7 +5294,6 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
 	printf("Execution -----------\n");
 	
 	insertintoWriteBackBuffer(NB);
-	//printf("Write Back Finish ---------------\n");
 	CommitUnit(NB, NR);
 	updateFetchBuffer();
     updateInstructionQueue();
@@ -5394,26 +5397,27 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 
 	printf("Execution begins -----------\n");
 	insertintoWriteBackBuffer2(NB);
-	printf("Write Back Finished ---------------\n");
+	
 	printf("Commit begins-----------\n");
-	int numCDB;
+	int numCDB, perutilization;
     if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
         printf("Commit instructions from program 2.\n");
         numCDB = CommitUnit2(NB, NR);
         if (NB > numCDB){
             printf("Commit instructions from program 1.\n");
-            CommitUnit(NB - numCDB, NR);
+            perutilization = CommitUnit(NB - numCDB, NR);
         }
     }else{
         printf("Commit instructions from program 1.\n");
         numCDB = CommitUnit(NB, NR);
         if (NB > numCDB){
             printf("Commit instructions from program 2.\n");
-            CommitUnit2(NB - numCDB, NR);
+            perutilization = CommitUnit2(NB - numCDB, NR);
         }
     }
+	cpu -> percentutilizationpercycle = cpu -> percentutilizationpercycle  + perutilization *25;
     printf("Commit finished -----------\n");
-   
+	calculate(cpu -> percentutilizationpercycle);
 
 
     updateFetchBuffer();
@@ -5435,7 +5439,7 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	    return 0;
 	}else
 	    return 1;
-
+	
 }
 
 /**
@@ -5677,6 +5681,15 @@ void branchHelper (CompletedInstruction *instructionAndResult) {
             }
         }
     }
+}
+
+// CDB utilization
+void calculate(int sumutilized)
+{
+	float avgutilization;
+	avgutilization = sumutilized/cpu->cycle;
+	cpu -> avgutilization = avgutilization;
+	//printf("CDB utilization - %f\n", avgutilization);
 }
 
 //Determine if the run cycle should be ended
