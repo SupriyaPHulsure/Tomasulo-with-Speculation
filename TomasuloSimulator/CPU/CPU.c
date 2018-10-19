@@ -3150,7 +3150,7 @@ ROB * InitializeROBEntry(Instruction * instructionP)
 		
             break;
         case S_D:
-			ROBEntry->DestReg = instructionP->rs;
+			ROBEntry->DestReg = -1;
 			ROBEntry -> isINT = 0;
 			ROBEntry -> isStore = 1;
 			ROBEntry -> DestAddr = 0;
@@ -3274,7 +3274,7 @@ ROB * InitializeROBEntry2(Instruction * instructionP)
 
             break;
         case S_D:
-			ROBEntry->DestReg = instructionP->rs;
+			ROBEntry->DestReg = -1;
 			ROBEntry -> isINT = 0;
 			ROBEntry -> isStore = 1;
 			ROBEntry -> DestAddr = 0;
@@ -3333,6 +3333,7 @@ int Commit(int NC, int NR, int returncount)
 							DestReg = ROBEntry -> DestReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
 							DestVal = *((int *)Current -> value -> value);
+							printf("%d\n", DestVal );
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
@@ -3351,6 +3352,7 @@ int Commit(int NC, int NR, int returncount)
 							DestReg = ROBEntry -> DestReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP , &DestRenameReg);
 							DestVal = *((double *)Current -> value -> value);
+							printf("%f\n", DestVal );
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
@@ -3366,7 +3368,10 @@ int Commit(int NC, int NR, int returncount)
 					{
 					
 						if(ROBEntry -> isINT == 1){
-							int DestVal= 0;
+							int DestVal, DestRenameReg;
+							DestRenameReg = ROBEntry -> DestRenameReg;
+							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt2, &DestRenameReg);
+							DestVal = *((int *)Current -> value -> value);
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
 							*((int*)valuePtr) = DestVal; // value from rename register ;
 							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
@@ -3375,7 +3380,10 @@ int Commit(int NC, int NR, int returncount)
 							rcount++;
 						}
 						else if(ROBEntry -> isINT == 0){
-							float DestVal = 0.0; 
+							float DestVal; int DestRenameReg;
+							DestRenameReg = ROBEntry -> DestRenameReg;
+							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP2, &DestRenameReg);
+							DestVal = *((double *)Current -> value -> value);
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
 							*((double*)valuePtr) = (double) DestVal; // value from rename register ;
 							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
@@ -3570,11 +3578,11 @@ int Commit2(int NC, int NR, int returncount)
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, robnumkey); 
 										}
-										if(getValueChainByDictionaryKey(cpu -> renameRegInt, robnumkey)  != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegInt, robnumkey); 
+										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &(robnum))  != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt, &(robnum)); 
 										}
-										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, robnumkey) != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegFP, robnumkey); 
+										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, &(robnum)) != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegFP, &(robnum)); 
 										}
 										
 										//go to next
@@ -4971,7 +4979,7 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
 	insertintoWriteBackBuffer(NB);
 	//printf("Write Back Finish ---------------\n");
 	CommitUnit(NB, NR);
-
+	printDataCache ();
 	updateFetchBuffer();
     updateInstructionQueue();
     updateReservationStations();
