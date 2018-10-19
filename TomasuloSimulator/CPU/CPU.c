@@ -3556,11 +3556,11 @@ int Commit2(int NC, int NR, int returncount)
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, robnumkey); 
 										}
-										if(getValueChainByDictionaryKey(cpu -> renameRegInt, robnumkey)  != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegInt, robnumkey); 
+										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &(robnum))  != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt, &(robnum)); 
 										}
-										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, robnumkey) != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegFP, robnumkey); 
+										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, &(robnum)) != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegFP, &(robnum)); 
 										}
 										
 										//go to next
