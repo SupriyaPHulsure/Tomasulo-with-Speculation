@@ -4441,6 +4441,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSint = tempEntry -> value -> value;
 					isProg2 = RSint ->instruction-> isProg2;
 					if(isProg2 == 0){
+						 if (RSint -> isReady == 0){
 						if(RSint -> Qj == robnumber){
 								RSint -> Vj = instruction -> intResult;
 								RSint -> Qj = -1;
@@ -4454,6 +4455,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
 							RSint -> isReady = 1;
 						}
 					}
+					}
                 }
             }
             for (tempEntry = cpu -> resStaIntResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
@@ -4461,6 +4463,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSint = tempEntry -> value -> value;
 					isProg2 = RSint ->instruction-> isProg2;
 					if(isProg2 == 0){
+						 if (RSint -> isReady == 0){
                     if(RSint -> Qj == robnumber){
                             RSint -> Vj = instruction -> intResult;
                             RSint -> Qj = -1;
@@ -4473,6 +4476,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
                         RSint -> isReady = 1;
                     }
+						 }
 					}
                 }
             }
@@ -4481,6 +4485,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSint = tempEntry -> value -> value;
 					isProg2 = RSint ->instruction-> isProg2;
 					if(isProg2 == 0){
+					if (RSint -> isReady == 0){
                     if(RSint -> Qj == robnumber){
                             RSint -> Vj = instruction -> intResult;
                             RSint -> Qj = -1;
@@ -4493,6 +4498,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
                         RSint -> isReady = 1;
                     }
+						}
 					}
                 }
             }
@@ -4501,6 +4507,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSmem = tempEntry -> value -> value;
 					isProg2 = RSmem ->instruction-> isProg2;
 					if(isProg2 == 0){
+						 if (RSmem -> isReady == 0){
                     if(RSmem -> Qj == robnumber){
                         RSmem -> Vj = instruction -> intResult;
                         RSmem -> Qj = -1;
@@ -4512,6 +4519,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
                                 RSmem -> isReady = 1;
                     }
+						 }
                 }
 				}
             }
@@ -4520,6 +4528,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSmem = tempEntry -> value -> value;
 					isProg2 = RSmem ->instruction-> isProg2;
 					if(isProg2 == 0){
+						 if (RSmem -> isReady == 0){
                     if(RSmem -> Qj == robnumber){
                         RSmem -> Vj = instruction -> intResult;
                         RSmem -> Qj = -1;
@@ -4527,6 +4536,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     if ((RSmem -> Qj == -1)){
                         RSmem -> isReady = 1;
                     }
+					}
 					}
                 }
             }
@@ -4542,6 +4552,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSfloat = tempEntry -> value -> value;
 					isProg2 = RSfloat ->instruction-> isProg2;
 					if(isProg2 == 0){
+							if (RSfloat -> isReady == 0){
                     if(RSfloat -> Qj == robnumber){
                         RSfloat -> Vj = instruction -> fpResult;
                         RSfloat -> Qj = -1;
@@ -4553,6 +4564,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
                                 RSfloat -> isReady = 1;
                         }
+					}
 					}
                 }
             }
@@ -4561,6 +4573,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSmem = tempEntry -> value -> value;
 					isProg2 = RSmem ->instruction-> isProg2;
 					if(isProg2 == 0){
+							 if (RSmem -> isReady == 0){
                     if(RSmem -> Qj == robnumber){
                         RSmem -> Vj = instruction -> intResult;
                         RSmem -> Qj = -1;
@@ -4569,6 +4582,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                                 RSmem -> isReady = 1;
                     }
 					}
+					}
                 }
             }
             for (tempEntry = cpu -> resStaFPmultResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
@@ -4576,7 +4590,9 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                 if (tempEntry != NULL) {
                     RSfloat = tempEntry -> value -> value;
 					isProg2 = RSfloat ->instruction-> isProg2;
+					
 					if(isProg2 == 0){
+						if (RSfloat -> isReady == 0){
                     if(RSfloat -> Qj == robnumber){
                         RSfloat -> Vj = instruction -> fpResult;
                         RSfloat -> Qj = -1;
@@ -4588,6 +4604,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
                                 RSfloat -> isReady = 1;
                         }
+					}
 					}
                 }
             }
@@ -4596,6 +4613,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSfloat = tempEntry -> value -> value;
 					isProg2 = RSfloat ->instruction-> isProg2;
 					if(isProg2 == 0){
+							if (RSfloat -> isReady == 0){
                     if(RSfloat -> Qj == robnumber){
                         RSfloat -> Vj = instruction -> fpResult;
                         RSfloat -> Qj = -1;
@@ -4608,6 +4626,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                                 RSfloat -> isReady = 1;
                         }
 					}
+					}
                 }
             }
             for (tempEntry = cpu -> storeBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
@@ -4615,6 +4634,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     RSmem = tempEntry -> value -> value;
 					isProg2 = RSmem ->instruction-> isProg2;
 					if(isProg2 == 0){
+						 if (RSmem -> isReady == 0){
                     if(RSmem -> Qj == robnumber){
                         RSmem -> Vj = instruction -> intResult;
                         RSmem -> Qj = -1;
@@ -4626,6 +4646,7 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                     if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
                                 RSmem -> isReady = 1;
                     }
+					}
 					}
                 }
             }
@@ -4666,6 +4687,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSint = tempEntry -> value -> value;
 					isProg2 = RSint ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSint -> isReady == 0){
 						if(RSint -> Qj == robnumber){
 								RSint -> Vj = instruction -> intResult;
 								RSint -> Qj = -1;
@@ -4679,6 +4701,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
 							RSint -> isReady = 1;
 						}
 					}
+					}
                 }
             }
             for (tempEntry = cpu -> resStaIntResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
@@ -4686,6 +4709,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSint = tempEntry -> value -> value;
 					isProg2 = RSint ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSint -> isReady == 0){
                     if(RSint -> Qj == robnumber){
                             RSint -> Vj = instruction -> intResult;
                             RSint -> Qj = -1;
@@ -4698,6 +4722,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     if ((RSint -> Qj == -1) && (RSint -> Qk == -1)){
                         RSint -> isReady = 1;
                     }
+					}
 					}
                 }
             }
@@ -4706,6 +4731,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSint = tempEntry -> value -> value;
 					isProg2 = RSint ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSint -> isReady == 0){
                     if(RSint -> Qj == robnumber){
                             RSint -> Vj = instruction -> intResult;
                             RSint -> Qj = -1;
@@ -4719,6 +4745,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                         RSint -> isReady = 1;
                     }
 					}
+					}
                 }
             }
             for (tempEntry = cpu -> storeBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
@@ -4726,6 +4753,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSmem = tempEntry -> value -> value;
 					isProg2 = RSmem ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSmem -> isReady == 0){
                     if(RSmem -> Qj == robnumber){
                         RSmem -> Vj = instruction -> intResult;
                         RSmem -> Qj = -1;
@@ -4738,6 +4766,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                                 RSmem -> isReady = 1;
                     }
                 }
+					}
 				}
             }
             for (tempEntry = cpu -> loadBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
@@ -4745,6 +4774,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSmem = tempEntry -> value -> value;
 					isProg2 = RSmem ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSmem -> isReady == 0){
                     if(RSmem -> Qj == robnumber){
                         RSmem -> Vj = instruction -> intResult;
                         RSmem -> Qj = -1;
@@ -4752,6 +4782,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     if ((RSmem -> Qj == -1)){
                         RSmem -> isReady = 1;
                     }
+					}
 					}
                 }
             }
@@ -4767,6 +4798,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSfloat = tempEntry -> value -> value;
 					isProg2 = RSfloat ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSfloat -> isReady == 0){
                     if(RSfloat -> Qj == robnumber){
                         RSfloat -> Vj = instruction -> fpResult;
                         RSfloat -> Qj = -1;
@@ -4779,6 +4811,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                                 RSfloat -> isReady = 1;
                         }
 					}
+					}
                 }
             }
             for (tempEntry = cpu -> loadBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
@@ -4786,6 +4819,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSmem = tempEntry -> value -> value;
 					isProg2 = RSmem ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSmem -> isReady == 0){
                     if(RSmem -> Qj == robnumber){
                         RSmem -> Vj = instruction -> intResult;
                         RSmem -> Qj = -1;
@@ -4793,6 +4827,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     if ((RSmem -> Qj == -1)){
                                 RSmem -> isReady = 1;
                     }
+					}
 					}
                 }
             }
@@ -4802,6 +4837,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSfloat = tempEntry -> value -> value;
 					isProg2 = RSfloat ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSfloat -> isReady == 0){
                     if(RSfloat -> Qj == robnumber){
                         RSfloat -> Vj = instruction -> fpResult;
                         RSfloat -> Qj = -1;
@@ -4813,6 +4849,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     if ((RSfloat -> Qj == -1) && (RSfloat -> Qk == -1)){
                                 RSfloat -> isReady = 1;
                         }
+					}
 					}
                 }
             }
@@ -4821,6 +4858,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSfloat = tempEntry -> value -> value;
 					isProg2 = RSfloat ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSfloat -> isReady == 0){
                     if(RSfloat -> Qj == robnumber){
                         RSfloat -> Vj = instruction -> fpResult;
                         RSfloat -> Qj = -1;
@@ -4833,6 +4871,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                                 RSfloat -> isReady = 1;
                         }
 					}
+					}
                 }
             }
             for (tempEntry = cpu -> storeBufferResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
@@ -4840,6 +4879,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     RSmem = tempEntry -> value -> value;
 					isProg2 = RSmem ->instruction-> isProg2;
 					if(isProg2 == 1){
+							if (RSmem -> isReady == 0){
                     if(RSmem -> Qj == robnumber){
                         RSmem -> Vj = instruction -> intResult;
                         RSmem -> Qj = -1;
@@ -4851,6 +4891,7 @@ void updateOutputRESresult2(CompletedInstruction *instruction) {
                     if ((RSmem -> Qj == -1) && (RSmem -> Qk == -1)){
                                 RSmem -> isReady = 1;
                     }
+					}
 					}
                 }
             }
@@ -5260,6 +5301,7 @@ int CommitUnit(int NB, int NR)
 		}
 		
 		printf("Count on CDB for program 1 is %d\n", returncount);
+		printf("------------------------------------------------------\n");
 		return returncount;
 		// divide NB
 }
@@ -5267,7 +5309,7 @@ int CommitUnit(int NB, int NR)
 // manage commit and write back
 int CommitUnit2(int NB, int NR)
 {
-	printf("NB for second prog - %d", NB);
+	//printf("NB for second prog - %d", NB);
 	int wb_count, commit_count, returncount = 0;
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
 	commit_count = commitInstuctionCount2();
@@ -5289,6 +5331,7 @@ int CommitUnit2(int NB, int NR)
 			returncount = writeBackUnit2(NB - commit_count, returncount);
 		}
 		printf("Count on CDB for program 2 is %d\n", returncount);
+		printf("------------------------------------------------------\n");
 		return returncount;
 		// divide NB
 }
@@ -5321,7 +5364,7 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
 	
 	int perutilization = 0;
 	perutilization = CommitUnit(NB, NR);
-	cpu -> percentutilizationpercycle = cpu -> percentutilizationpercycle  + perutilization *25;
+	cpu -> percentutilizationpercycle = cpu -> percentutilizationpercycle  + perutilization *(int)(100/NB);
     printf("Commit finished -----------\n");
 	calculate(cpu -> percentutilizationpercycle);
 	
@@ -5445,7 +5488,7 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
             perutilization = CommitUnit2(NB - numCDB, NR);
         }
     }
-	cpu -> percentutilizationpercycle = cpu -> percentutilizationpercycle  + perutilization *25;
+	cpu -> percentutilizationpercycle = cpu -> percentutilizationpercycle  + perutilization *(int)(100/NB);
     printf("Commit finished -----------\n");
 	calculate(cpu -> percentutilizationpercycle);
 
