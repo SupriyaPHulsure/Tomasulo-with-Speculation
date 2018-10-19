@@ -62,6 +62,7 @@ void updateOutputRES(CompletedInstruction *instruction);
 int commitInstuctionCount();
 int Commit(int NC, int NR, int returncount);
 int CommitUnit(int NB, int NR);
+void calculate(int perutilization);
 int checkEnd();
 int checkEnd2();
 
@@ -5317,7 +5318,13 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
 	printf("Execution -----------\n");
 	
 	insertintoWriteBackBuffer(NB);
-	CommitUnit(NB, NR);
+	
+	int perutilization = 0;
+	perutilization = CommitUnit(NB, NR);
+	cpu -> percentutilizationpercycle = cpu -> percentutilizationpercycle  + perutilization *25;
+    printf("Commit finished -----------\n");
+	calculate(cpu -> percentutilizationpercycle);
+	
 	updateFetchBuffer();
     updateInstructionQueue();
     updateReservationStations();
