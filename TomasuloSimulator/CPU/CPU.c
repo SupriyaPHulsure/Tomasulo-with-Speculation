@@ -5461,6 +5461,7 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 
     isEnd1 = checkEnd();
     isEnd2 = checkEnd2();
+    //printf("isEnd1: %d; isEnd2: %d\n", isEnd1, isEnd2);
 
 	if((isEnd1==1) & (isEnd2 == 1)){
 	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
