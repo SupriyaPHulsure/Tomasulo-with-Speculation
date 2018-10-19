@@ -3914,15 +3914,15 @@ int Commit2(int NC, int NR, int returncount)
 									else{
 										KeyRS *robnumkey = (KeyRS *)malloc(sizeof(KeyRS));
 										robnumkey -> reorderNum = robnum;
-										robnumkey -> progNum = 1;
+										robnumkey -> progNum = 2;
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, robnumkey); 
 										}
-										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &(robnum))  != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegInt, &(robnum)); 
+										if(getValueChainByDictionaryKey(cpu -> renameRegInt2, &(robnum))  != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt2, &(robnum)); 
 										}
-										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, &(robnum)) != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegFP, &(robnum)); 
+										else if(getValueChainByDictionaryKey(cpu -> renameRegFP2, &(robnum)) != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegFP2, &(robnum)); 
 										}
 										
 										//go to next

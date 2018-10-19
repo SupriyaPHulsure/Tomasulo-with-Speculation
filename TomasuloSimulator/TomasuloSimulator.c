@@ -122,8 +122,16 @@ int main(int argc, char** argv) {
         }
 		
 		printf("Average utilization of CDB is - %f %\n", cpu -> avgutilization);
-/*
-        printInstructionQueue();
+
+		 printDataCache (); //print data cache
+
+
+        printIntegerRegisters (); //print integer registers
+        printFPRegisters (); //print floating point registers
+		printIntegerRegisters2();
+        printFPRegisters2();
+		
+      /*   printInstructionQueue();
         printInstructionQueue2();
         printReservationStations();
         printRenamingRegisters();
@@ -133,8 +141,8 @@ int main(int argc, char** argv) {
         printIntegerRegistersStatus2();
         printFPRegistersStatus2();
         printROB();
-        printROB2();
-*/
+        printROB2(); */
+
 
 
 	}
