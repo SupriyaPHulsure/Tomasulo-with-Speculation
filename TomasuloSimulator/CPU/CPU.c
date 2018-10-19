@@ -1543,7 +1543,7 @@ int addInstruction2RSfloat2(Dictionary *renameRegFP, Dictionary *resSta, Diction
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         RS->isExecuting = 0;
-        addDictionaryEntry(resStaResult, &keyRS, RS);
+        addDictionaryEntry(resStaResult, keyRS, RS);
         //Update register status
         RegStatusEntry = FPRegStatus[instruction->fd];
         RegStatusEntry->busy = 1;
@@ -2725,7 +2725,7 @@ CompletedInstruction **execute2(int NB) {
         rsint = (RSint *)(dictVal -> value);
         key -> reorderNum = rsint -> Dest;
         key -> progNum = rsint -> instruction -> isProg2 + 1;
-        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
+        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, key);
     } else {
         instructionsToExec[1] = NULL;
     }
