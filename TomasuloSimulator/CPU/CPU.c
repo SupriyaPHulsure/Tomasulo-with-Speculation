@@ -2725,7 +2725,7 @@ CompletedInstruction **execute2(int NB) {
         rsint = (RSint *)(dictVal -> value);
         key -> reorderNum = rsint -> Dest;
         key -> progNum = rsint -> instruction -> isProg2 + 1;
-        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, &(rsint -> Dest));
+        instructionsToExec[1] = getValueChainByDictionaryKey (cpu -> resStaMult, key);
     } else {
         instructionsToExec[1] = NULL;
     }
@@ -2946,7 +2946,6 @@ CompletedInstruction **execute2(int NB) {
                     rsmem -> isExecuting = 1;
                     rsmem -> address = rsmem -> Vj + instruction->immediate;
                     loadStallROBNumber = rsmem -> Dest;
-                    printf("rsmem Dest %d\n", rsmem -> Dest);
                     pipelineString = "Load/Store";
                     printPipeline(instruction, pipelineString, 1);
                 } else {
@@ -2978,9 +2977,7 @@ CompletedInstruction **execute2(int NB) {
                             }
                             if (j != -1 && !moveOn && RS -> isExecuting != 2) {
                                 instructionFoundOrBubble = 1;
-                                printf("RS Dest %d %d %d\n",RS->instruction->address,RS->instruction->isProg2, RS -> Dest);
                                 rsmem = RS;
-                                printf("rsmem Dest %d\n", rsmem -> Dest);
                             } else {
                                 dictEntry = dictEntry -> next;
                             }
@@ -3917,15 +3914,15 @@ int Commit2(int NC, int NR, int returncount)
 									else{
 										KeyRS *robnumkey = (KeyRS *)malloc(sizeof(KeyRS));
 										robnumkey -> reorderNum = robnum;
-										robnumkey -> progNum = 1;
+										robnumkey -> progNum = 2;
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, robnumkey); 
 										}
-										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &(robnum))  != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegInt, &(robnum)); 
+										if(getValueChainByDictionaryKey(cpu -> renameRegInt2, &(robnum))  != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt2, &(robnum)); 
 										}
-										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, &(robnum)) != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegFP, &(robnum)); 
+										else if(getValueChainByDictionaryKey(cpu -> renameRegFP2, &(robnum)) != NULL){
+											removeDictionaryEntriesByKey(cpu -> renameRegFP2, &(robnum)); 
 										}
 										
 										//go to next

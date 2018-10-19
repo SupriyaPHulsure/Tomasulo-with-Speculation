@@ -105,9 +105,7 @@ int main(int argc, char** argv) {
         int test_cycle;
 
 
-        //for (test_cycle = 0; test_cycle < 45; test_cycle ++){
         while(runClockCycle2 (NF, NW, NB, NR)){
-            runClockCycle2 (NF, NW, NB, NR);
             printInstructionQueue();
             printInstructionQueue2();
             printReservationStations();
@@ -122,8 +120,16 @@ int main(int argc, char** argv) {
         }
 		
 		printf("Average utilization of CDB is - %f %\n", cpu -> avgutilization);
-/*
-        printInstructionQueue();
+
+		 printDataCache (); //print data cache
+
+
+        printIntegerRegisters (); //print integer registers
+        printFPRegisters (); //print floating point registers
+		printIntegerRegisters2();
+        printFPRegisters2();
+		
+      /*   printInstructionQueue();
         printInstructionQueue2();
         printReservationStations();
         printRenamingRegisters();
@@ -133,8 +139,8 @@ int main(int argc, char** argv) {
         printIntegerRegistersStatus2();
         printFPRegistersStatus2();
         printROB();
-        printROB2();
-*/
+        printROB2(); */
+
 
 
 	}
