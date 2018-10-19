@@ -101,8 +101,9 @@ int main(int argc, char** argv) {
         initializeCPU (NI, NR); //initialize CPU data structure
 
         int test_cycle;
-        for (test_cycle = 0; test_cycle < 8; test_cycle ++){
-            runClockCycle2 (NF, NW, NB, NR);
+        //for (test_cycle = 0; test_cycle < 8; test_cycle ++){
+        while(runClockCycle2 (NF, NW, NB, NR)){
+            //runClockCycle2 (NF, NW, NB, NR);
             printInstructionQueue();
             printInstructionQueue2();
             printReservationStations();
@@ -129,7 +130,7 @@ int main(int argc, char** argv) {
         printROB2();
 */
 
-	    //TODO
+
 	}
 	
 

@@ -5080,10 +5080,10 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 
 
 
-	printf("Execution -----------\n");
+	printf("Execution begins -----------\n");
 	insertintoWriteBackBuffer2(NB);
-	//printf("Write Back Finish ---------------\n");
-	//CommitUnit(NB, NR);
+	printf("Write Back Finished ---------------\n");
+	printf("Commit begins-----------\n");
 	int numCDB;
     if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
         printf("Commit instructions in program 2.\n");
@@ -5100,6 +5100,7 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
             CommitUnit2(NB - numCDB, NR);
         }
     }
+    printf("Commit finished -----------\n");
    
 
 
