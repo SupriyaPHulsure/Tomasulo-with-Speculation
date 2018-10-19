@@ -5194,7 +5194,7 @@ int writeBackUnit2(int NB, int returncount){
 	ROB *ROBentry;
 	int isprog;
 	int rcount = returncount;
-	//KeyRS *key = (KeyRS *) malloc(sizeof(KeyRS));
+	KeyRS *key = (KeyRS *) malloc(sizeof(KeyRS));
 	
 	for (current = cpu -> WriteBackBuffer -> head; current != NULL && NB >= 0; current = current -> next){
       
@@ -5203,6 +5203,8 @@ int writeBackUnit2(int NB, int returncount){
 			if(isprog == 1){
 				
 				int j = 0;
+				key -> reorderNum = instruction ->ROB_number;
+				key -> progNum =  instruction-> instruction -> isProg2 + 1;
 				if (cpu -> reorderBuffer2 != NULL){
 					ROBentry = cpu-> reorderBuffer2 -> items[cpu->reorderBuffer2 -> head];
 					//while(ROBentry != NULL){
@@ -5226,6 +5228,7 @@ int writeBackUnit2(int NB, int returncount){
 				}
 			updateOutputRES2(instruction);
 			updateOutputRESresult2(instruction);
+			removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, key);
 				rcount++;
 			}
 		}
