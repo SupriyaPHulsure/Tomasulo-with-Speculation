@@ -1543,7 +1543,7 @@ int addInstruction2RSfloat2(Dictionary *renameRegFP, Dictionary *resSta, Diction
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         RS->isExecuting = 0;
-        addDictionaryEntry(resStaResult, &keyRS, RS);
+        addDictionaryEntry(resStaResult, keyRS, RS);
         //Update register status
         RegStatusEntry = FPRegStatus[instruction->fd];
         RegStatusEntry->busy = 1;
