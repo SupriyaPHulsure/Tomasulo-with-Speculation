@@ -3333,7 +3333,6 @@ int Commit(int NC, int NR, int returncount)
 							DestReg = ROBEntry -> DestReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
 							DestVal = *((int *)Current -> value -> value);
-							printf("%d\n", DestVal );
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
@@ -3352,7 +3351,6 @@ int Commit(int NC, int NR, int returncount)
 							DestReg = ROBEntry -> DestReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP , &DestRenameReg);
 							DestVal = *((double *)Current -> value -> value);
-							printf("%f\n", DestVal );
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
@@ -3396,7 +3394,7 @@ int Commit(int NC, int NR, int returncount)
 					else{
 						//Branch
 						if(ROBEntry ->isBranch == 1 ){
-						if( ROBEntry -> isCorrectPredict == 0){
+						if(ROBEntry -> isCorrectPredict == 0){
 							// move head to isafterbranch == 0
 							int i = 0;
 							ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
@@ -4809,9 +4807,8 @@ int writeBackUnit(int NB, int returncount){
       
 			instruction = (CompletedInstruction *)current -> value -> value;
 			isprog = instruction -> instruction -> isProg2;
-			printf("current instruction is from program - %d\n", isprog);
+		
 			if(isprog == 0){
-				printf("instruction in Writeback has ROB2_number  - %d\n", instruction ->ROB_number);
 				int j = 0;
 				key -> reorderNum = instruction ->ROB_number;
 				key -> progNum =  instruction-> instruction -> isProg2 + 1;
@@ -4827,7 +4824,7 @@ int writeBackUnit(int NB, int returncount){
 							}
 							if(ROBentry -> isStore == 1){
 								ROBentry -> DestAddr = instruction -> address;
-								printf("store address is updated in ROB.\n");
+								//printf("store address is updated in ROB.\n");
 							}
 							printf("instruction %d  with ROB_number - %d updated in reorder buffer \n", ROBentry -> instruction -> address, instruction -> ROB_number);
 						}
@@ -4861,10 +4858,8 @@ int writeBackUnit2(int NB, int returncount){
       
 			instruction = (CompletedInstruction *)current -> value -> value;
 			isprog = instruction -> instruction -> isProg2;
-			printf("current instruction is from program - %d\n", isprog);
 			if(isprog == 1){
 				
-				printf("instruction in Writeback has ROB2_number  - %d\n", instruction ->ROB_number);
 				int j = 0;
 				if (cpu -> reorderBuffer2 != NULL){
 					ROBentry = cpu-> reorderBuffer2 -> items[cpu->reorderBuffer2 -> head];
@@ -4878,7 +4873,7 @@ int writeBackUnit2(int NB, int returncount){
 							}
 							if(ROBentry -> isStore == 1){
 								ROBentry -> DestAddr = instruction -> address;
-								printf("store address is updated in ROB.\n");
+								//printf("store address is updated in ROB.\n");
 							}
 							printf("instruction %d  with ROB_number - %d updated in reorder buffer \n", ROBentry -> instruction -> address, instruction -> ROB_number);
 						}
