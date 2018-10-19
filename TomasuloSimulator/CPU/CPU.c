@@ -3648,7 +3648,6 @@ int Commit(int NC, int NR, int returncount)
 							DestReg = ROBEntry -> DestReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
 							DestVal = *((int *)Current -> value -> value);
-							printf("%d\n", DestVal );
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
@@ -3667,7 +3666,6 @@ int Commit(int NC, int NR, int returncount)
 							DestReg = ROBEntry -> DestReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP , &DestRenameReg);
 							DestVal = *((double *)Current -> value -> value);
-							printf("%f\n", DestVal );
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
@@ -3711,7 +3709,7 @@ int Commit(int NC, int NR, int returncount)
 					else{
 						//Branch
 						if(ROBEntry ->isBranch == 1 ){
-						if( ROBEntry -> isCorrectPredict == 0){
+						if(ROBEntry -> isCorrectPredict == 0){
 							// move head to isafterbranch == 0
 							int i = 0;
 							ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
@@ -3787,6 +3785,7 @@ int Commit2(int NC, int NR, int returncount)
 	RegStatus *RegStatusEntry;
 	void *valuePtr = malloc(sizeof(double));
 	int robnum;
+	int rcount = returncount;
 		ROBEntry = cpu -> reorderBuffer2 -> items[cpu->reorderBuffer2 ->head];
 //		while(ROBEntry != NULL && NC != 0)
 		while (cpu->reorderBuffer2->count != 0 && NC != 0 )
@@ -3812,7 +3811,7 @@ int Commit2(int NC, int NR, int returncount)
 							removeDictionaryEntriesByKey(cpu -> renameRegInt2, &DestRenameReg);
 							printf("Committed instruction %d in integer register number %d with value %d \n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
-							returncount++;
+							rcount++;
 					}
 					else if(ROBEntry -> isINT == 0 && ROBEntry -> isStore == 0 && ROBEntry -> isBranch == 0){
 						int DestRenameReg, DestReg; float DestVal;
@@ -3829,7 +3828,7 @@ int Commit2(int NC, int NR, int returncount)
 							removeDictionaryEntriesByKey(cpu -> renameRegFP2, &DestRenameReg);
 							printf("Committed instruction %d in floating point register number %d with value %f\n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
-							returncount++;
+							rcount++;
 					}
 					else if(ROBEntry -> isStore == 1)
 					{
@@ -3844,7 +3843,7 @@ int Commit2(int NC, int NR, int returncount)
 							//removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction SD %d in memory address %d with value %d \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr, DestVal);
 							NC --;
-							returncount++;
+							rcount++;
 						}
 						else if(ROBEntry -> isINT == 0){
 							float DestVal; int DestRenameReg;
@@ -3858,7 +3857,7 @@ int Commit2(int NC, int NR, int returncount)
 							printf("Committed instruction S_D %d in memory address %d with value %f \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr, DestVal);							
 							//DestVal = 0;
 							NC --;
-							returncount++;
+							rcount++;
 						}
 					}
 					else{
@@ -3916,7 +3915,7 @@ int Commit2(int NC, int NR, int returncount)
 						
 						}
 						NC--;
-						returncount++;
+						rcount++;
 					}
 				}
 		else{
@@ -3926,7 +3925,7 @@ int Commit2(int NC, int NR, int returncount)
 		
 		ROBEntry = cpu -> reorderBuffer2-> items[cpu->reorderBuffer2->head];
 		}
-return returncount;
+return rcount;
 }
 
 
@@ -5118,14 +5117,13 @@ int writeBackUnit(int NB, int returncount){
 	ROB *ROBentry;
 	int isprog;
 	KeyRS *key = (KeyRS *)malloc(sizeof(KeyRS));
-
+	int rcount = returncount;
 	for (current = cpu -> WriteBackBuffer -> head; current != NULL && NB >= 0; current = current -> next){
       
 			instruction = (CompletedInstruction *)current -> value -> value;
 			isprog = instruction -> instruction -> isProg2;
-			printf("current instruction is from program - %d\n", isprog);
+		
 			if(isprog == 0){
-				printf("instruction in Writeback has ROB2_number  - %d\n", instruction ->ROB_number);
 				int j = 0;
 				key -> reorderNum = instruction ->ROB_number;
 				key -> progNum =  instruction-> instruction -> isProg2 + 1;
@@ -5141,7 +5139,7 @@ int writeBackUnit(int NB, int returncount){
 							}
 							if(ROBentry -> isStore == 1){
 								ROBentry -> DestAddr = instruction -> address;
-								printf("store address is updated in ROB.\n");
+								//printf("store address is updated in ROB.\n");
 							}
 							printf("instruction %d  with ROB_number - %d updated in reorder buffer \n", ROBentry -> instruction -> address, instruction -> ROB_number);
 						}
@@ -5153,10 +5151,10 @@ int writeBackUnit(int NB, int returncount){
 			updateOutputRES(instruction);
 			updateOutputRESresult(instruction);
 			removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, key);
-			returncount++;
+			rcount++;
 			}
 		}
-	return returncount;
+	return rcount;
 }
 
 // for prog 2
@@ -5168,16 +5166,15 @@ int writeBackUnit2(int NB, int returncount){
 	CompletedInstruction *instruction;
 	ROB *ROBentry;
 	int isprog;
+	int rcount = returncount;
 	//KeyRS *key = (KeyRS *) malloc(sizeof(KeyRS));
 	
 	for (current = cpu -> WriteBackBuffer -> head; current != NULL && NB >= 0; current = current -> next){
       
 			instruction = (CompletedInstruction *)current -> value -> value;
 			isprog = instruction -> instruction -> isProg2;
-			printf("current instruction is from program - %d\n", isprog);
 			if(isprog == 1){
 				
-				printf("instruction in Writeback has ROB2_number  - %d\n", instruction ->ROB_number);
 				int j = 0;
 				if (cpu -> reorderBuffer2 != NULL){
 					ROBentry = cpu-> reorderBuffer2 -> items[cpu->reorderBuffer2 -> head];
@@ -5191,7 +5188,7 @@ int writeBackUnit2(int NB, int returncount){
 							}
 							if(ROBentry -> isStore == 1){
 								ROBentry -> DestAddr = instruction -> address;
-								printf("store address is updated in ROB.\n");
+								//printf("store address is updated in ROB.\n");
 							}
 							printf("instruction %d  with ROB_number - %d updated in reorder buffer \n", ROBentry -> instruction -> address, instruction -> ROB_number);
 						}
@@ -5202,10 +5199,10 @@ int writeBackUnit2(int NB, int returncount){
 				}
 			updateOutputRES2(instruction);
 			updateOutputRESresult2(instruction);
-				returncount++;
+				rcount++;
 			}
 		}
-	return returncount;
+	return rcount;
 }
 	
 	
@@ -5218,10 +5215,10 @@ int CommitUnit(int NB, int NR)
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
 	commit_count = commitInstuctionCount();
 	
-	printf("Write Back and Commit---------------\n");
-	printf("commit count - %d, wb count - %d and NB - %d \t NR - %d\n", commit_count, wb_count, NB, NR);
+	//printf("Write Back and Commit---------------\n");
+	printf("commit count - %d, wb count - %d\n", commit_count, wb_count);
 	if(wb_count == 0 && commit_count == 0){
-		printf("No instruction in Writeback and in ROB for Commit.\n");
+		printf("No instruction in Writeback and in ROB for Commit(Program 1).\n");
 	}
 	else if(wb_count == 0 || commit_count >= NB)
 	{
@@ -5235,7 +5232,7 @@ int CommitUnit(int NB, int NR)
 			returncount = writeBackUnit(NB - commit_count, returncount);
 		}
 		
-		printf("returncount from prog 1 commit unit is %d\n", returncount);
+		printf("Count on CDB for program 1 is %d\n", returncount);
 		return returncount;
 		// divide NB
 }
@@ -5247,10 +5244,10 @@ int CommitUnit2(int NB, int NR)
 	wb_count = countDictionaryLen(cpu -> WriteBackBuffer);
 	commit_count = commitInstuctionCount2();
 	
-	printf("Write Back and Commit---------------\n");
+	//printf("Write Back and Commit---------------\n");
 	printf("commit count - %d, wb count - %d\n", commit_count, wb_count);
 	if(wb_count == 0 && commit_count == 0){
-		printf("No instruction in Writeback and in ROB for Commit.\n");
+		printf("No instruction in Writeback and in ROB for Commit(Program 2).\n");
 	}
 	else if(wb_count == 0 || commit_count >= NB)
 	{
@@ -5263,6 +5260,7 @@ int CommitUnit2(int NB, int NR)
 			returncount = Commit(commit_count, NR, returncount);
 			returncount = writeBackUnit2(NB - commit_count, returncount);
 		}
+		printf("Count on CDB for program 2 is %d\n", returncount);
 		return returncount;
 		// divide NB
 }
@@ -5294,7 +5292,6 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
 	insertintoWriteBackBuffer(NB);
 	//printf("Write Back Finish ---------------\n");
 	CommitUnit(NB, NR);
-	printDataCache ();
 	updateFetchBuffer();
     updateInstructionQueue();
     updateReservationStations();
@@ -5401,17 +5398,17 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	printf("Commit begins-----------\n");
 	int numCDB;
     if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
-        printf("Commit instructions in program 2.\n");
+        printf("Commit instructions from program 2.\n");
         numCDB = CommitUnit2(NB, NR);
         if (NB > numCDB){
-            printf("Commit instructions in program 1.\n");
+            printf("Commit instructions from program 1.\n");
             CommitUnit(NB - numCDB, NR);
         }
     }else{
-        printf("Commit instructions in program 1.\n");
+        printf("Commit instructions from program 1.\n");
         numCDB = CommitUnit(NB, NR);
         if (NB > numCDB){
-            printf("Commit instructions in program 2.\n");
+            printf("Commit instructions from program 2.\n");
             CommitUnit2(NB - numCDB, NR);
         }
     }
