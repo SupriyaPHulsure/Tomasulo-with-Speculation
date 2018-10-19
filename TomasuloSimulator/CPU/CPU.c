@@ -3370,7 +3370,7 @@ int Commit(int NC, int NR, int returncount)
 						if(ROBEntry -> isINT == 1){
 							int DestVal, DestRenameReg;
 							DestRenameReg = ROBEntry -> DestRenameReg;
-							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt2, &DestRenameReg);
+							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
 							DestVal = *((int *)Current -> value -> value);
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
 							*((int*)valuePtr) = DestVal; // value from rename register ;
@@ -3382,7 +3382,7 @@ int Commit(int NC, int NR, int returncount)
 						else if(ROBEntry -> isINT == 0){
 							float DestVal; int DestRenameReg;
 							DestRenameReg = ROBEntry -> DestRenameReg;
-							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP2, &DestRenameReg);
+							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP, &DestRenameReg);
 							DestVal = *((double *)Current -> value -> value);
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
 							*((double*)valuePtr) = (double) DestVal; // value from rename register ;
