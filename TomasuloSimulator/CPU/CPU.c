@@ -2329,6 +2329,7 @@ CompletedInstruction **execute(int NB){
                     }
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    instructionAndResult->instruction = rsmem -> instruction;
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
@@ -2944,6 +2945,7 @@ CompletedInstruction **execute2(int NB) {
                     rsmem -> isExecuting = 1;
                     rsmem -> address = rsmem -> Vj + instruction->immediate;
                     loadStallROBNumber = rsmem -> Dest;
+                    printf("rsmem Dest %d\n", rsmem -> Dest);
                     pipelineString = "Load/Store";
                     printPipeline(instruction, pipelineString, 1);
                 } else {
@@ -2975,7 +2977,9 @@ CompletedInstruction **execute2(int NB) {
                             }
                             if (j != -1 && !moveOn && RS -> isExecuting != 2) {
                                 instructionFoundOrBubble = 1;
+                                printf("RS Dest %d %d %d\n",RS->instruction->address,RS->instruction->isProg2, RS -> Dest);
                                 rsmem = RS;
+                                printf("rsmem Dest %d\n", rsmem -> Dest);
                             } else {
                                 dictEntry = dictEntry -> next;
                             }
@@ -2985,6 +2989,7 @@ CompletedInstruction **execute2(int NB) {
                     }
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    instructionAndResult->instruction = rsmem -> instruction;
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     if (instruction -> isProg2) {
@@ -3059,6 +3064,7 @@ CompletedInstruction **execute2(int NB) {
                     }
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    instructionAndResult->instruction = rsmem -> instruction;
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     if (instruction -> isProg2) {
@@ -4872,8 +4878,6 @@ void insertintoWriteBackBuffer(int NB)
 	{
 		cpu -> WriteBackBuffer = createDictionary(getHashCodeFromROBNumber, compareROBNumber);
 	}
-//	//TODO: don't return here, this is for testing execute(2)
-//	return;
 	if(unitOutputs != NULL){
 		if(unitOutputs[INT] != NULL){
 			instruction = unitOutputs[INT];
