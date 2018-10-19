@@ -2946,7 +2946,6 @@ CompletedInstruction **execute2(int NB) {
                     rsmem -> isExecuting = 1;
                     rsmem -> address = rsmem -> Vj + instruction->immediate;
                     loadStallROBNumber = rsmem -> Dest;
-                    printf("rsmem Dest %d\n", rsmem -> Dest);
                     pipelineString = "Load/Store";
                     printPipeline(instruction, pipelineString, 1);
                 } else {
@@ -2978,9 +2977,7 @@ CompletedInstruction **execute2(int NB) {
                             }
                             if (j != -1 && !moveOn && RS -> isExecuting != 2) {
                                 instructionFoundOrBubble = 1;
-                                printf("RS Dest %d %d %d\n",RS->instruction->address,RS->instruction->isProg2, RS -> Dest);
                                 rsmem = RS;
-                                printf("rsmem Dest %d\n", rsmem -> Dest);
                             } else {
                                 dictEntry = dictEntry -> next;
                             }
