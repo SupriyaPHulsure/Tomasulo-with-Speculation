@@ -2246,7 +2246,7 @@ CompletedInstruction **execute(int NB){
             key -> reorderNum = unitOutputs[FPadd] -> ROB_number;
             key -> progNum = unitOutputs[FPadd] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> intResult));
+            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> fpResult));
             removeDictionaryEntriesByKey (cpu -> resStaFPadd, key);
             pipelineString = "FPadd";
             printPipeline(unitOutputs[FPadd], pipelineString, 0);
@@ -2269,7 +2269,7 @@ CompletedInstruction **execute(int NB){
             key -> reorderNum = unitOutputs[FPmult] -> ROB_number;
             key -> progNum = unitOutputs[FPmult] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> intResult));
+            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> fpResult));
             removeDictionaryEntriesByKey (cpu -> resStaFPmult, key);
             pipelineString = "FPmult";
             printPipeline(unitOutputs[FPmult], pipelineString, 0);
@@ -2292,7 +2292,7 @@ CompletedInstruction **execute(int NB){
             key -> reorderNum = unitOutputs[FPdiv] -> ROB_number;
             key -> progNum = unitOutputs[FPdiv] -> instruction -> isProg2 + 1;
             removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> intResult));
+            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> fpResult));
             removeDictionaryEntriesByKey (cpu -> resStaFPdiv, key);
             pipelineString = "FPdiv";
             printPipeline(unitOutputs[FPdiv], pipelineString, 0);
@@ -2928,10 +2928,10 @@ CompletedInstruction **execute2(int NB) {
             key -> progNum = unitOutputs[FPadd] -> instruction -> isProg2 + 1;
             if (unitOutputs[FPadd] -> instruction -> isProg2) {
                 removeDictionaryEntriesByKey (cpu -> renameRegFP2, &(unitOutputs[FPadd] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> intResult));
+                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> fpResult));
             } else {
                 removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> intResult));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> fpResult));
             }
             removeDictionaryEntriesByKey (cpu -> resStaFPadd, key);
             pipelineString = "FPadd";
@@ -2956,10 +2956,10 @@ CompletedInstruction **execute2(int NB) {
             key -> progNum = unitOutputs[FPmult] -> instruction -> isProg2 + 1;
             if (unitOutputs[FPmult] -> instruction -> isProg2) {
                 removeDictionaryEntriesByKey (cpu -> renameRegFP2, &(unitOutputs[FPmult] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> intResult));
+                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> fpResult));
             } else {
                 removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> intResult));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> fpResult));
             }
             removeDictionaryEntriesByKey (cpu -> resStaFPmult, key);
             pipelineString = "FPmult";
@@ -2984,10 +2984,10 @@ CompletedInstruction **execute2(int NB) {
             key -> progNum = unitOutputs[FPdiv] -> instruction -> isProg2 + 1;
             if (unitOutputs[FPdiv] -> instruction -> isProg2) {
                 removeDictionaryEntriesByKey (cpu -> renameRegFP2, &(unitOutputs[FPdiv] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> intResult));
+                addDictionaryEntry (cpu -> renameRegFP2, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> fpResult));
             } else {
                 removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> intResult));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> fpResult));
             }
             removeDictionaryEntriesByKey (cpu -> resStaFPdiv, key);
             pipelineString = "FPdiv";
