@@ -3052,7 +3052,7 @@ CompletedInstruction **execute2(int NB) {
         if (BUPipelineTemp != NULL) {
             key -> reorderNum = BUPipelineTemp -> ROB_number;
             key -> progNum = BUPipelineTemp -> instruction -> isProg2 + 1;
-            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaBU, &(BUPipelineTemp -> ROB_number)) -> value -> value);
+            RSint *stalled = (RSint *)(getValueChainByDictionaryKey(cpu -> resStaBU, key) -> value -> value);
             stalled -> isExecuting = 0;
         }
     }
@@ -5082,10 +5082,10 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 
 
 
-	printf("Execution -----------\n");
+	printf("Execution begins -----------\n");
 	insertintoWriteBackBuffer2(NB);
-	//printf("Write Back Finish ---------------\n");
-	//CommitUnit(NB, NR);
+	printf("Write Back Finished ---------------\n");
+	printf("Commit begins-----------\n");
 	int numCDB;
     if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
         printf("Commit instructions from program 2.\n");
@@ -5102,6 +5102,7 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
             CommitUnit2(NB - numCDB, NR);
         }
     }
+    printf("Commit finished -----------\n");
    
 
 
