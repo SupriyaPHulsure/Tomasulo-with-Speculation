@@ -262,6 +262,11 @@ typedef struct _cpu {
     //Flag of program that last cycle fetch and next cycle decode
     int lastCycleFetchProgram;
     int nextCycleDecodeProgram;
+	
+	
+	//Commit counter
+	int commitCounter;
+	int commitCounter1;
 
 } CPU;
 
