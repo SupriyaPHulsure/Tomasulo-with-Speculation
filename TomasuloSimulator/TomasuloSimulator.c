@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
         printIntegerRegisters (); //print integer registers
         printFPRegisters (); //print floating point registers
 		
-		printf("Average utilization of CDB is - %f %\n", cpu -> avgutilization);
+		printf("Average utilization of CDB is - %f\n", cpu -> avgutilization);
 	}
 
 	if (argc == 3) {
