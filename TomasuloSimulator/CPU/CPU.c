@@ -1239,11 +1239,18 @@ int addInstruction2RSbranch(Dictionary *renameRegInt, Dictionary *resSta, Dictio
         RegStatus *RegStatusEntry = IntRegStatus[instruction->rs];
         if (RegStatusEntry->busy == 1){
             int robNum = RegStatusEntry -> reorderNum;
+            printf("ROB number is %d.\n", robNum);
             if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
                 DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey(renameRegInt, &(RegStatusEntry -> reorderNum));
+                printf("ROB number is %d.\n", RegStatusEntry -> reorderNum);
+
+                if(renameRegIntEntry == NULL){
+                    printf("NULL in renaming Reg.\n");
+                }
                 RS -> Vj = *((int *)renameRegIntEntry->value->value);
                 RS -> Qj = -1;
                 RS->isReady = 1;
+                printf("Begin step 7.\n");
             }
             else{
                 RS -> Qj = robNum;
@@ -1255,6 +1262,7 @@ int addInstruction2RSbranch(Dictionary *renameRegInt, Dictionary *resSta, Dictio
             RS->isReady = 1;
         }
         if (instruction->rt >= 0){
+
             RegStatus *RegStatusEntry = IntRegStatus[instruction->rt];
             if (RegStatusEntry->busy == 1){
                 int robNum = RegStatusEntry -> reorderNum;
@@ -1278,6 +1286,7 @@ int addInstruction2RSbranch(Dictionary *renameRegInt, Dictionary *resSta, Dictio
         }else{
             RS -> Qk = -1;
         }
+        printf("Begin step 2.\n");
         //Append to reservation stations
         KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
         keyRS->reorderNum = DestROBnum;
@@ -1312,15 +1321,18 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
 //        return 0;
 //    }
     if (maxLenBuff - counterUnit - counterUnitResult > 0){
+        printf("Step 1.\n");
         RS -> isReady = 1; //Will be set to 0 later if necessary
         int DestROBnum = cpu -> reorderBuffer->tail;
         RegStatus *RegStatusEntry = cpu -> IntRegStatus[instruction->rs];
         if (RegStatusEntry -> busy == 1) {
+            printf("Step 2.\n");
             int robNum = RegStatusEntry -> reorderNum;
             if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
                 DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey(cpu -> renameRegInt, &(RegStatusEntry -> reorderNum));
                 RS -> Vj = *((int *)renameRegIntEntry -> value -> value);
                 RS -> Qj = -1;
+                printf("Step 3.\n");
             }
             else{
                 RS -> Qj = robNum;
@@ -1330,19 +1342,27 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
             RS -> Vj = cpu->integerRegisters[instruction->rs]->data;
             RS -> Qj = -1;
         }
+        printf("Step 4.\n");
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         if (strcmp(buffType, "Store") == 0) {
             if (instruction -> op == S_D) {
                 RegStatusEntry = cpu -> FPRegStatus[instruction -> ft];
                 if (RegStatusEntry -> busy == 1){
+                    printf("Step 5.\n");
                     int robNum = RegStatusEntry -> reorderNum;
                     if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
-                        DictionaryEntry *renameRegFloatEntry = getValueChainByDictionaryKey (cpu -> renameRegFP, &instruction->ft);
+                        printf("Step 6.\n");
+                        DictionaryEntry *renameRegFloatEntry = getValueChainByDictionaryKey (cpu -> renameRegFP, &(RegStatusEntry -> reorderNum));
+                        if(renameRegFloatEntry==NULL){
+                            printf("renameRegFloatEntry is NULL.\n");
+                        }
                         RS -> fpVk = *((int *)renameRegFloatEntry -> value -> value);
                         RS -> Qk = -1;
+                        printf("Step 7.\n");
                     }
                     else{
+                        printf("Step 8.\n");
                         RS -> Qk = robNum;
                         RS->isReady = 0;
                     }
@@ -1355,7 +1375,7 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
                 if (RegStatusEntry -> busy == 1){
                     int robNum = RegStatusEntry -> reorderNum;
                     if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
-                        DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey (cpu -> renameRegInt, &instruction->rt);
+                        DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey (cpu -> renameRegInt, &(RegStatusEntry -> reorderNum));
                         RS -> iVk = *((int *)renameRegIntEntry -> value -> value);
                         RS -> Qk = -1;
                     }
@@ -1762,8 +1782,11 @@ int issueInstruction(Instruction *instruction){
         case DADDI:
         case DADD:
         case DSUB:
+            printf("Check if renameReg is full.\n");
             renameRegFull = renameRegIsFull(cpu->renameRegInt, instruction -> rd);
+
             if (renameRegFull!=1){
+                printf("renameReg is not full.\n");
                 rsType = "INT";
                 issued = addInstruction2RSint(cpu->renameRegInt, cpu->resStaInt, cpu->resStaIntResult, rsType, numberRSint,
                                             instruction, cpu->IntRegStatus);
@@ -1822,6 +1845,7 @@ int issueInstruction(Instruction *instruction){
         case SD:
         case S_D:
             rsType = "Store";
+            printf("Begin issuing store.\n");
             issued = addLoadStore2Buffer(cpu->storeBuffer, cpu->storeBufferResult,
                      rsType, numberBufferStore, instruction);
             break;
@@ -1830,6 +1854,7 @@ int issueInstruction(Instruction *instruction){
         case BEQ:
         case BEQZ:
             rsType = "BU";
+            printf("Begin issuing %s .\n", rsType);
             issued = addInstruction2RSbranch(cpu->renameRegInt, cpu->resStaBU, cpu->resStaBUResult, rsType, numberRSbu,
                                              instruction, cpu->IntRegStatus);
             break;
@@ -1951,11 +1976,14 @@ int issueUnit(int NW){
     Instruction *instruction;
     for(i=0; i<NW; i++){
         if((instruction = getHeadCircularQueue(cpu -> instructionQueue))!= NULL){
+            printf("Begin issuing this instruction.\n");
             issued = issueInstruction(instruction);
-            if (issued == 0)
+            if (issued == 0){
                 return i;
+            }
             else
                 dequeueCircular(cpu -> instructionQueue);
+                printf("Finish issued this instruction.\n");
         }
         else
             return i;
