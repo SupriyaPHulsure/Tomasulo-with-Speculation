@@ -4605,7 +4605,6 @@ void updateOutputRESresult(CompletedInstruction *instruction) {
                 }
             }
             for (tempEntry = cpu -> resStaFPmultResult -> head; tempEntry != NULL; tempEntry = tempEntry -> next){
-                tempEntry = cpu -> resStaFPmultResult -> head;
                 if (tempEntry != NULL) {
                     RSfloat = tempEntry -> value -> value;
 					isProg2 = RSfloat ->instruction-> isProg2;
