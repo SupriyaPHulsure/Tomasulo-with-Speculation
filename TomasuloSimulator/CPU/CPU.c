@@ -1346,16 +1346,18 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         if (strcmp(buffType, "Store") == 0) {
+            printf("Store.\n");
             if (instruction -> op == S_D) {
                 RegStatusEntry = cpu -> FPRegStatus[instruction -> ft];
+                printf("FPReg numer: %d\n", instruction -> ft);
                 if (RegStatusEntry -> busy == 1){
                     int robNum = RegStatusEntry -> reorderNum;
+                    printf("ROB number: %d\n", robNum);
                     if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
                         DictionaryEntry *renameRegFloatEntry = getValueChainByDictionaryKey (cpu -> renameRegFP, &(RegStatusEntry -> reorderNum));
-                        if(renameRegFloatEntry==NULL){
-                            printf("renameRegFloatEntry is NULL.\n");
-                        }
-                        RS -> fpVk = *((int *)renameRegFloatEntry -> value -> value);
+
+                        RS -> fpVk = *((double *)renameRegFloatEntry -> value -> value);
+                        printf("fpVk: %f.\n", RS -> fpVk);
                         RS -> Qk = -1;
                     }
                     else{
@@ -1691,7 +1693,7 @@ int addLoadStore2Buffer2(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
                     int robNum = RegStatusEntry -> reorderNum;
                     if (((ROB *)cpu -> reorderBuffer2 -> items[robNum]) -> isReady == 1){
                         DictionaryEntry *renameRegFloatEntry = getValueChainByDictionaryKey (cpu -> renameRegFP2, &(RegStatusEntry -> reorderNum));
-                        RS -> fpVk = *((int *)renameRegFloatEntry -> value -> value);
+                        RS -> fpVk = *((double *)renameRegFloatEntry -> value -> value);
                         RS -> Qk = -1;
                     }
                     else{
