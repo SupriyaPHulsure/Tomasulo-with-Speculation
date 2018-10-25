@@ -1243,18 +1243,11 @@ int addInstruction2RSbranch(Dictionary *renameRegInt, Dictionary *resSta, Dictio
         RegStatus *RegStatusEntry = IntRegStatus[instruction->rs];
         if (RegStatusEntry->busy == 1){
             int robNum = RegStatusEntry -> reorderNum;
-            printf("ROB number is %d.\n", robNum);
             if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
                 DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey(renameRegInt, &(RegStatusEntry -> reorderNum));
-                printf("ROB number is %d.\n", RegStatusEntry -> reorderNum);
-
-                if(renameRegIntEntry == NULL){
-                    printf("NULL in renaming Reg.\n");
-                }
                 RS -> Vj = *((int *)renameRegIntEntry->value->value);
                 RS -> Qj = -1;
                 RS->isReady = 1;
-                printf("Begin step 7.\n");
             }
             else{
                 RS -> Qj = robNum;
@@ -1290,7 +1283,6 @@ int addInstruction2RSbranch(Dictionary *renameRegInt, Dictionary *resSta, Dictio
         }else{
             RS -> Qk = -1;
         }
-        printf("Begin step 2.\n");
         //Append to reservation stations
         KeyRS *keyRS = (KeyRS*)malloc(sizeof(KeyRS));
         keyRS->reorderNum = DestROBnum;
@@ -1346,18 +1338,13 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         if (strcmp(buffType, "Store") == 0) {
-            printf("Store.\n");
             if (instruction -> op == S_D) {
                 RegStatusEntry = cpu -> FPRegStatus[instruction -> ft];
-                printf("FPReg numer: %d\n", instruction -> ft);
                 if (RegStatusEntry -> busy == 1){
                     int robNum = RegStatusEntry -> reorderNum;
-                    printf("ROB number: %d\n", robNum);
                     if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
                         DictionaryEntry *renameRegFloatEntry = getValueChainByDictionaryKey (cpu -> renameRegFP, &(RegStatusEntry -> reorderNum));
-
                         RS -> fpVk = *((double *)renameRegFloatEntry -> value -> value);
-                        printf("fpVk: %f.\n", RS -> fpVk);
                         RS -> Qk = -1;
                     }
                     else{
