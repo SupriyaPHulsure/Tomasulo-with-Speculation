@@ -209,10 +209,7 @@ void initializeCPU (int NI, int NR) {
     //Initialize flag of program that last next cycle fetched and next cycle decodes
     cpu->lastCycleFetchProgram = 0;
     cpu->nextCycleDecodeProgram = 0;
-	
-	//Initialize commit counter
-	cpu -> commitCounter = 0;
-	cpu -> commitCounter1 = 0;
+
 }
 
 //Fetch Instructions Unit
@@ -1697,7 +1694,7 @@ int addLoadStore2Buffer2(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
                 if (RegStatusEntry -> busy == 1){
                     int robNum = RegStatusEntry -> reorderNum;
                     if (((ROB *)cpu -> reorderBuffer2 -> items[robNum]) -> isReady == 1){
-                        DictionaryEntry *renameRegFloatEntry = getValueChainByDictionaryKey (cpu -> renameRegFP2, &instruction->ft);
+                        DictionaryEntry *renameRegFloatEntry = getValueChainByDictionaryKey (cpu -> renameRegFP2, &(RegStatusEntry -> reorderNum));
                         RS -> fpVk = *((int *)renameRegFloatEntry -> value -> value);
                         RS -> Qk = -1;
                     }
@@ -1714,7 +1711,7 @@ int addLoadStore2Buffer2(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
                 if (RegStatusEntry -> busy == 1){
                     int robNum = RegStatusEntry -> reorderNum;
                     if (((ROB *)cpu -> reorderBuffer2 -> items[robNum]) -> isReady == 1){
-                        DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey (cpu -> renameRegInt2, &instruction->rt);
+                        DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey (cpu -> renameRegInt2, &(RegStatusEntry -> reorderNum));
                         RS -> iVk = *((int *)renameRegIntEntry -> value -> value);
                         RS -> Qk = -1;
                     }
@@ -3702,7 +3699,6 @@ int Commit(int NC, int NR, int returncount)
 				//printf("Checking instruction %d for commiting\n", ROBEntry -> instruction -> address);
 				if((strcmp(ROBEntry -> state, "W") == 0) && ROBEntry -> isReady == 1)
 				{
-					robnum = cpu->reorderBuffer -> head;
 					ROBEntry = dequeueCircular(cpu -> reorderBuffer);
 					//printf("Checked instruction %d for commiting\n", ROBEntry -> instruction -> address);
 					if(ROBEntry -> isINT == 1 && ROBEntry -> isStore == 0 && ROBEntry -> isBranch == 0){
@@ -3713,8 +3709,8 @@ int Commit(int NC, int NR, int returncount)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
-							//robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
-							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
+							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
+							//printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, cpu->reorderBuffer->head);
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
@@ -3731,8 +3727,7 @@ int Commit(int NC, int NR, int returncount)
 							DestVal = *((double *)Current -> value -> value);
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
-							//robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
-							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
+							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
@@ -5329,14 +5324,12 @@ int CommitUnit(int NB, int NR)
 	else if(wb_count == 0 || commit_count >= NB)
 	{
 		returncount = Commit(NB, NR, returncount);
-		cpu->commitCounter += returncount;
 	}
 	else if(commit_count == 0 || wb_count >= NB ){
 		returncount = writeBackUnit(NB, returncount);
 	}
 	else{
 			returncount = Commit(commit_count, NR, returncount);
-			cpu->commitCounter += returncount;
 			returncount = writeBackUnit(NB - commit_count, returncount);
 		}
 		
@@ -5362,14 +5355,12 @@ int CommitUnit2(int NB, int NR)
 	else if(wb_count == 0 || commit_count >= NB)
 	{
 		returncount = Commit2(NB, NR, returncount);
-		cpu->commitCounter1 += returncount;
 	}
 	else if(commit_count == 0 || wb_count >= NB ){
 		returncount = writeBackUnit2(NB, returncount);
 	}
 	else{
 			returncount = Commit2(commit_count, NR, returncount);
-			cpu->commitCounter1 += returncount;
 			returncount = writeBackUnit2(NB - commit_count, returncount);
 		}
 		printf("Count on CDB for program 2 is %d\n", returncount);
@@ -5415,9 +5406,7 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
     updateReservationStations();
 
     printf("Finished update.\n");
-	printf("--------------------------------------------------------\n");
-	printf("Commited instructions Count is %d\n", cpu->commitCounter);
-	printf("--------------------------------------------------------\n");
+
     isEnd = checkEnd();
 
 	if(isEnd==1){
@@ -5535,7 +5524,7 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	cpu -> percentutilizationpercycle = cpu -> percentutilizationpercycle  + perutilization *(int)(100/NB);
     printf("Commit finished -----------\n");
 	calculate(cpu -> percentutilizationpercycle);
-	
+
 
     updateFetchBuffer();
     updateInstructionQueue();
@@ -5545,17 +5534,11 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
     printf("Finished update.\n");
     cpu->lastCycleFetchProgram = cpu->nextCycleDecodeProgram;
     cpu->nextCycleDecodeProgram = 0;
-	
-	//show commited instructions count
-	printf("-----------------------------------------------------------------------\n");
-	printf("Commited instructions Count for program 1 is %d\n", cpu->commitCounter);
-	printf("Commited instructions Count for program 2 is %d\n", cpu->commitCounter1);
-	printf("-----------------------------------------------------------------------\n");
-	
+
     isEnd1 = checkEnd();
     isEnd2 = checkEnd2();
     //printf("isEnd1: %d; isEnd2: %d\n", isEnd1, isEnd2);
-	
+
 	if((isEnd1==1) & (isEnd2 == 1)){
 	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
 	    printf("Stalls due to full Reservation Stations: %d\n", cpu -> stallFullRS);
