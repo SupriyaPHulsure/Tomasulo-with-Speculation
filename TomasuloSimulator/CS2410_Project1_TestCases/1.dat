@@ -1,0 +1,33 @@
+LD R1, 0(R0)
+LD R2, 4(R0)
+LD R3, 8(R0)
+LD R4, 12(R0)
+LD R5, 16(R0)
+LD R6, 20(R0)
+LD R7, 24(R0)
+LD R8, 28(R0)
+AND R9, R1, R2
+ANDI R10, R2, 2
+OR R11, R3, R4
+ORI R12, R5, 2
+SLT R13, R11, R12
+OR R14, R13, R0
+SLTI R14, R14, 7
+DADD R15, R6, R7
+DSUB R16, R7, R8
+DMUL R17, R7, R8
+SD R12, 100(R0)
+SD R13, 104(R0)
+SD R14, 108(R0)
+DATA
+Mem(0) = 1.0
+Mem(4) = 2.0
+Mem(8) = 3.0
+Mem(12) = 4.0
+Mem(16) = 5.0
+Mem(20) = 6.0
+Mem(24) = 7.0
+Mem(28) = 8.0
+Mem(100) = 0.0
+Mem(104) = 0.0
+Mem(108) = 0.0
