@@ -1406,7 +1406,7 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
                 removeDictionaryEntriesByKey(cpu -> renameRegFP, &(RS -> Dest));
                 addDictionaryEntry(cpu -> renameRegFP, &(RS -> Dest), valuePtr);
             } else {
-                RegStatusEntry = cpu -> FPRegStatus[instruction -> rt];
+                RegStatusEntry = cpu -> IntRegStatus[instruction -> rt];
                 RegStatusEntry->busy = 1;
         		RegStatusEntry->reorderNum = DestROBnum;
                 void *valuePtr = malloc(sizeof(int));
@@ -1742,7 +1742,7 @@ int addLoadStore2Buffer2(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
                 removeDictionaryEntriesByKey(cpu -> renameRegFP2, &(RS -> Dest));
                 addDictionaryEntry(cpu -> renameRegFP2, &(RS -> Dest), valuePtr);
             } else {
-                RegStatusEntry = cpu -> FPRegStatus2[instruction -> rt];
+                RegStatusEntry = cpu -> IntRegStatus2[instruction -> rt];
                 RegStatusEntry->busy = 1;
         		RegStatusEntry->reorderNum = DestROBnum;
                 void *valuePtr = malloc(sizeof(int));
