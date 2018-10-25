@@ -2366,32 +2366,35 @@ CompletedInstruction **execute(int NB){
                 dictEntry = cpu -> loadBuffer -> head;
                 instructionFoundOrBubble = 0;
                 while (!instructionFoundOrBubble) { //1 for instruction, 2 for bubble
-                    RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
-                    if (RS == NULL) {
+
+                    if (dictEntry == NULL) {
                         instructionFoundOrBubble = 2;
-                        continue;
-                    }
-                    if (RS -> isReady && RS -> address != -1) {
-                        for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
-                            if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)])) -> DestAddr == RS -> address) {
-                                j = -1; //break out of for loop
+
+                    } else {
+                        RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+                        if (RS -> isReady && RS -> address != -1) {
+                            for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
+                                if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)])) -> DestAddr == RS -> address) {
+                                    j = -2; //break out of for loop
+                                }
                             }
-                        }
-                        moveOn = 0;
-                        if (rsmem != NULL && RS->Dest == rsmem -> Dest) {
-                            moveOn = 1;
-                        }
-                        if (j != -1 && !moveOn && RS -> isExecuting != 2) {
-                            instructionFoundOrBubble = 1;
-                            rsmem = RS;
+                            moveOn = 0;
+                            if (rsmem != NULL && RS->Dest == rsmem -> Dest) {
+                                moveOn = 1;
+                            }
+                            if (j != -1 && !moveOn && RS -> isExecuting != 2) {
+                                instructionFoundOrBubble = 1;
+                                rsmem = RS;
+                            } else {
+                                dictEntry = dictEntry -> next;
+                            }
                         } else {
                             dictEntry = dictEntry -> next;
                         }
-                    } else {
-                        dictEntry = dictEntry -> next;
                     }
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    instructionAndResult->instruction = rsmem -> instruction;
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
@@ -3020,7 +3023,6 @@ CompletedInstruction **execute2(int NB) {
                     rsmem -> isExecuting = 1;
                     rsmem -> address = rsmem -> Vj + instruction->immediate;
                     loadStallROBNumber = rsmem -> Dest;
-                    printf("rsmem Dest %d\n", rsmem -> Dest);
                     pipelineString = "Load/Store";
                     printPipeline(instruction, pipelineString, 1);
                 } else {
@@ -3036,30 +3038,33 @@ CompletedInstruction **execute2(int NB) {
                 dictEntry = cpu -> loadBuffer -> head;
                 instructionFoundOrBubble = 0;
                 while (!instructionFoundOrBubble) { //1 for instruction, 2 for bubble
-                    RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
-                    if (RS == NULL) {
+
+                    if (dictEntry == NULL) {
                         instructionFoundOrBubble = 2;
-                        continue;
-                    }
-                    if (RS -> isReady && RS -> address != -1) {
-                        for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
-                            if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)])) -> DestAddr == RS -> address) {
-                                j = -1; //break out of for loop
+
+                    } else {
+                        RS = (RSmem *)((DictionaryEntry *)dictEntry -> value -> value);
+                        if (RS -> isReady && RS -> address != -1) {
+                            for (j = 0; j < buff -> count && j < ((RS->Dest - buff->head)%buff->size) && j != -1; j++) {
+                                if (((ROB *)(buff -> items[(buff -> head + j) % (buff->size)])) -> DestAddr == RS -> address) {
+                                    j = -2; //break out of for loop
+                                }
                             }
-                        }
-                        moveOn = 0;
-                        if (rsmem != NULL && RS->Dest == rsmem -> Dest) {
-                            moveOn = 1;
-                        }
-                        if (j != -1 && !moveOn && RS -> isExecuting != 2) {
-                            instructionFoundOrBubble = 1;
-                            rsmem = RS;
+                            moveOn = 0;
+                            if (rsmem != NULL && RS->Dest == rsmem -> Dest) {
+                                moveOn = 1;
+                            }
+                            if (j != -1 && !moveOn && RS -> isExecuting != 2) {
+                                instructionFoundOrBubble = 1;
+                                rsmem = RS;
+                            } else {
+                                dictEntry = dictEntry -> next;
+                            }
                         } else {
                             dictEntry = dictEntry -> next;
                         }
-                    } else {
-                        dictEntry = dictEntry -> next;
                     }
+
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
                     instructionAndResult->instruction = rsmem -> instruction;
