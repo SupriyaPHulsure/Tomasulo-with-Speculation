@@ -3695,6 +3695,7 @@ int Commit(int NC, int NR, int returncount)
 				//printf("Checking instruction %d for commiting\n", ROBEntry -> instruction -> address);
 				if((strcmp(ROBEntry -> state, "W") == 0) && ROBEntry -> isReady == 1)
 				{
+				    robnum = cpu->reorderBuffer ->head;
 					ROBEntry = dequeueCircular(cpu -> reorderBuffer);
 					//printf("Checked instruction %d for commiting\n", ROBEntry -> instruction -> address);
 					if(ROBEntry -> isINT == 1 && ROBEntry -> isStore == 0 && ROBEntry -> isBranch == 0){
