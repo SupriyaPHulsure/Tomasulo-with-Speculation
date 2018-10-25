@@ -3689,13 +3689,13 @@ int Commit(int NC, int NR, int returncount)
 	// commit instructions from ROB
 	ROB * ROBEntry;
 	RegStatus *RegStatusEntry;
-	void *valuePtr = malloc(sizeof(double));
 	int robnum;
 	int rcount = returncount;
 		ROBEntry = cpu -> reorderBuffer -> items[cpu->reorderBuffer ->head];
 //		while(ROBEntry != NULL && NC != 0)
 		while (cpu->reorderBuffer->count != 0 && NC != 0)
 		{
+		        void *valuePtr = malloc(sizeof(double));
 				//printf("Checking instruction %d for commiting\n", ROBEntry -> instruction -> address);
 				if((strcmp(ROBEntry -> state, "W") == 0) && ROBEntry -> isReady == 1)
 				{
@@ -3745,14 +3745,14 @@ int Commit(int NC, int NR, int returncount)
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt, &DestRenameReg);
 							DestVal = *((int *)Current -> value -> value);
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
-							*((int*)valuePtr) = DestVal; // value from rename register ;
+							*((double*)valuePtr) = (double)DestVal; // value from rename register ;
 							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
 							printf("Committed instruction SD %d in memory address %d \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr);
 							NC --;
 							rcount++;
 						}
 						else if(ROBEntry -> isINT == 0){
-							float DestVal; int DestRenameReg;
+							double DestVal; int DestRenameReg;
 							DestRenameReg = ROBEntry -> DestRenameReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP, &DestRenameReg);
 							DestVal = *((double *)Current -> value -> value);
