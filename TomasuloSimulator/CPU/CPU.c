@@ -5775,15 +5775,18 @@ void calculate(int sumutilized)
 int checkEnd(){
     //check whether PC exceeds last instruction in cache
     int fetchEnd = 0;
-    int robCount, iQueueCount;
+    int robCount, iQueueCount, fetchBufferCount;
     if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))) {
         fetchEnd = 1;
     }
-    //Check whether all instructions in ROB have been committed
+    //Check whether all instructions are issued
     iQueueCount = getCountCircularQueue(cpu->instructionQueue);
+    //Check whether all instructions in ROB have been committed
     robCount = getCountCircularQueue(cpu->reorderBuffer);
+    //Check whether all instructions are decoded
+    fetchBufferCount = countDictionaryLen(cpu->fetchBuffer);
 
-    if((fetchEnd==1)&&(robCount==0)&&iQueueCount == 0){
+    if((fetchEnd==1)&&(robCount==0)&&(iQueueCount == 0)&&(fetchBufferCount==0)){
         return 1;
     }else{
         return 0;

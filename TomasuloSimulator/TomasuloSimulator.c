@@ -105,9 +105,7 @@ int main(int argc, char** argv) {
         int test_cycle;
 
 
-//        for (test_cycle = 0; test_cycle < 45; test_cycle ++){
         while(runClockCycle2 (NF, NW, NB, NR)){
-//            runClockCycle2 (NF, NW, NB, NR);
             printInstructionQueue();
             printInstructionQueue2();
             printReservationStations();
