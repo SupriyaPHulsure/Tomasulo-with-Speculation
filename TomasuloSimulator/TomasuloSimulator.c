@@ -122,6 +122,7 @@ int main(int argc, char** argv) {
 		printf("Average utilization of CDB is - %f %\n", cpu -> avgutilization);
 
 		 printDataCache (); //print data cache
+		 printDataCache2 ();
 
 
         printIntegerRegisters (); //print integer registers
