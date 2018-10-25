@@ -3705,12 +3705,7 @@ int Commit(int NC, int NR, int returncount)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
-<<<<<<< HEAD
 							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
-=======
-							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
-							//printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, cpu->reorderBuffer->head);
->>>>>>> d56ad644b7a7d19555093f685435f1dd8367e236
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
@@ -3727,11 +3722,7 @@ int Commit(int NC, int NR, int returncount)
 							DestVal = *((double *)Current -> value -> value);
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
-<<<<<<< HEAD
 							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
-=======
-							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
->>>>>>> d56ad644b7a7d19555093f685435f1dd8367e236
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
