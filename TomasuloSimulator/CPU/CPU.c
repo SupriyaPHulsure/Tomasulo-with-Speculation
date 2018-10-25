@@ -209,6 +209,10 @@ void initializeCPU (int NI, int NR) {
     //Initialize flag of program that last next cycle fetched and next cycle decodes
     cpu->lastCycleFetchProgram = 0;
     cpu->nextCycleDecodeProgram = 0;
+	
+	//Initialize commit counter
+	cpu -> commitCounter = 0;
+	cpu -> commitCounter1 = 0;
 
 }
 
@@ -3701,8 +3705,12 @@ int Commit(int NC, int NR, int returncount)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
+<<<<<<< HEAD
+							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
+=======
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
 							//printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, cpu->reorderBuffer->head);
+>>>>>>> d56ad644b7a7d19555093f685435f1dd8367e236
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
@@ -3719,7 +3727,11 @@ int Commit(int NC, int NR, int returncount)
 							DestVal = *((double *)Current -> value -> value);
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
+<<<<<<< HEAD
+							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
+=======
 							robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
+>>>>>>> d56ad644b7a7d19555093f685435f1dd8367e236
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
@@ -3834,16 +3846,17 @@ int Commit2(int NC, int NR, int returncount)
 	// commit instructions from ROB
 	ROB * ROBEntry;
 	RegStatus *RegStatusEntry;
-	void *valuePtr = malloc(sizeof(double));
 	int robnum;
 	int rcount = returncount;
 		ROBEntry = cpu -> reorderBuffer2 -> items[cpu->reorderBuffer2 ->head];
 //		while(ROBEntry != NULL && NC != 0)
 		while (cpu->reorderBuffer2->count != 0 && NC != 0 )
 		{
+	            void *valuePtr = malloc(sizeof(double));
 				//printf("Checking instruction %d for commiting\n", ROBEntry -> instruction -> address);
 				if((strcmp(ROBEntry -> state, "W") == 0) && ROBEntry -> isReady == 1)
 				{
+					robnum = cpu->reorderBuffer -> head;
 					ROBEntry = dequeueCircular(cpu -> reorderBuffer2);
 					//printf("Checked instruction %d for commiting\n", ROBEntry -> instruction -> address);
 					if(ROBEntry -> isINT == 1 && ROBEntry -> isStore == 0 && ROBEntry -> isBranch == 0){
@@ -3854,8 +3867,8 @@ int Commit2(int NC, int NR, int returncount)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters2 [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus2[DestReg];
-							robnum = (cpu->reorderBuffer2 -> head - 1)%cpu->reorderBuffer2->size;
-							//printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, cpu->reorderBuffer->head);
+							//robnum = (cpu->reorderBuffer2 -> head - 1)%cpu->reorderBuffer2->size;
+							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
@@ -3872,7 +3885,8 @@ int Commit2(int NC, int NR, int returncount)
 							DestVal = *((double *)Current -> value -> value);
 							cpu -> floatingPointRegisters2 [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus2[DestReg];
-							robnum = (cpu->reorderBuffer2 -> head - 1)%cpu->reorderBuffer2->size;
+							//robnum = (cpu->reorderBuffer2 -> head - 1)%cpu->reorderBuffer2->size;
+							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
@@ -3889,9 +3903,8 @@ int Commit2(int NC, int NR, int returncount)
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegInt2, &DestRenameReg);
 							DestVal = *((int *)Current -> value -> value);
 							removeDictionaryEntriesByKey (dataCache2, &(ROBEntry -> DestAddr));
-							*((int*)valuePtr) = DestVal; // value from rename register ;
+							*((double*)valuePtr) = (double)DestVal; // value from rename register ;
 							addDictionaryEntry (dataCache2, &(ROBEntry -> DestAddr), valuePtr);
-							//removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction SD %d in memory address %d with value %d \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr, DestVal);
 							NC --;
 							rcount++;
@@ -5316,12 +5329,14 @@ int CommitUnit(int NB, int NR)
 	else if(wb_count == 0 || commit_count >= NB)
 	{
 		returncount = Commit(NB, NR, returncount);
+		cpu->commitCounter += returncount;
 	}
 	else if(commit_count == 0 || wb_count >= NB ){
 		returncount = writeBackUnit(NB, returncount);
 	}
 	else{
 			returncount = Commit(commit_count, NR, returncount);
+			cpu->commitCounter += returncount;
 			returncount = writeBackUnit(NB - commit_count, returncount);
 		}
 		
@@ -5347,12 +5362,14 @@ int CommitUnit2(int NB, int NR)
 	else if(wb_count == 0 || commit_count >= NB)
 	{
 		returncount = Commit2(NB, NR, returncount);
+		cpu->commitCounter1 += returncount;
 	}
 	else if(commit_count == 0 || wb_count >= NB ){
 		returncount = writeBackUnit2(NB, returncount);
 	}
 	else{
 			returncount = Commit2(commit_count, NR, returncount);
+			cpu->commitCounter1 += returncount;
 			returncount = writeBackUnit2(NB - commit_count, returncount);
 		}
 		printf("Count on CDB for program 2 is %d\n", returncount);
@@ -5399,12 +5416,16 @@ int runClockCycle (int NF, int NW, int NB, int NR) {
 
     printf("Finished update.\n");
 
+	
+	
+
     isEnd = checkEnd();
 
 	if(isEnd==1){
 	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
 	    printf("Stalls due to full Reservation Stations: %d\n", cpu -> stallFullRS);
 	    printf("Stalls due to full Reorder Buffer: %d\n", cpu -> stallFullROB);
+		printf("Commited instructions Count is %d\n", cpu->commitCounter);
 	    return 0;
 	}else
 	    return 1;
@@ -5527,6 +5548,9 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
     cpu->lastCycleFetchProgram = cpu->nextCycleDecodeProgram;
     cpu->nextCycleDecodeProgram = 0;
 
+	
+	
+	
     isEnd1 = checkEnd();
     isEnd2 = checkEnd2();
     //printf("isEnd1: %d; isEnd2: %d\n", isEnd1, isEnd2);
@@ -5535,6 +5559,8 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
 	    printf("Stalls due to full Reservation Stations: %d\n", cpu -> stallFullRS);
 	    printf("Stalls due to full Reorder Buffer: %d\n", cpu -> stallFullROB);
+		printf("Commited instructions Count for program 1 is %d\n", cpu->commitCounter);
+		printf("Commited instructions Count for program 2 is %d\n", cpu->commitCounter1);
 	    return 0;
 	}else
 	    return 1;
