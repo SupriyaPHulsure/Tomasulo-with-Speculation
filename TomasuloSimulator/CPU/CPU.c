@@ -3685,7 +3685,6 @@ int Commit(int NC, int NR, int returncount)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus[DestReg];
-							//robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
 							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
@@ -3703,7 +3702,6 @@ int Commit(int NC, int NR, int returncount)
 							DestVal = *((double *)Current -> value -> value);
 							cpu -> floatingPointRegisters [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus[DestReg];
-							//robnum = (cpu->reorderBuffer -> head - 1)%cpu->reorderBuffer->size;
 							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
@@ -3829,6 +3827,7 @@ int Commit2(int NC, int NR, int returncount)
 				//printf("Checking instruction %d for commiting\n", ROBEntry -> instruction -> address);
 				if((strcmp(ROBEntry -> state, "W") == 0) && ROBEntry -> isReady == 1)
 				{
+					robnum = cpu->reorderBuffer -> head;
 					ROBEntry = dequeueCircular(cpu -> reorderBuffer2);
 					//printf("Checked instruction %d for commiting\n", ROBEntry -> instruction -> address);
 					if(ROBEntry -> isINT == 1 && ROBEntry -> isStore == 0 && ROBEntry -> isBranch == 0){
@@ -3839,8 +3838,8 @@ int Commit2(int NC, int NR, int returncount)
 							DestVal = *((int *)Current -> value -> value);
 							cpu -> integerRegisters2 [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> IntRegStatus2[DestReg];
-							robnum = (cpu->reorderBuffer2 -> head - 1)%cpu->reorderBuffer2->size;
-							//printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, cpu->reorderBuffer->head);
+							//robnum = (cpu->reorderBuffer2 -> head - 1)%cpu->reorderBuffer2->size;
+							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
@@ -3857,7 +3856,8 @@ int Commit2(int NC, int NR, int returncount)
 							DestVal = *((double *)Current -> value -> value);
 							cpu -> floatingPointRegisters2 [DestReg] -> data = DestVal;
 							RegStatusEntry = cpu -> FPRegStatus2[DestReg];
-							robnum = (cpu->reorderBuffer2 -> head - 1)%cpu->reorderBuffer2->size;
+							//robnum = (cpu->reorderBuffer2 -> head - 1)%cpu->reorderBuffer2->size;
+							printf("reg status rob muber - %d\t Commit instruction ROB number - %d\n",RegStatusEntry -> reorderNum, robnum);
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
