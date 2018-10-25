@@ -3762,6 +3762,7 @@ int Commit(int NC, int NR, int returncount)
 								ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
 								robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
 								if(ROBentrySecond != NULL){
+									
 									if(robnum == cpu -> reorderBuffer -> tail){
 										printf("ROB is empty now\n");
 										//cpu -> reorderBuffer -> head = cpu -> reorderBuffer -> tail;
@@ -3782,6 +3783,8 @@ int Commit(int NC, int NR, int returncount)
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, robnumkey); 
 										}
+									
+										//if(cpu -> IntRegStatus )
 										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &(robnum))  != NULL){
 											removeDictionaryEntriesByKey(cpu -> renameRegInt, &(robnum)); 
 										}
@@ -3789,6 +3792,25 @@ int Commit(int NC, int NR, int returncount)
 											removeDictionaryEntriesByKey(cpu -> renameRegFP, &(robnum)); 
 										}
 										
+										if(ROBentrySecond -> isINT == 1){
+											int j = 0;
+											for (j = 0; j < numberOfIntRegisters; j++) {
+												if(cpu -> IntRegStatus [j] -> reorderNum == robnum)
+												{
+													cpu -> IntRegStatus [j] -> busy = 0;
+												}
+											}
+										}
+										else 
+										{
+											int k = 0;
+											for (k = 0; k < numberOfFPRegisters; k++) {
+												if(cpu -> FPRegStatus [k] -> reorderNum == robnum)
+												{
+													cpu -> FPRegStatus [k] -> busy = 0;
+												}
+											}
+										}
 										//go to next
 									}
 									i++;
@@ -3837,7 +3859,7 @@ int Commit2(int NC, int NR, int returncount)
 				//printf("Checking instruction %d for commiting\n", ROBEntry -> instruction -> address);
 				if((strcmp(ROBEntry -> state, "W") == 0) && ROBEntry -> isReady == 1)
 				{
-					robnum = cpu->reorderBuffer -> head;
+					robnum = cpu->reorderBuffer2 -> head;
 					ROBEntry = dequeueCircular(cpu -> reorderBuffer2);
 					//printf("Checked instruction %d for commiting\n", ROBEntry -> instruction -> address);
 					if(ROBEntry -> isINT == 1 && ROBEntry -> isStore == 0 && ROBEntry -> isBranch == 0){
@@ -3943,7 +3965,25 @@ int Commit2(int NC, int NR, int returncount)
 										else if(getValueChainByDictionaryKey(cpu -> renameRegFP2, &(robnum)) != NULL){
 											removeDictionaryEntriesByKey(cpu -> renameRegFP2, &(robnum)); 
 										}
-										
+										if(ROBentrySecond -> isINT == 1){
+											int j = 0;
+											for (j = 0; j < numberOfIntRegisters; j++) {
+												if(cpu -> IntRegStatus2 [j] -> reorderNum == robnum)
+												{
+													cpu -> IntRegStatus2 [j] -> busy = 0;
+												}
+											}
+										}
+										else 
+										{
+											int k = 0;
+											for (k = 0; k < numberOfFPRegisters; k++) {
+												if(cpu -> FPRegStatus2 [k] -> reorderNum == robnum)
+												{
+													cpu -> FPRegStatus2 [k] -> busy = 0;
+												}
+											}
+										}
 										//go to next
 									}
 									i++;
