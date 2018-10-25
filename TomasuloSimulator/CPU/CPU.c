@@ -1321,18 +1321,15 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
 //        return 0;
 //    }
     if (maxLenBuff - counterUnit - counterUnitResult > 0){
-        printf("Step 1.\n");
         RS -> isReady = 1; //Will be set to 0 later if necessary
         int DestROBnum = cpu -> reorderBuffer->tail;
         RegStatus *RegStatusEntry = cpu -> IntRegStatus[instruction->rs];
         if (RegStatusEntry -> busy == 1) {
-            printf("Step 2.\n");
             int robNum = RegStatusEntry -> reorderNum;
             if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
                 DictionaryEntry *renameRegIntEntry = getValueChainByDictionaryKey(cpu -> renameRegInt, &(RegStatusEntry -> reorderNum));
                 RS -> Vj = *((int *)renameRegIntEntry -> value -> value);
                 RS -> Qj = -1;
-                printf("Step 3.\n");
             }
             else{
                 RS -> Qj = robNum;
@@ -1342,27 +1339,22 @@ int addLoadStore2Buffer(Dictionary *LOrSBuffer, Dictionary *LOrSBufferResult,
             RS -> Vj = cpu->integerRegisters[instruction->rs]->data;
             RS -> Qj = -1;
         }
-        printf("Step 4.\n");
         RS->Dest = DestROBnum;
         RS->instruction = instruction;
         if (strcmp(buffType, "Store") == 0) {
             if (instruction -> op == S_D) {
                 RegStatusEntry = cpu -> FPRegStatus[instruction -> ft];
                 if (RegStatusEntry -> busy == 1){
-                    printf("Step 5.\n");
                     int robNum = RegStatusEntry -> reorderNum;
                     if (((ROB *)cpu -> reorderBuffer -> items[robNum]) -> isReady == 1){
-                        printf("Step 6.\n");
                         DictionaryEntry *renameRegFloatEntry = getValueChainByDictionaryKey (cpu -> renameRegFP, &(RegStatusEntry -> reorderNum));
                         if(renameRegFloatEntry==NULL){
                             printf("renameRegFloatEntry is NULL.\n");
                         }
                         RS -> fpVk = *((int *)renameRegFloatEntry -> value -> value);
                         RS -> Qk = -1;
-                        printf("Step 7.\n");
                     }
                     else{
-                        printf("Step 8.\n");
                         RS -> Qk = robNum;
                         RS->isReady = 0;
                     }
