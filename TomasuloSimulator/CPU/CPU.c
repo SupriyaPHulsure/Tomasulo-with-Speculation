@@ -2344,6 +2344,9 @@ CompletedInstruction **execute(int NB){
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
                     instructionAndResult->instruction = rsmem -> instruction;
+                    if (instructionAndResult->instruction->op != L_D) {
+                        break;
+                    }
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
                     dataCacheElement = getValueChainByDictionaryKey(dataCache, addrPtr);
@@ -2407,6 +2410,9 @@ CompletedInstruction **execute(int NB){
                     }
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
+                    if (instructionAndResult->instruction->op != LD) {
+                        break;
+                    }
                     instructionAndResult->instruction = rsmem -> instruction;
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
@@ -3032,9 +3038,12 @@ CompletedInstruction **execute2(int NB) {
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
                     instructionAndResult->instruction = rsmem -> instruction;
+                    if (instructionAndResult->instruction->op != L_D) {
+                        break;
+                    }
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
-                    if (instruction -> isProg2) {
+                    if (rsmem -> instruction -> isProg2) {
                         dataCacheElement = getValueChainByDictionaryKey(dataCache2, addrPtr);
                         if (dataCacheElement != NULL) {
                             valuePtr = dataCacheElement->value->value;
@@ -3109,9 +3118,12 @@ CompletedInstruction **execute2(int NB) {
                 }
                 if (instructionFoundOrBubble == 1 && instructionsToExec[3] == NULL) {
                     instructionAndResult->instruction = rsmem -> instruction;
+                    if (instructionAndResult->instruction->op != LD) {
+                        break;
+                    }
                     rsmem -> isExecuting = 2;
                     * ((int*)addrPtr) = rsmem -> address;
-                    if (instruction -> isProg2) {
+                    if (rsmem -> instruction -> isProg2) {
                         dataCacheElement = getValueChainByDictionaryKey(dataCache2, addrPtr);
                         if (dataCacheElement != NULL) {
                             valuePtr = dataCacheElement->value->value;
