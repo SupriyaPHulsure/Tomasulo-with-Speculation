@@ -5871,9 +5871,9 @@ int checkEnd2(){
     iQueueCount = getCountCircularQueue(cpu->instructionQueue2);
     robCount = getCountCircularQueue(cpu->reorderBuffer2);
     //Check whether all instructions are decoded
-    fetchBufferCount = countDictionaryLen(cpu->fetchBuffer);
+    fetchBufferCount = countDictionaryLen(cpu->fetchBuffer2);
 
-    if((fetchEnd==1)&&(robCount==0)&&iQueueCount == 0){
+    if((fetchEnd==1)&&(robCount==0)&&(iQueueCount == 0)&&(fetchBufferCount==0)){
         return 1;
     }else{
         return 0;
