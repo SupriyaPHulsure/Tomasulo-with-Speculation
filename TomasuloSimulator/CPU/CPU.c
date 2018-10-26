@@ -5495,6 +5495,33 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	countFetchBuffer1 = countDictionaryLen(cpu->fetchBuffer);
 	countFetchBuffer2 = countDictionaryLen(cpu->fetchBuffer2);
 
+	if ((cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction)))&&(cpu -> PC2 >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction2)))){
+
+            if((countInstQueue1 + countFetchBuffer1) > (countInstQueue2 + countFetchBuffer2)){//fetch the one with fewer entries in instruction queue
+                printf("Fetch instructions in program 2.\n");
+                fetchMultiInstructionUnit2(NF);
+                cpu->nextCycleDecodeProgram = 2;
+
+            }else{
+                if(countInstQueue1 < countInstQueue2){
+                    printf("Fetch instructions in program 1.\n");
+                    fetchMultiInstructionUnit(NF);
+                    cpu->nextCycleDecodeProgram = 1;
+
+                }else{
+                    if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
+                        printf("Fetch instructions in program 2.\n");
+                        fetchMultiInstructionUnit2(NF);
+                        cpu->nextCycleDecodeProgram = 2;
+                    }else{
+                        printf("Fetch instructions in program 1.\n");
+                        fetchMultiInstructionUnit(NF);
+                        cpu->nextCycleDecodeProgram = 1;
+                    }
+                }
+            }
+	}else{
+
 	if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))){
 	    printf("Fetch instructions in program 2.\n");
 	    fetchMultiInstructionUnit2(NF);
@@ -5530,6 +5557,7 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
                 }
             }
         }
+    }
     }
     printf("Fetch finished -----------\n");
 
