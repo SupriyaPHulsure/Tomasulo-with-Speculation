@@ -1767,11 +1767,9 @@ int issueInstruction(Instruction *instruction){
         case DADDI:
         case DADD:
         case DSUB:
-            printf("Check if renameReg is full.\n");
             renameRegFull = renameRegIsFull(cpu->renameRegInt, instruction -> rd);
 
             if (renameRegFull!=1){
-                printf("renameReg is not full.\n");
                 rsType = "INT";
                 issued = addInstruction2RSint(cpu->renameRegInt, cpu->resStaInt, cpu->resStaIntResult, rsType, numberRSint,
                                             instruction, cpu->IntRegStatus);
@@ -1961,14 +1959,12 @@ int issueUnit(int NW){
     Instruction *instruction;
     for(i=0; i<NW; i++){
         if((instruction = getHeadCircularQueue(cpu -> instructionQueue))!= NULL){
-            printf("Begin issuing this instruction.\n");
             issued = issueInstruction(instruction);
             if (issued == 0){
                 return i;
             }
             else
                 dequeueCircular(cpu -> instructionQueue);
-                printf("Finish issued this instruction.\n");
         }
         else
             return i;
