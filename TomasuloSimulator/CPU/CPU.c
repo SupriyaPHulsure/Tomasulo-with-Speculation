@@ -3760,6 +3760,7 @@ int Commit(int NC, int NR, int returncount)
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
 							*((double*)valuePtr) = (double)DestVal; // value from rename register ;
 							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
+							removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
 							printf("Committed instruction SD %d in memory address %d \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr);
 							NC --;
 							rcount++;
@@ -3772,6 +3773,7 @@ int Commit(int NC, int NR, int returncount)
 							removeDictionaryEntriesByKey (dataCache, &(ROBEntry -> DestAddr));
 							*((double*)valuePtr) = (double) DestVal; // value from rename register ;
 							addDictionaryEntry (dataCache, &(ROBEntry -> DestAddr), valuePtr);
+							removeDictionaryEntriesByKey(cpu -> renameRegFP, &DestRenameReg);
 							printf("Committed instruction S_D %d in memory address %d \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr);							
 							//DestVal = 0;
 							NC --;
@@ -3781,22 +3783,19 @@ int Commit(int NC, int NR, int returncount)
 					else{
 						//Branch
 						if(ROBEntry ->isBranch == 1 ){
-						if(ROBEntry -> isCorrectPredict == 0){
-							// move head to isafterbranch == 0
+							removeDictionaryEntriesByKey(cpu -> renameRegInt, &(robnum));
 							int i = 0;
 							ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
-							int robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+							int robnum2 = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+						if(ROBEntry -> isCorrectPredict == 0){
+							// move head to isafterbranch == 0
+							
 							while(ROBentrySecond != NULL){
 								ROB *ROBentrySecond = cpu -> reorderBuffer-> items[(cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size];
-								robnum = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+								robnum2 = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
+								printf("instruction being flushed has rob num %d\n", robnum2);
 								if(ROBentrySecond != NULL){
 									
-									if(robnum == cpu -> reorderBuffer -> tail){
-										printf("ROB is empty now\n");
-										//cpu -> reorderBuffer -> head = cpu -> reorderBuffer -> tail;
-										cpu -> reorderBuffer = createCircularQueue(NR);
-										break;
-									}
 									if(ROBentrySecond -> isAfterBranch == 0)
 									{
 										cpu -> reorderBuffer -> head = (cpu->reorderBuffer->head + i)%cpu->reorderBuffer->size;
@@ -3806,24 +3805,23 @@ int Commit(int NC, int NR, int returncount)
 									}
 									else{
 										KeyRS *robnumkey = (KeyRS *)malloc(sizeof(KeyRS));
-										robnumkey -> reorderNum = robnum;
+										robnumkey -> reorderNum = robnum2;
 										robnumkey -> progNum = 1;
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, robnumkey); 
 										}
-									
-										//if(cpu -> IntRegStatus )
-										if(getValueChainByDictionaryKey(cpu -> renameRegInt, &(robnum))  != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegInt, &(robnum)); 
+										if(ROBentrySecond -> isINT == 1){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt, &(robnum2)); 
+											
 										}
-										else if(getValueChainByDictionaryKey(cpu -> renameRegFP, &(robnum)) != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegFP, &(robnum)); 
+										else{
+											removeDictionaryEntriesByKey(cpu -> renameRegFP, &(robnum2)); 
 										}
-										
+
 										if(ROBentrySecond -> isINT == 1){
 											int j = 0;
 											for (j = 0; j < numberOfIntRegisters; j++) {
-												if(cpu -> IntRegStatus [j] -> reorderNum == robnum)
+												if(cpu -> IntRegStatus [j] -> reorderNum == robnum2)
 												{
 													cpu -> IntRegStatus [j] -> busy = 0;
 												}
@@ -3833,13 +3831,20 @@ int Commit(int NC, int NR, int returncount)
 										{
 											int k = 0;
 											for (k = 0; k < numberOfFPRegisters; k++) {
-												if(cpu -> FPRegStatus [k] -> reorderNum == robnum)
+												if(cpu -> FPRegStatus [k] -> reorderNum == robnum2)
 												{
 													cpu -> FPRegStatus [k] -> busy = 0;
 												}
 											}
 										}
 										//go to next
+									}
+									
+									if(robnum2 == cpu -> reorderBuffer -> tail){
+										printf("ROB is empty now\n");
+										//cpu -> reorderBuffer -> head = cpu -> reorderBuffer -> tail;
+										cpu -> reorderBuffer = createCircularQueue(NR);
+										break;
 									}
 									i++;
 								}
@@ -3903,7 +3908,10 @@ int Commit2(int NC, int NR, int returncount)
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
-							removeDictionaryEntriesByKey(cpu -> renameRegInt2, &DestRenameReg);
+							if(DestRenameReg > 0)
+							{
+								removeDictionaryEntriesByKey(cpu -> renameRegInt2, &DestRenameReg);
+							}
 							printf("Committed instruction %d in integer register number %d with value %d \n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
 							rcount++;
@@ -3921,7 +3929,10 @@ int Commit2(int NC, int NR, int returncount)
 							if(RegStatusEntry -> reorderNum == robnum){
 								RegStatusEntry->busy = 0;
 							}
-							removeDictionaryEntriesByKey(cpu -> renameRegFP2, &DestRenameReg);
+							if(DestRenameReg > 0)
+							{
+								removeDictionaryEntriesByKey(cpu -> renameRegFP2, &DestRenameReg);
+							}
 							printf("Committed instruction %d in floating point register number %d with value %f\n", ROBEntry -> instruction -> address, DestReg, DestVal);
 							NC --;
 							rcount++;
@@ -3936,19 +3947,20 @@ int Commit2(int NC, int NR, int returncount)
 							removeDictionaryEntriesByKey (dataCache2, &(ROBEntry -> DestAddr));
 							*((double*)valuePtr) = (double)DestVal; // value from rename register ;
 							addDictionaryEntry (dataCache2, &(ROBEntry -> DestAddr), valuePtr);
+							removeDictionaryEntriesByKey(cpu -> renameRegInt2, &DestRenameReg);
 							printf("Committed instruction SD %d in memory address %d with value %d \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr, DestVal);
 							NC --;
 							rcount++;
 						}
 						else if(ROBEntry -> isINT == 0){
-							float DestVal; int DestRenameReg;
+							double DestVal; int DestRenameReg;
 							DestRenameReg = ROBEntry -> DestRenameReg;
 							DictionaryEntry * Current = getValueChainByDictionaryKey(cpu -> renameRegFP2, &DestRenameReg);
 							DestVal = *((double *)Current -> value -> value);
 							removeDictionaryEntriesByKey (dataCache2, &(ROBEntry -> DestAddr));
 							*((double*)valuePtr) = (double) DestVal; // value from rename register ;
 							addDictionaryEntry (dataCache2, &(ROBEntry -> DestAddr), valuePtr);
-							//removeDictionaryEntriesByKey(cpu -> renameRegInt, &DestRenameReg);
+							removeDictionaryEntriesByKey(cpu -> renameRegFP2, &DestRenameReg);
 							printf("Committed instruction S_D %d in memory address %d with value %f \n", ROBEntry -> instruction -> address, ROBEntry -> DestAddr, DestVal);							
 							//DestVal = 0;
 							NC --;
@@ -3958,21 +3970,19 @@ int Commit2(int NC, int NR, int returncount)
 					else{
 						//Branch
 						if(ROBEntry ->isBranch == 1 ){
-						if( ROBEntry -> isCorrectPredict == 0){
-							// move head to isafterbranch == 0
+							removeDictionaryEntriesByKey(cpu -> renameRegInt2, &(robnum));
 							int i = 0;
 							ROB *ROBentrySecond = cpu -> reorderBuffer2-> items[(cpu->reorderBuffer2->head + i)%cpu->reorderBuffer2->size];
-							int robnum = (cpu->reorderBuffer2->head + i)%cpu->reorderBuffer2->size;
+							int robnum2 = (cpu->reorderBuffer2->head + i)%cpu->reorderBuffer2->size;
+						if(ROBEntry -> isCorrectPredict == 0){
+							// move head to isafterbranch == 0
+							
 							while(ROBentrySecond != NULL){
 								ROB *ROBentrySecond = cpu -> reorderBuffer2-> items[(cpu->reorderBuffer2->head + i)%cpu->reorderBuffer2->size];
-								robnum = (cpu->reorderBuffer2->head + i)%cpu->reorderBuffer2->size;
+								robnum2 = (cpu->reorderBuffer2->head + i)%cpu->reorderBuffer2->size;
+								printf("instruction being flushed has rob num %d\n", robnum2);
 								if(ROBentrySecond != NULL){
-									if(robnum == cpu -> reorderBuffer2 -> tail){
-										printf("ROB is empty now\n");
-										//cpu -> reorderBuffer2 -> head = cpu -> reorderBuffer2 -> tail;
-										cpu -> reorderBuffer2 = createCircularQueue(NR);
-										break;
-									}
+									
 									if(ROBentrySecond -> isAfterBranch == 0)
 									{
 										cpu -> reorderBuffer2 -> head = (cpu->reorderBuffer2->head + i)%cpu->reorderBuffer2->size;
@@ -3982,21 +3992,23 @@ int Commit2(int NC, int NR, int returncount)
 									}
 									else{
 										KeyRS *robnumkey = (KeyRS *)malloc(sizeof(KeyRS));
-										robnumkey -> reorderNum = robnum;
-										robnumkey -> progNum = 2;
+										robnumkey -> reorderNum = robnum2;
+										robnumkey -> progNum = 1;
 										if(cpu -> WriteBackBuffer != NULL){
 											removeDictionaryEntriesByKey(cpu -> WriteBackBuffer, robnumkey); 
 										}
-										if(getValueChainByDictionaryKey(cpu -> renameRegInt2, &(robnum))  != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegInt2, &(robnum)); 
+										if(ROBentrySecond -> isINT == 1){
+											removeDictionaryEntriesByKey(cpu -> renameRegInt2, &(robnum2)); 
+											
 										}
-										else if(getValueChainByDictionaryKey(cpu -> renameRegFP2, &(robnum)) != NULL){
-											removeDictionaryEntriesByKey(cpu -> renameRegFP2, &(robnum)); 
+										else{
+											removeDictionaryEntriesByKey(cpu -> renameRegFP2, &(robnum2)); 
 										}
+
 										if(ROBentrySecond -> isINT == 1){
 											int j = 0;
 											for (j = 0; j < numberOfIntRegisters; j++) {
-												if(cpu -> IntRegStatus2 [j] -> reorderNum == robnum)
+												if(cpu -> IntRegStatus2 [j] -> reorderNum == robnum2)
 												{
 													cpu -> IntRegStatus2 [j] -> busy = 0;
 												}
@@ -4006,13 +4018,20 @@ int Commit2(int NC, int NR, int returncount)
 										{
 											int k = 0;
 											for (k = 0; k < numberOfFPRegisters; k++) {
-												if(cpu -> FPRegStatus2 [k] -> reorderNum == robnum)
+												if(cpu -> FPRegStatus2 [k] -> reorderNum == robnum2)
 												{
 													cpu -> FPRegStatus2 [k] -> busy = 0;
 												}
 											}
 										}
 										//go to next
+									}
+									
+									if(robnum2 == cpu -> reorderBuffer2 -> tail){
+										printf("ROB is empty now\n");
+										//cpu -> reorderBuffer2 -> head = cpu -> reorderBuffer2 -> tail;
+										cpu -> reorderBuffer2 = createCircularQueue(NR);
+										break;
 									}
 									i++;
 								}
@@ -4038,7 +4057,7 @@ int Commit2(int NC, int NR, int returncount)
 		
 		ROBEntry = cpu -> reorderBuffer2-> items[cpu->reorderBuffer2->head];
 		}
-return rcount;
+	return rcount;
 }
 
 
@@ -5287,6 +5306,7 @@ int writeBackUnit(int NB, int returncount){
 							ROBentry -> isReady = 1;
 							if(ROBentry -> isBranch == 1){
 								ROBentry -> isCorrectPredict = instruction -> isCorrectPredict;
+								//printf("Branch instruction %d is correctly predicted %d", instruction -> address, instruction -> isCorrectPredict);
 							}
 							if(ROBentry -> isStore == 1){
 								ROBentry -> DestAddr = instruction -> address;
@@ -5503,28 +5523,41 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	countFetchBuffer1 = countDictionaryLen(cpu->fetchBuffer);
 	countFetchBuffer2 = countDictionaryLen(cpu->fetchBuffer2);
 
-	if((countInstQueue1 + countFetchBuffer1) > (countInstQueue2 + countFetchBuffer2)){//fetch the one with fewer entries in instruction queue
+	if (cpu -> PC >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))){
 	    printf("Fetch instructions in program 2.\n");
 	    fetchMultiInstructionUnit2(NF);
 	    cpu->nextCycleDecodeProgram = 2;
-
 	}else{
-	    if(countInstQueue1 < countInstQueue2){
-            printf("Fetch instructions in program 1.\n");
-            fetchMultiInstructionUnit(NF);
-            cpu->nextCycleDecodeProgram = 1;
-
+	    if (cpu -> PC2 >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))){
+	    printf("Fetch instructions in program 1.\n");
+        fetchMultiInstructionUnit(NF);
+        cpu->nextCycleDecodeProgram = 1;
 	    }else{
-	        if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
-	            printf("Fetch instructions in program 2.\n");
+
+            if((countInstQueue1 + countFetchBuffer1) > (countInstQueue2 + countFetchBuffer2)){//fetch the one with fewer entries in instruction queue
+                printf("Fetch instructions in program 2.\n");
                 fetchMultiInstructionUnit2(NF);
                 cpu->nextCycleDecodeProgram = 2;
-	        }else{
-                printf("Fetch instructions in program 1.\n");
-                fetchMultiInstructionUnit(NF);
-                cpu->nextCycleDecodeProgram = 1;
-	        }
-	    }
+
+            }else{
+                if(countInstQueue1 < countInstQueue2){
+                    printf("Fetch instructions in program 1.\n");
+                    fetchMultiInstructionUnit(NF);
+                    cpu->nextCycleDecodeProgram = 1;
+
+                }else{
+                    if (cpu->cycle%2 == 0){//Give priority to thread 2 in odd cycles
+                        printf("Fetch instructions in program 2.\n");
+                        fetchMultiInstructionUnit2(NF);
+                        cpu->nextCycleDecodeProgram = 2;
+                    }else{
+                        printf("Fetch instructions in program 1.\n");
+                        fetchMultiInstructionUnit(NF);
+                        cpu->nextCycleDecodeProgram = 1;
+                    }
+                }
+            }
+        }
     }
     printf("Fetch finished -----------\n");
 
@@ -5601,8 +5634,8 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	
     isEnd1 = checkEnd();
     isEnd2 = checkEnd2();
-    //printf("isEnd1: %d; isEnd2: %d\n", isEnd1, isEnd2);
-
+    printf("isEnd1: %d; isEnd2: %d\n", isEnd1, isEnd2);
+	
 	if((isEnd1==1) & (isEnd2 == 1)){
 	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
 	    printf("Stalls due to full Reservation Stations: %d\n", cpu -> stallFullRS);
@@ -5879,7 +5912,7 @@ int checkEnd(){
     robCount = getCountCircularQueue(cpu->reorderBuffer);
     //Check whether all instructions are decoded
     fetchBufferCount = countDictionaryLen(cpu->fetchBuffer);
-
+	printf("part 1 - IQ count -%d robcount - %d fetch end - %d FBcount - %d\n", iQueueCount, robCount,fetchEnd,fetchBufferCount );
     if((fetchEnd==1)&&(robCount==0)&&(iQueueCount == 0)&&(fetchBufferCount==0)){
         return 1;
     }else{
@@ -5897,10 +5930,11 @@ int checkEnd2(){
     }
     //Check whether all instructions in ROB have been committed
     iQueueCount = getCountCircularQueue(cpu->instructionQueue2);
+	
     robCount = getCountCircularQueue(cpu->reorderBuffer2);
     //Check whether all instructions are decoded
     fetchBufferCount = countDictionaryLen(cpu->fetchBuffer2);
-
+	printf("Part 2 - IQ count -%d robcount - %d fetch end - %d FBcount - %d\n", iQueueCount, robCount, fetchEnd,fetchBufferCount );
     if((fetchEnd==1)&&(robCount==0)&&(iQueueCount == 0)&&(fetchBufferCount==0)){
         return 1;
     }else{
