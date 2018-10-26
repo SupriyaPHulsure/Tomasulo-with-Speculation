@@ -5606,8 +5606,8 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	
     isEnd1 = checkEnd();
     isEnd2 = checkEnd2();
-    //printf("isEnd1: %d; isEnd2: %d\n", isEnd1, isEnd2);
-
+    printf("isEnd1: %d; isEnd2: %d\n", isEnd1, isEnd2);
+	
 	if((isEnd1==1) & (isEnd2 == 1)){
 	    printf("Processor has finished working in %d cycle(s).\n", cpu -> cycle);
 	    printf("Stalls due to full Reservation Stations: %d\n", cpu -> stallFullRS);
@@ -5884,7 +5884,7 @@ int checkEnd(){
     robCount = getCountCircularQueue(cpu->reorderBuffer);
     //Check whether all instructions are decoded
     fetchBufferCount = countDictionaryLen(cpu->fetchBuffer);
-
+	printf("part 1 - IQ count -%d robcount - %d fetch end - %d FBcount - %d\n", iQueueCount, robCount,fetchEnd,fetchBufferCount );
     if((fetchEnd==1)&&(robCount==0)&&(iQueueCount == 0)&&(fetchBufferCount==0)){
         return 1;
     }else{
@@ -5902,10 +5902,11 @@ int checkEnd2(){
     }
     //Check whether all instructions in ROB have been committed
     iQueueCount = getCountCircularQueue(cpu->instructionQueue2);
+	
     robCount = getCountCircularQueue(cpu->reorderBuffer2);
     //Check whether all instructions are decoded
     fetchBufferCount = countDictionaryLen(cpu->fetchBuffer2);
-
+	printf("Part 2 - IQ count -%d robcount - %d fetch end - %d FBcount - %d\n", iQueueCount, robCount, fetchEnd,fetchBufferCount );
     if((fetchEnd==1)&&(robCount==0)&&(iQueueCount == 0)&&(fetchBufferCount==0)){
         return 1;
     }else{
