@@ -2361,7 +2361,7 @@ CompletedInstruction **execute(int NB){
                     LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                     memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                     pipelineString = "MEM";
-                    printPipeline(instruction, pipelineString, 1);
+                    printPipeline(instructionAndResult->instruction, pipelineString, 1);
                 }
                 break;
             case LD:
@@ -2427,7 +2427,7 @@ CompletedInstruction **execute(int NB){
                     LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                     memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                     pipelineString = "MEM";
-                    printPipeline(instruction, pipelineString, 1);
+                    printPipeline(instructionAndResult->instruction, pipelineString, 1);
                 }
                 break;
             case SD:
@@ -3063,7 +3063,7 @@ CompletedInstruction **execute2(int NB) {
                     LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                     memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                     pipelineString = "MEM";
-                    printPipeline(instruction, pipelineString, 1);
+                    printPipeline(instructionAndResult->instruction, pipelineString, 1);
                 }
                 break;
             case LD:
@@ -3143,7 +3143,7 @@ CompletedInstruction **execute2(int NB) {
                     LoadPipelineTemp = malloc(sizeof(CompletedInstruction)*2);
                     memcpy(LoadPipelineTemp, instructionAndResult, sizeof(CompletedInstruction));
                     pipelineString = "MEM";
-                    printPipeline(instruction, pipelineString, 1);
+                    printPipeline(instructionAndResult->instruction, pipelineString, 1);
                 }
                 break;
             case SD:
