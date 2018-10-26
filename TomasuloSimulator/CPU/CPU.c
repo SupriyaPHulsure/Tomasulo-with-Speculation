@@ -2493,14 +2493,18 @@ CompletedInstruction **execute(int NB){
     int maxOutput = NB - (countDictionaryLen (cpu -> WriteBackBuffer));
 	//printf("max outputs - %d\n", maxOutput);
     i = 0;
+    int r;
     if (i < maxOutput) {
         unitOutputs[INT] = executePipelinedUnit (cpu -> INTPipeline);
         if (unitOutputs[INT] != NULL) {
             i++;
             key -> reorderNum = unitOutputs[INT] -> ROB_number;
             key -> progNum = unitOutputs[INT] -> instruction -> isProg2 + 1;
-            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number), &(unitOutputs[INT] -> intResult));
+            r = unitOutputs[INT] -> ROB_number;
+            if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[INT] -> ROB_number), &(unitOutputs[INT] -> intResult));
+            }
             removeDictionaryEntriesByKey (cpu -> resStaInt, key);
             pipelineString = "INT";
             printPipeline(unitOutputs[INT], pipelineString, 0);
@@ -2522,8 +2526,11 @@ CompletedInstruction **execute(int NB){
             i++;
             key -> reorderNum = unitOutputs[MULT] -> ROB_number;
             key -> progNum = unitOutputs[MULT] -> instruction -> isProg2 + 1;
-            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number), &(unitOutputs[MULT] -> intResult));
+            r = unitOutputs[MULT] -> ROB_number;
+            if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[MULT] -> ROB_number), &(unitOutputs[MULT] -> intResult));
+            }
             removeDictionaryEntriesByKey (cpu -> resStaMult, key);
             pipelineString = "MULT";
             printPipeline(unitOutputs[MULT], pipelineString, 0);
@@ -2545,21 +2552,30 @@ CompletedInstruction **execute(int NB){
             i++;
             key -> reorderNum = unitOutputs[LS] -> ROB_number;
             key -> progNum = unitOutputs[LS] -> instruction -> isProg2 + 1;
+            r = unitOutputs[LS] -> ROB_number;
             if (unitOutputs[LS] -> instruction -> op == L_D) {
-                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                    removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                }
                 removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
             } else if (unitOutputs[LS] -> instruction -> op == LD) {
-                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                    removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                }
                 removeDictionaryEntriesByKey (cpu -> loadBuffer, key);
             } else if (unitOutputs[LS] -> instruction -> op == S_D) {
-                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                    removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> fpResult));
+                }
                 removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
             } else {
-                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
-                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                    removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number));
+                    addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[LS] -> ROB_number), &(unitOutputs[LS] -> intResult));
+                }
                 removeDictionaryEntriesByKey (cpu -> storeBuffer, key);
             }
             pipelineString = "Load/Store";
@@ -2596,8 +2612,11 @@ CompletedInstruction **execute(int NB){
             i++;
             key -> reorderNum = unitOutputs[FPadd] -> ROB_number;
             key -> progNum = unitOutputs[FPadd] -> instruction -> isProg2 + 1;
-            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> fpResult));
+            r = unitOutputs[FPadd] -> ROB_number;
+            if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPadd] -> ROB_number), &(unitOutputs[FPadd] -> fpResult));
+            }
             removeDictionaryEntriesByKey (cpu -> resStaFPadd, key);
             pipelineString = "FPadd";
             printPipeline(unitOutputs[FPadd], pipelineString, 0);
@@ -2619,8 +2638,11 @@ CompletedInstruction **execute(int NB){
             i++;
             key -> reorderNum = unitOutputs[FPmult] -> ROB_number;
             key -> progNum = unitOutputs[FPmult] -> instruction -> isProg2 + 1;
-            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> fpResult));
+            r = unitOutputs[FPmult] -> ROB_number;
+            if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPmult] -> ROB_number), &(unitOutputs[FPmult] -> fpResult));
+            }
             removeDictionaryEntriesByKey (cpu -> resStaFPmult, key);
             pipelineString = "FPmult";
             printPipeline(unitOutputs[FPmult], pipelineString, 0);
@@ -2642,8 +2664,11 @@ CompletedInstruction **execute(int NB){
             i++;
             key -> reorderNum = unitOutputs[FPdiv] -> ROB_number;
             key -> progNum = unitOutputs[FPdiv] -> instruction -> isProg2 + 1;
-            removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> fpResult));
+            r = unitOutputs[FPdiv] -> ROB_number;
+            if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                removeDictionaryEntriesByKey (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegFP, &(unitOutputs[FPdiv] -> ROB_number), &(unitOutputs[FPdiv] -> fpResult));
+            }
             removeDictionaryEntriesByKey (cpu -> resStaFPdiv, key);
             pipelineString = "FPdiv";
             printPipeline(unitOutputs[FPdiv], pipelineString, 0);
@@ -2666,8 +2691,11 @@ CompletedInstruction **execute(int NB){
             i++;
             key -> reorderNum = unitOutputs[BU] -> ROB_number;
             key -> progNum = unitOutputs[BU] -> instruction -> isProg2 + 1;
-            removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number));
-            addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
+            r = unitOutputs[BU] -> ROB_number;
+            if (isValidCircularIndex(cpu->reorderBuffer,r)) {
+                removeDictionaryEntriesByKey (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number));
+                addDictionaryEntry (cpu -> renameRegInt, &(unitOutputs[BU] -> ROB_number), &(unitOutputs[BU] -> intResult));
+            }
             removeDictionaryEntriesByKey (cpu -> resStaBU, key);
             branchHelper (unitOutputs[BU]);
             pipelineString = "BU";

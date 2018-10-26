@@ -75,4 +75,12 @@ static inline void *getHeadCircularQueue (CircularQueue *circularQueue) {
 		return value;
 }
 
+static inline int isValidCircularIndex (CircularQueue *circularQueue, int index) {
+    if (circularQueue -> head < circularQueue -> tail) {
+        return (index >= circularQueue -> head && index <= circularQueue -> tail);
+    } else {
+        return (index >= circularQueue->head && index < circularQueue->size) || (index <= circularQueue->tail);
+    }
+}
+
 #endif /* GLOBAL_ADT_CIRCULARQUEUE_H_ */
