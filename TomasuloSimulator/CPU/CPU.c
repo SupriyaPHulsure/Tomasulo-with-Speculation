@@ -5500,7 +5500,7 @@ int runClockCycle2 (int NF, int NW, int NB, int NR) {
 	    fetchMultiInstructionUnit2(NF);
 	    cpu->nextCycleDecodeProgram = 2;
 	}else{
-	    if (cpu -> PC2 >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction))){
+	    if (cpu -> PC2 >= (instructionCacheBaseAddress + (cacheLineSize * numberOfInstruction2))){
 	    printf("Fetch instructions in program 1.\n");
         fetchMultiInstructionUnit(NF);
         cpu->nextCycleDecodeProgram = 1;
