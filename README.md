@@ -1,18 +1,16 @@
-# CS2410_Project1
 
->tar -xzvf dis43_meg168_sph34_CS2410_Proj1.tar.gz
 
->cd dis43_meg168_sph34_CS2410_Proj1/TomasuloSimulator
+>TomasuloSimulator
 
 >make clean
 
 >make
 
-For part 1:
+For single instruction file (single thread):
 
 >./TomasuloSimulator Benchmarks/Test1.dat
 
-For part 2:
+For multithreading using two different instruction files:
 
 >./TomasuloSimulator Benchmarks/Test1.dat Benchmarks/Test1.dat
 
