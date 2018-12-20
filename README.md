@@ -19,8 +19,8 @@ I. Confirguaration details
     // Configuration details
     NF (Number of instructions that can be fetched in each cycle) = 4;
     NI (Number of Instruction that can be issued in each cycle)= 8;
-    NR(Number of instruction in ROB - Reorder Buffer) = 16;
-    NB(Number of instruction on Common data bus) = 4;
+    NR (Number of instruction in ROB - Reorder Buffer) = 16;
+    NB (Number of instruction on Common data bus) = 4;
 
     
 II. Run
