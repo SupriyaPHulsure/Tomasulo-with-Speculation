@@ -2,6 +2,8 @@
 # Tomasulo-Simulator with hardware Speculation
 Tomasulo’s algorithm is a computer architecture hardware algorithm for dynamic scheduling of instructions that allows out-of-order execution and enables more efficient use of multiple execution units. It was developed by Robert Tomasulo at IBM in 1967 and was first implemented in the IBM System/360 Model 91’s floating point unit.
 
+This project is a simulator for an out-of-order superscalar processor that uses the Tomasulo algorithm and fetches NF instructions per cycle. We design the simulator to maintain consistent state in the presence of exceptions by using hardware speculation which uses two hardware components: 1. ROB and 2. Renaming Resgisters. We also use the simulator to find the appropriate number of function units, fetch rate and result buses for given benchmark.
+
 ### Getting Started
 This project is implemented in C language. 
 
